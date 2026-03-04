@@ -155,6 +155,7 @@ function tc_render_registration_form( $registration_id ) {
         $phone     = sanitize_text_field( $_POST['phone'] ?? '' );
         $company   = sanitize_text_field( $_POST['company'] ?? '' );
         $event_id  = absint( $_POST['event_id'] ?? 0 );
+        $event_date = sanitize_text_field( $_POST['event_date'] ?? '' );
         $status    = sanitize_text_field( $_POST['status'] ?? 'pending' );
         $notes     = sanitize_textarea_field( $_POST['notes'] ?? '' );
 
@@ -166,6 +167,7 @@ function tc_render_registration_form( $registration_id ) {
                 'phone'     => $phone,
                 'company'   => $company,
                 'event_id'  => $event_id,
+                'event_date' => $event_date,
                 'status'    => $status,
                 'notes'     => $notes,
             ) );
@@ -228,6 +230,13 @@ function tc_render_registration_form( $registration_id ) {
                             }
                             ?>
                         </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th scope="row"><label for="event_date">Gewähltes Datum</label></th>
+                    <td>
+                        <input type="date" id="event_date" name="event_date" value="<?php echo esc_attr( $reg['event_date'] ); ?>" />
+                        <p class="description">Relevant für mehrtägige Veranstaltungen</p>
                     </td>
                 </tr>
                 <tr>

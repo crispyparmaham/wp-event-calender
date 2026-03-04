@@ -16,9 +16,11 @@
             var eventId = $(this).val();
             var form = $(this).closest('.tc-registration-form');
             var detailsDiv = form.find('.tc-event-details');
+            var datePicker = form.find('.tc-form-group .tc-form-group-date-picker, [id*="-date-picker"]');
 
             if (!eventId) {
                 detailsDiv.hide();
+                if (datePicker.length) datePicker.hide();
                 return;
             }
 
@@ -49,6 +51,30 @@
                         
                         detailsDiv.show();
                         detailsDiv.css('opacity', '1');
+
+                        // Datum-Auswahl für mehrtägige Events
+                        var datePickerField = form.find('[id*="-date-picker"]');
+                        if (data.is_multiday && data.dates.length > 0 && datePickerField.length) {
+                            var selectField = datePickerField.find('select');
+                            selectField.find('option:not(:first)').remove();
+
+                            $.each(data.dates, function(i, date) {
+                                var dateObj = new Date(date + 'T00:00:00');
+                                var formatted = dateObj.toLocaleDateString('de-DE', {
+                                    weekday: 'long',
+                                    year: 'numeric',
+                                    month: 'long',
+                                    day: 'numeric'
+                                });
+                                selectField.append('<option value="' + date + '">' + formatted + '</option>');
+                            });
+
+                            datePickerField.show();
+                        } else {
+                            if (datePickerField.length) {
+                                datePickerField.hide();
+                            }
+                        }
                     }
                 },
                 error: function() {

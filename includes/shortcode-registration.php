@@ -17,6 +17,11 @@ add_shortcode( 'training_registration', function ( $atts ) {
 
     $event_id = absint( $atts['event_id'] );
     
+    // Wenn keine Event-ID übergeben, versuchen das aktuelle Event zu erkennen
+    if ( ! $event_id && is_singular( 'training_event' ) ) {
+        $event_id = get_the_ID();
+    }
+    
     // Wenn Event-ID übergeben, Existenz prüfen
     if ( $event_id && get_post_type( $event_id ) !== 'training_event' ) {
         return '<p class="tc-error">Veranstaltung nicht gefunden.</p>';
@@ -58,7 +63,8 @@ add_shortcode( 'training_registration', function ( $atts ) {
                         ) );
 
                         foreach ( $events as $event ) {
-                            echo '<option value="' . esc_attr( $event->ID ) . '">' 
+                            $selected = ( is_singular( 'training_event' ) && $event->ID === get_the_ID() ) ? 'selected' : '';
+                            echo '<option value="' . esc_attr( $event->ID ) . '" ' . esc_attr( $selected ) . '>' 
                                 . esc_html( $event->post_title ) 
                                 . '</option>';
                         }
@@ -84,6 +90,18 @@ add_shortcode( 'training_registration', function ( $atts ) {
             <?php else : ?>
                 <input type="hidden" name="event_id" value="<?php echo esc_attr( $event_id ); ?>">
             <?php endif; ?>
+
+            <!-- Datum-Auswahl (für mehrtägige Events) -->
+            <div id="<?php echo esc_attr( $form_id ); ?>-date-picker" class="tc-form-group" style="display:none;">
+                <label for="<?php echo esc_attr( $form_id ); ?>-event-date">
+                    Wählen Sie ein Datum <span class="tc-required">*</span>
+                </label>
+                <select id="<?php echo esc_attr( $form_id ); ?>-event-date"
+                        name="event_date" 
+                        class="tc-form-control">
+                    <option value="">-- Bitte wählen --</option>
+                </select>
+            </div>
 
             <!-- Persönliche Daten -->
             <div class="tc-form-row">
