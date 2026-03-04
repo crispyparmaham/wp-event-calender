@@ -143,6 +143,7 @@
                 phone: $form.find('input[name="phone"]').val().trim(),
                 company: $form.find('input[name="company"]').val().trim(),
                 event_id: $form.find('input[name="event_id"], select[name="event_id"]').val(),
+                event_date: $form.find('select[name="event_date"]').val() || '',
                 notes: $form.find('textarea[name="notes"]').val().trim()
             };
 

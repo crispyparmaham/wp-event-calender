@@ -12,7 +12,7 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'TC_PATH',    plugin_dir_path( __FILE__ ) );
 define( 'TC_URL',     plugin_dir_url( __FILE__ ) );
-define( 'TC_VERSION', '1.0.0' );
+define( 'TC_VERSION', '2.0.2' );
 
 require_once TC_PATH . 'includes/cpt.php';
 require_once TC_PATH . 'includes/ajax.php';
