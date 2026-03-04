@@ -246,7 +246,9 @@ function tc_render_registration_form( $registration_id ) {
             'lastname'   => sanitize_text_field(     $_POST['lastname']   ?? '' ),
             'email'      => sanitize_email(          $_POST['email']      ?? '' ),
             'phone'      => sanitize_text_field(     $_POST['phone']      ?? '' ),
-            'company'    => sanitize_text_field(     $_POST['company']    ?? '' ),
+            'address'    => sanitize_text_field(     $_POST['address']    ?? '' ),
+            'zip'        => sanitize_text_field(     $_POST['zip']        ?? '' ),
+            'city'       => sanitize_text_field(     $_POST['city']       ?? '' ),
             'event_id'   => absint(                  $_POST['event_id']   ?? 0  ),
             'event_date' => sanitize_text_field(     $_POST['event_date'] ?? '' ),
             'status'     => sanitize_text_field(     $_POST['status']     ?? 'pending' ),
@@ -270,10 +272,13 @@ function tc_render_registration_form( $registration_id ) {
             <table class="form-table">
                 <?php
                 $fields = array(
-                    array( 'firstname', 'Vorname',     'text',  true  ),
-                    array( 'lastname',  'Nachname',    'text',  true  ),
-                    array( 'email',     'E-Mail',      'email', true  ),
-                    array( 'phone',     'Telefon',     'tel',   false ),
+                    array( 'firstname', 'Vorname',              'text',  true  ),
+                    array( 'lastname',  'Nachname',             'text',  true  ),
+                    array( 'email',     'E-Mail',               'email', true  ),
+                    array( 'phone',     'Telefon',              'tel',   false ),
+                    array( 'address',   'Straße & Hausnummer',  'text',  false ),
+                    array( 'zip',       'PLZ',                  'text',  false ),
+                    array( 'city',      'Ort',                  'text',  false ),
                 );
                 foreach ( $fields as [ $name, $label, $type, $req ] ) : ?>
                 <tr>

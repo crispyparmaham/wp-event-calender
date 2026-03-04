@@ -201,9 +201,22 @@ add_shortcode( 'training_registration', function ( $atts ) {
             </div>
 
             <div class="tc-form-group">
-                <label for="<?php echo esc_attr( $form_id ); ?>-company">Unternehmen</label>
-                <input type="text" id="<?php echo esc_attr( $form_id ); ?>-company"
-                       name="company" class="tc-form-control" autocomplete="organization">
+                <label for="<?php echo esc_attr( $form_id ); ?>-address">Straße &amp; Hausnummer</label>
+                <input type="text" id="<?php echo esc_attr( $form_id ); ?>-address"
+                       name="address" class="tc-form-control" autocomplete="street-address">
+            </div>
+
+            <div class="tc-form-row">
+                <div class="tc-form-group">
+                    <label for="<?php echo esc_attr( $form_id ); ?>-zip">PLZ</label>
+                    <input type="text" id="<?php echo esc_attr( $form_id ); ?>-zip"
+                           name="zip" class="tc-form-control" autocomplete="postal-code">
+                </div>
+                <div class="tc-form-group">
+                    <label for="<?php echo esc_attr( $form_id ); ?>-city">Ort</label>
+                    <input type="text" id="<?php echo esc_attr( $form_id ); ?>-city"
+                           name="city" class="tc-form-control" autocomplete="address-level2">
+                </div>
             </div>
 
             <div class="tc-form-group">
