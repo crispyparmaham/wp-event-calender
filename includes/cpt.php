@@ -1,0 +1,284 @@
+<?php
+defined( 'ABSPATH' ) || exit;
+
+// ─────────────────────────────────────────────
+// 1. Custom Post Type registrieren
+// ─────────────────────────────────────────────
+add_action( 'init', function () {
+    register_post_type( 'training_event', array(
+        'labels' => array(
+            'name'          => 'Events',
+            'singular_name' => 'Event',
+            'add_new'       => 'Event hinzufügen',
+            'add_new_item'  => 'Neuen Event hinzufügen',
+            'edit_item'     => 'Event bearbeiten',
+            'all_items'     => 'Alle Events',
+            'search_items'  => 'Events suchen',
+            'not_found'     => 'Keine Events gefunden.',
+        ),
+        'public'       => true,
+        'show_in_menu' => true,
+        'menu_icon'    => 'dashicons-calendar-alt',
+        'supports'     => array( 'title', 'editor', 'thumbnail' ),
+        'has_archive'  => true,
+        'rewrite'      => array( 'slug' => 'events' ),
+        'show_in_rest' => true,
+    ) );
+} );
+
+// ─────────────────────────────────────────────
+// 2. ACF Feldgruppe
+// ─────────────────────────────────────────────
+add_action( 'acf/include_fields', function () {
+    if ( ! function_exists( 'acf_add_local_field_group' ) ) return;
+
+    acf_add_local_field_group( array(
+        'key'    => 'group_training_event',
+        'title'  => 'Event Details',
+        'fields' => array(
+
+            // ── TAB: Allgemein ──────────────────────
+            array(
+                'key'       => 'field_tc_tab_general',
+                'label'     => 'Allgemein',
+                'type'      => 'tab',
+                'placement' => 'top',
+                'endpoint'  => 0,
+            ),
+            array(
+                'key'           => 'field_tc_event_type',
+                'label'         => 'Event-Typ',
+                'name'          => 'event_type',
+                'type'          => 'select',
+                'choices'       => array(
+                    'training' => 'Gruppentraining',
+                    'seminar'  => 'Seminar',
+                ),
+                'default_value' => 'training',
+                'return_format' => 'value',
+                'required'      => 1,
+            ),
+            array(
+                'key'       => 'field_tc_intro_text',
+                'label'     => 'Einleitungstext',
+                'name'      => 'intro_text',
+                'type'      => 'textarea',
+                'rows'      => 4,
+                'new_lines' => 'wpautop',
+            ),
+            array(
+                'key'           => 'field_tc_partnerlogo',
+                'label'         => 'Partnerlogo',
+                'name'          => 'partnerlogo',
+                'type'          => 'image',
+                'return_format' => 'array',
+                'preview_size'  => 'medium',
+                'library'       => 'all',
+            ),
+
+            // ── TAB: Details ────────────────────────
+            array(
+                'key'       => 'field_tc_tab_details',
+                'label'     => 'Details',
+                'type'      => 'tab',
+                'placement' => 'top',
+                'endpoint'  => 0,
+            ),
+            array(
+                'key'         => 'field_tc_leadership',
+                'label'       => 'Seminar-/Trainingsleitung',
+                'name'        => 'seminar_leadership',
+                'type'        => 'text',
+                'placeholder' => 'z.B. Max Mustermann',
+            ),
+            array(
+                'key'         => 'field_tc_participants',
+                'label'       => 'Teilnehmer',
+                'name'        => 'participants',
+                'type'        => 'text',
+                'placeholder' => 'z.B. 6 bis 15',
+            ),
+            array(
+                'key'          => 'field_tc_difficulty',
+                'label'        => 'Für wen geeignet',
+                'name'         => 'difficulty',
+                'type'         => 'text',
+                'instructions' => 'z.B. Anfänger, Fortgeschrittene, Alle',
+                'placeholder'  => 'z.B. Alle Levels',
+            ),
+            array(
+                'key'   => 'field_tc_location',
+                'label' => 'Ort',
+                'name'  => 'location',
+                'type'  => 'wysiwyg',
+                'tabs'  => 'all',
+            ),
+
+            // ── TAB: Datum & Uhrzeit ────────────────
+            array(
+                'key'       => 'field_tc_tab_datetime',
+                'label'     => 'Datum & Uhrzeit',
+                'type'      => 'tab',
+                'placement' => 'top',
+                'endpoint'  => 0,
+            ),
+            array(
+                'key'           => 'field_tc_more_days',
+                'label'         => 'Mehrtägige Veranstaltung?',
+                'name'          => 'more_days',
+                'type'          => 'true_false',
+                'ui'            => 1,
+                'default_value' => 0,
+            ),
+            array(
+                'key'            => 'field_tc_start_date',
+                'label'          => 'Startdatum',
+                'name'           => 'start_date',
+                'type'           => 'date_picker',
+                'display_format' => 'd.m.Y',
+                'return_format'  => 'Y-m-d',
+                'first_day'      => 1,
+                'required'       => 1,
+            ),
+            array(
+                'key'         => 'field_tc_start_time',
+                'label'       => 'Startzeit',
+                'name'        => 'start_time',
+                'type'        => 'time_picker',
+                'display_format' => 'H:i',
+                'return_format'  => 'H:i',
+            ),
+            array(
+                'key'         => 'field_tc_end_time',
+                'label'       => 'Endzeit',
+                'name'        => 'end_time',
+                'type'        => 'time_picker',
+                'display_format' => 'H:i',
+                'return_format'  => 'H:i',
+                'instructions'=> 'Endzeit am selben Tag. Für mehrtägige Events unten das Enddatum setzen.',
+            ),
+            array(
+                'key'            => 'field_tc_end_date',
+                'label'          => 'Enddatum',
+                'name'           => 'end_date',
+                'type'           => 'date_picker',
+                'display_format' => 'd.m.Y',
+                'return_format'  => 'Y-m-d',
+                'first_day'      => 1,
+                'instructions'   => 'Nur bei mehrtägigen Events ausfüllen.',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_more_days',
+                    'operator' => '==',
+                    'value'    => '1',
+                ) ) ),
+            ),
+
+            // ── Wiederholung ────────────────────────
+            array(
+                'key'           => 'field_tc_is_recurring',
+                'label'         => 'Wiederkehrendes Event?',
+                'name'          => 'is_recurring',
+                'type'          => 'true_false',
+                'ui'            => 1,
+                'default_value' => 0,
+                'instructions'  => 'Aktivieren, wenn dieses Event regelmäßig stattfindet.',
+            ),
+            array(
+                'key'           => 'field_tc_recurring_weekday',
+                'label'         => 'Wochentag der Wiederholung',
+                'name'          => 'recurring_weekday',
+                'type'          => 'select',
+                'instructions'  => 'An welchem Wochentag findet das Event wöchentlich statt?',
+                'choices'       => array(
+                    '1' => 'Montag',
+                    '2' => 'Dienstag',
+                    '3' => 'Mittwoch',
+                    '4' => 'Donnerstag',
+                    '5' => 'Freitag',
+                    '6' => 'Samstag',
+                    '0' => 'Sonntag',
+                ),
+                'return_format' => 'value',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_is_recurring',
+                    'operator' => '==',
+                    'value'    => '1',
+                ) ) ),
+            ),
+            array(
+                'key'            => 'field_tc_recurring_until',
+                'label'          => 'Wiederholen bis',
+                'name'           => 'recurring_until',
+                'type'           => 'date_picker',
+                'instructions'   => 'Letzter möglicher Termin der Serie.',
+                'display_format' => 'd.m.Y',
+                'return_format'  => 'Y-m-d',
+                'first_day'      => 1,
+                'required'       => 0,
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_is_recurring',
+                    'operator' => '==',
+                    'value'    => '1',
+                ) ) ),
+            ),
+
+            // ── TAB: Preis ──────────────────────────
+            array(
+                'key'       => 'field_tc_tab_price',
+                'label'     => 'Preis',
+                'type'      => 'tab',
+                'placement' => 'top',
+                'endpoint'  => 0,
+            ),
+            array(
+                'key'     => 'field_tc_normal_price',
+                'label'   => 'Regulärer Preis (€)',
+                'name'    => 'normal_preis',
+                'type'    => 'number',
+                'min'     => 0,
+                'step'    => 0.01,
+                'prepend' => '€',
+            ),
+            array(
+                'key'        => 'field_tc_early_bird',
+                'label'      => 'Early Bird',
+                'name'       => 'early_bird',
+                'type'       => 'group',
+                'layout'     => 'row',
+                'sub_fields' => array(
+                    array(
+                        'key'     => 'field_tc_eb_price',
+                        'label'   => 'Early-Bird-Preis (€)',
+                        'name'    => 'early_bird_preis',
+                        'type'    => 'number',
+                        'min'     => 0,
+                        'step'    => 0.01,
+                        'prepend' => '€',
+                    ),
+                    array(
+                        'key'            => 'field_tc_eb_deadline',
+                        'label'          => 'Anmeldung bis',
+                        'name'           => 'anmeldung',
+                        'type'           => 'date_picker',
+                        'instructions'   => 'Muss vor dem Startdatum liegen.',
+                        'display_format' => 'd.m.Y',
+                        'return_format'  => 'Y-m-d',
+                        'first_day'      => 1,
+                    ),
+                ),
+            ),
+
+        ),
+        'location' => array( array( array(
+            'param'    => 'post_type',
+            'operator' => '==',
+            'value'    => 'training_event',
+        ) ) ),
+        'menu_order'            => 0,
+        'position'              => 'normal',
+        'style'                 => 'default',
+        'label_placement'       => 'top',
+        'instruction_placement' => 'label',
+        'active'                => true,
+    ) );
+} );
