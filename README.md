@@ -78,7 +78,8 @@ The plugin registers the following fields on the `training_event` post type:
 | Allgemein | Einleitungstext | `intro_text` | Textarea |
 | Allgemein | Partnerlogo | `partnerlogo` | Image |
 | Details | Seminar-/Trainingsleitung | `seminar_leadership` | Text |
-| Details | Teilnehmer | `participants` | Text |
+| Details | Max. Teilnehmer (optional) | `participants` | Number |
+| Details | Teilnehmer tracken? | `track_participants` | Boolean |
 | Details | Für wen geeignet | `difficulty` | Text |
 | Details | Ort | `location` | WYSIWYG |
 | Datum & Uhrzeit | Mehrtägig? | `more_days` | True/False |
@@ -168,10 +169,13 @@ Displays a registration form for trainings and seminars. Users can select an eve
 - **Dynamic event selection** — loads all published events when no event_id specified
 - **Event details** — displays trainer, location, and date when event is selected
 - **Multi-day support** — shows date picker if event spans multiple days
+- **Capacity tracking** — shows current registrations and max capacity (if enabled)
+- **Booking closure** — when event is full, registration form is disabled with "Ausgebucht" message
 - **Form fields** — First name, last name, email (required), phone, company, notes
 - **Real-time validation** — user-friendly error messages
 - **AJAX submission** — no page reload required
-- **Confirmation email** — automatic dispatch from configured sender address
+- **Confirmation email** — automatic dispatch to registrant
+- **Admin notification** — admin receives notification email for new registrations
 - **Database storage** — registrations stored in custom database table `wp_tc_registrations`
 
 ### Attributes
@@ -199,7 +203,7 @@ Navigate to **Events → Einstellungen** to configure:
 
 | Setting | Description |
 |---|---|
-| **Bestätigungs-E-Mail von** | Sender email address for confirmation emails (defaults to admin email). Uses Fluent SMTP if installed. |
+| **Bestätigungs-E-Mail von** | Email address that **receives** registrations and admin notifications. DO NOT change the sender email here — that's controlled by Fluent SMTP plugin configuration. |
 
 ---
 

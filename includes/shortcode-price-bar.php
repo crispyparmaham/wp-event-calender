@@ -42,6 +42,21 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
         ? date_create_from_format( 'Y-m-d', $price_date_string )
         : null;
 
+    // Kapazitätsprüfung
+    $track_participants = get_field( 'track_participants', $post_id );
+    $max_participants = get_field( 'participants', $post_id );
+    $is_full = false;
+
+    if ( $track_participants && $max_participants ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'tc_registrations';
+        $current_registrations = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM $table_name WHERE event_id = %d AND status IN ('pending', 'confirmed')",
+            $post_id
+        ) );
+        $is_full = $current_registrations >= $max_participants;
+    }
+
     $show_early  = $price_date && $early_price && $price_date_string >= $today;
     $has_price   = ! $price_on_request && $normal_price;
 
@@ -52,7 +67,14 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
         <div class="tc-price-bar-inner">
 
             <div class="tc-price-bar-info">
-                <?php if ( $price_on_request ) : ?>
+                <?php if ( $is_full ) : ?>
+
+                    <div class="tc-price-bar-label tc-price-bar-label--full">Ausgebucht</div>
+                    <div class="tc-price-bar-amount tc-price-bar-amount--full">
+                        Leider keine Plätze mehr verfügbar.
+                    </div>
+
+                <?php elseif ( $price_on_request ) : ?>
 
                     <div class="tc-price-bar-label">Preis</div>
                     <div class="tc-price-bar-amount tc-price-bar-amount--request">
@@ -90,9 +112,11 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
             </div>
 
             <a href="<?php echo $link; ?>"
-               class="tc-price-bar-btn <?php echo ( $show_early && $has_price ) ? 'tc-price-bar-btn--early' : ''; ?>">
+               class="tc-price-bar-btn <?php echo ( $show_early && $has_price ) ? 'tc-price-bar-btn--early' : ''; ?>"
+               <?php echo $is_full ? 'style="pointer-events: none; opacity: 0.5; cursor: not-allowed;"' : ''; ?>>
                 <?php
-                if ( $price_on_request )   echo $request_text;
+                if ( $is_full )            echo 'Ausgebucht';
+                elseif ( $price_on_request )   echo $request_text;
                 elseif ( ! $has_price )    echo $no_price_text;
                 else                       echo $link_text;
                 ?>

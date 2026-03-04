@@ -17,10 +17,12 @@
             var form = $(this).closest('.tc-registration-form');
             var detailsDiv = form.find('.tc-event-details');
             var datePicker = form.find('.tc-form-group .tc-form-group-date-picker, [id*="-date-picker"]');
+            var submitBtn = form.find('.tc-submit-btn');
 
             if (!eventId) {
                 detailsDiv.hide();
                 if (datePicker.length) datePicker.hide();
+                submitBtn.prop('disabled', false).removeClass('tc-btn-disabled');
                 return;
             }
 
@@ -49,8 +51,31 @@
                         }
                         detailsDiv.find('.tc-detail-date').text(dateStr);
                         
+                        // Alte Kapazität Info entfernen
+                        detailsDiv.find('.tc-detail-item-capacity').remove();
+                        
+                        // Kapazität anzeigen wenn aktiv
+                        if (data.track_participants && data.max_participants > 0) {
+                            var capacityText = data.current_registrations + '/' + data.max_participants + ' Teilnehmer';
+                            var capacityClass = data.is_full ? 'tc-full' : 'tc-available';
+                            var capacityHtml = '<div class="tc-detail-item tc-detail-item-capacity">' +
+                                '<span class="tc-detail-label">Kapazität:</span>' +
+                                '<span class="tc-detail-capacity ' + capacityClass + '">' + capacityText + '</span>' +
+                                '</div>';
+                            detailsDiv.find('.tc-detail-date').closest('.tc-detail-item').after(capacityHtml);
+                        }
+                        
                         detailsDiv.show();
                         detailsDiv.css('opacity', '1');
+
+                        // Button deaktivieren wenn voll
+                        if (data.is_full) {
+                            submitBtn.prop('disabled', true).addClass('tc-btn-disabled');
+                            submitBtn.find('.tc-btn-text').text('Ausgebucht');
+                        } else {
+                            submitBtn.prop('disabled', false).removeClass('tc-btn-disabled');
+                            submitBtn.find('.tc-btn-text').text('Anmeldung absenden');
+                        }
 
                         // Datum-Auswahl für mehrtägige Events
                         var datePickerField = form.find('[id*="-date-picker"]');

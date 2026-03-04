@@ -105,9 +105,9 @@ function tc_field_registration_email() {
         required
     />
     <p class="description">
-        Von dieser E-Mail-Adresse werden die Anmeldebestätigungen an die Teilnehmer versendet.
+        Diese E-Mail-Adresse <strong>empfängt</strong> die Anmeldebestätigungen und Benachrichtigungen von neuen Anmeldungen.
         <br>
-        <strong>Hinweis:</strong> Wird durch das Fluent SMTP Plugin abgewickelt (soweit installiert/konfiguriert).
+        <strong>Hinweis:</strong> Die tatsächliche Absenderadresse wird durch Fluent SMTP Plugin bestimmt (falls installiert/konfiguriert).
     </p>
     <?php
 }

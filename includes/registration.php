@@ -144,6 +144,23 @@ function tc_handle_registration_submission() {
         ) );
     }
 
+    // Kapazität prüfen
+    $track_participants = get_field( 'track_participants', $event_id );
+    $max_participants = get_field( 'participants', $event_id );
+    
+    if ( $track_participants && $max_participants ) {
+        $current_registrations = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM $table_name WHERE event_id = %d AND status IN ('pending', 'confirmed')",
+            $event_id
+        ) );
+
+        if ( $current_registrations >= $max_participants ) {
+            wp_send_json_error( array(
+                'message' => 'Leider ist dieser Termin bereits ausgebucht.',
+            ) );
+        }
+    }
+
     // Doppelten Antrag prüfen
     $existing = $wpdb->get_row( $wpdb->prepare(
         "SELECT id FROM $table_name WHERE email = %s AND event_id = %d",
@@ -221,6 +238,8 @@ function tc_get_event_details_ajax() {
     $start_time = get_field( 'start_time', $event_id );
     $more_days = get_field( 'more_days', $event_id );
     $end_date = get_field( 'end_date', $event_id );
+    $track_participants = get_field( 'track_participants', $event_id );
+    $max_participants = get_field( 'participants', $event_id );
 
     // Datumsarray für mehrtägige Events generieren
     $dates = array();
@@ -235,6 +254,19 @@ function tc_get_event_details_ajax() {
         }
     }
 
+    // Aktueller Anmeldungsstand
+    $current_registrations = 0;
+    $is_full = false;
+    if ( $track_participants && $max_participants ) {
+        global $wpdb;
+        $table_name = $wpdb->prefix . 'tc_registrations';
+        $current_registrations = (int) $wpdb->get_var( $wpdb->prepare(
+            "SELECT COUNT(*) FROM $table_name WHERE event_id = %d AND status IN ('pending', 'confirmed')",
+            $event_id
+        ) );
+        $is_full = $current_registrations >= $max_participants;
+    }
+
     wp_send_json_success( array(
         'title'       => $event->post_title,
         'leadership'  => $leadership ?: 'Nicht angegeben',
@@ -243,6 +275,10 @@ function tc_get_event_details_ajax() {
         'start_time'  => $start_time ?: '',
         'is_multiday' => (bool) $more_days,
         'dates'       => $dates,
+        'track_participants' => (bool) $track_participants,
+        'max_participants'   => $max_participants ?: 0,
+        'current_registrations' => $current_registrations,
+        'is_full'    => $is_full,
     ) );
 }
 
@@ -253,36 +289,66 @@ add_action( 'tc_registration_submitted', function ( $registration_id, $data ) {
     $event = get_post( $data['event_id'] );
     $event_title = $event ? $event->post_title : 'Veranstaltung';
     
-    $to      = $data['email'];
-    $from_email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
+    // Mail an Teilnehmer
+    $to_customer      = $data['email'];
     $blogname = get_option( 'blogname' );
     
-    $subject = 'Anmeldungsbestätigung: ' . $event_title;
-    $headers = array(
-        'Content-Type: text/html; charset=UTF-8',
-        'From: ' . $blogname . ' <' . $from_email . '>',
-    );
+    $subject_customer = 'Anmeldungsbestätigung: ' . $event_title;
+    $headers = array( 'Content-Type: text/html; charset=UTF-8' );
 
-    $message = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
-    $message .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px;">';
-    $message .= '<h2 style="color: #0066cc; margin-top: 0;">Vielen Dank für Ihre Anmeldung!</h2>';
-    $message .= '<p>Hallo ' . esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) . ',</p>';
-    $message .= '<p>Ihre Anmeldung für die Veranstaltung <strong>' . esc_html( $event_title ) . '</strong> wurde erfolgreich gespeichert.</p>';
+    $message_customer = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
+    $message_customer .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px;">';
+    $message_customer .= '<h2 style="color: #0066cc; margin-top: 0;">Vielen Dank für Ihre Anmeldung!</h2>';
+    $message_customer .= '<p>Hallo ' . esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) . ',</p>';
+    $message_customer .= '<p>Ihre Anmeldung für die Veranstaltung <strong>' . esc_html( $event_title ) . '</strong> wurde erfolgreich gespeichert.</p>';
     
     // Wenn ein konkretes Datum vorhanden (für mehrtägige Events)
     if ( ! empty( $data['event_date'] ) ) {
         $event_date_obj = DateTime::createFromFormat( 'Y-m-d', $data['event_date'] );
         $formatted_date = $event_date_obj ? $event_date_obj->format( 'd.m.Y' ) : $data['event_date'];
-        $message .= '<p><strong>Gewähltes Datum:</strong> ' . esc_html( $formatted_date ) . '</p>';
+        $message_customer .= '<p><strong>Gewähltes Datum:</strong> ' . esc_html( $formatted_date ) . '</p>';
     }
     
-    $message .= '<p>Wir werden Sie kontaktieren, sobald Ihre Anmeldung bestätigt wurde.</p>';
-    $message .= '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">';
-    $message .= '<p style="font-size: 0.9em; color: #666;">';
-    $message .= 'Mit freundlichen Grüßen<br>';
-    $message .= '<strong>' . esc_html( $blogname ) . '</strong>';
-    $message .= '</p>';
-    $message .= '</div></body></html>';
+    $message_customer .= '<p>Wir werden Sie kontaktieren, sobald Ihre Anmeldung bestätigt wurde.</p>';
+    $message_customer .= '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">';
+    $message_customer .= '<p style="font-size: 0.9em; color: #666;">';
+    $message_customer .= 'Mit freundlichen Grüßen<br>';
+    $message_customer .= '<strong>' . esc_html( $blogname ) . '</strong>';
+    $message_customer .= '</p>';
+    $message_customer .= '</div></body></html>';
 
-    wp_mail( $to, $subject, $message, $headers );
+    wp_mail( $to_customer, $subject_customer, $message_customer, $headers );
+
+    // Mail an Admin
+    $admin_email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
+    if ( $admin_email !== $to_customer ) {
+        $subject_admin = 'Neue Anmeldung: ' . $event_title . ' - ' . $data['firstname'] . ' ' . $data['lastname'];
+        
+        $message_admin = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
+        $message_admin .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px;">';
+        $message_admin .= '<h2 style="color: #0066cc; margin-top: 0;">Neue Anmeldung eingegangen</h2>';
+        $message_admin .= '<p><strong>Veranstaltung:</strong> ' . esc_html( $event_title ) . '</p>';
+        $message_admin .= '<p><strong>Name:</strong> ' . esc_html( $data['firstname'] . ' ' . $data['lastname'] ) . '</p>';
+        $message_admin .= '<p><strong>E-Mail:</strong> ' . esc_html( $data['email'] ) . '</p>';
+        if ( ! empty( $data['phone'] ) ) {
+            $message_admin .= '<p><strong>Telefon:</strong> ' . esc_html( $data['phone'] ) . '</p>';
+        }
+        if ( ! empty( $data['company'] ) ) {
+            $message_admin .= '<p><strong>Unternehmen:</strong> ' . esc_html( $data['company'] ) . '</p>';
+        }
+        if ( ! empty( $data['event_date'] ) ) {
+            $event_date_obj = DateTime::createFromFormat( 'Y-m-d', $data['event_date'] );
+            $formatted_date = $event_date_obj ? $event_date_obj->format( 'd.m.Y' ) : $data['event_date'];
+            $message_admin .= '<p><strong>Gewähltes Datum:</strong> ' . esc_html( $formatted_date ) . '</p>';
+        }
+        if ( ! empty( $data['notes'] ) ) {
+            $message_admin .= '<p><strong>Notizen:</strong></p><p style="background-color: #f0f0f0; padding: 10px; border-radius: 4px;">' . nl2br( esc_html( $data['notes'] ) ) . '</p>';
+        }
+        
+        $message_admin .= '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">';
+        $message_admin .= '<p><a href="' . esc_url( admin_url( 'admin.php?page=training-registrations' ) ) . '" style="background-color: #0066cc; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; display: inline-block;">Zur Anmeldungsübersicht</a></p>';
+        $message_admin .= '</div></body></html>';
+
+        wp_mail( $admin_email, $subject_admin, $message_admin, $headers );
+    }
 }, 10, 2 );
