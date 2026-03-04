@@ -146,6 +146,7 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 [training_calendar]
 [training_calendar type="training"]
 [training_calendar type="seminar" view="listMonth"]
+[training_calendar mode="dark"]
 ```
 
 **Via PHP template:**
@@ -153,6 +154,7 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 <?php echo do_shortcode('[training_calendar]'); ?>
 <?php echo do_shortcode('[training_calendar type="training"]'); ?>
 <?php echo do_shortcode('[training_calendar type="seminar" view="listMonth"]'); ?>
+<?php echo do_shortcode('[training_calendar mode="dark"]'); ?>
 ```
 
 ### Attributes
@@ -161,6 +163,7 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 |---|---|---|---|
 | `type` | `all`, `training`, `seminar` | `all` | Pre-selected filter tab |
 | `view` | `dayGridMonth`, `timeGridWeek`, `listMonth` | `dayGridMonth` | Initial calendar view |
+| `mode` | `light`, `dark` | `light` | Color scheme |
 
 ### URL Parameter
 

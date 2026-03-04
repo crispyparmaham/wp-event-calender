@@ -1,32 +1,53 @@
-/* ─── Ladeanimation ───────────────────────────────────────────── */
-.tc-loader {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 40px 20px;
-  color: #6b7280;
-  font-size: 14px;
-}
+/*
+ * Training Calendar – Frontend Styles
+ * ─────────────────────────────────────────────────────────────────
+ * Theme-unabhängig: Alle Farben explizit gesetzt.
+ *
+ * Farbmodus per Shortcode-Attribut:
+ *   [training_calendar]              → Light (default)
+ *   [training_calendar mode="dark"]  → Dark
+ *
+ * CSS Custom Properties zum Anpassen:
+ *   --tc-bg            Kalender-Hintergrund
+ *   --tc-surface       Zellen-Hintergrund
+ *   --tc-border        Rahmenfarbe
+ *   --tc-text          Haupttextfarbe
+ *   --tc-text-muted    Dezente Textfarbe (Wochentage, etc.)
+ *   --tc-today         Hintergrund des heutigen Tages
+ *   --tc-btn-bg        Toolbar-Button Hintergrund
+ *   --tc-btn-text      Toolbar-Button Text
+ *   --tc-btn-active    Aktiver Button Hintergrund
+ * ─────────────────────────────────────────────────────────────────
+*/
 
-.tc-loader-spinner {
-  width: 22px;
-  height: 22px;
-  border: 3px solid #e5e7eb;
-  border-top-color: #4f46e5;
-  border-radius: 50%;
-  animation: tc-spin .7s linear infinite;
-  flex-shrink: 0;
-}
-
-@keyframes tc-spin {
-  to { transform: rotate(360deg); }
-}
-
-/* ─── Wrapper ─────────────────────────────────────────────────── */
+/* ─── Light Mode (default) ────────────────────────────────────── */
 .tc-frontend-wrap {
+  --tc-bg:          #ffffff;
+  --tc-surface:     #f9fafb;
+  --tc-border:      #e5e7eb;
+  --tc-text:        #111827;
+  --tc-text-muted:  #6b7280;
+  --tc-today:       #ede9fe;
+  --tc-btn-bg:      #4f46e5;
+  --tc-btn-text:    #ffffff;
+  --tc-btn-active:  #3730a3;
+
   position: relative;
-  font-family: inherit;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--tc-text);
+}
+
+/* ─── Dark Mode ───────────────────────────────────────────────── */
+.tc-frontend-wrap.tc-dark {
+  --tc-bg:          #1f2937;
+  --tc-surface:     #111827;
+  --tc-border:      #374151;
+  --tc-text:        #f9fafb;
+  --tc-text-muted:  #9ca3af;
+  --tc-today:       #312e81;
+  --tc-btn-bg:      #4f46e5;
+  --tc-btn-text:    #ffffff;
+  --tc-btn-active:  #3730a3;
 }
 
 /* ─── Filter-Leiste ───────────────────────────────────────────── */
@@ -42,28 +63,28 @@
   align-items: center;
   gap: 6px;
   padding: 7px 16px;
-  border: 2px solid #e5e7eb;
+  border: 2px solid var(--tc-border);
   border-radius: 999px;
-  background: #fff;
-  color: #374151;
+  background: var(--tc-bg);
+  color: var(--tc-text);
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
   transition: border-color .15s, background .15s, color .15s;
+  font-family: inherit;
 }
 
 .tc-filter-btn:hover {
-  border-color: #4f46e5;
-  color: #4f46e5;
+  border-color: var(--tc-btn-bg);
+  color: var(--tc-btn-bg);
 }
 
 .tc-filter-btn.is-active {
-  background: #4f46e5;
-  border-color: #4f46e5;
-  color: #fff;
+  background: var(--tc-btn-bg);
+  border-color: var(--tc-btn-bg);
+  color: var(--tc-btn-text);
 }
 
-/* Farbpunkte in den Buttons */
 .tc-dot {
   display: inline-block;
   width: 10px;
@@ -80,67 +101,217 @@
   background: #fff;
 }
 
-/* ─── Kalender ────────────────────────────────────────────────── */
+/* ─── Kalender Container ──────────────────────────────────────── */
 .tc-frontend-calendar {
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--tc-bg);
+  border: 1px solid var(--tc-border);
   border-radius: 10px;
   padding: 20px;
+  color: var(--tc-text);
 }
 
-/* FullCalendar Overrides */
+/* ─── FullCalendar Overrides (theme-unabhängig) ───────────────── */
+
+/* Toolbar */
+.tc-frontend-wrap .fc {
+  color: var(--tc-text);
+}
+
 .tc-frontend-wrap .fc .fc-toolbar-title {
   font-size: 1.15em;
-  font-weight: 600;
+  font-weight: 700;
+  color: var(--tc-text);
+}
+
+/* Buttons */
+.tc-frontend-wrap .fc .fc-button {
+  font-family: inherit;
 }
 
 .tc-frontend-wrap .fc .fc-button-primary {
-  background-color: #4f46e5;
-  border-color: #4338ca;
+  background-color: var(--tc-btn-bg) !important;
+  border-color: var(--tc-btn-bg) !important;
+  color: var(--tc-btn-text) !important;
   font-size: 13px;
+  box-shadow: none !important;
 }
 
 .tc-frontend-wrap .fc .fc-button-primary:hover {
-  background-color: #4338ca;
-  border-color: #3730a3;
+  background-color: var(--tc-btn-active) !important;
+  border-color: var(--tc-btn-active) !important;
 }
 
-.tc-frontend-wrap .fc .fc-button-primary:not(:disabled).fc-button-active {
-  background-color: #3730a3;
-  border-color: #312e81;
+.tc-frontend-wrap .fc .fc-button-primary:not(:disabled).fc-button-active,
+.tc-frontend-wrap .fc .fc-button-primary:not(:disabled):active {
+  background-color: var(--tc-btn-active) !important;
+  border-color: var(--tc-btn-active) !important;
 }
 
+.tc-frontend-wrap .fc .fc-button-primary:disabled {
+  background-color: var(--tc-btn-bg) !important;
+  border-color: var(--tc-btn-bg) !important;
+  opacity: .6;
+}
+
+/* Tabelle / Grid */
+.tc-frontend-wrap .fc .fc-scrollgrid,
+.tc-frontend-wrap .fc .fc-scrollgrid-section > td,
+.tc-frontend-wrap .fc td,
+.tc-frontend-wrap .fc th {
+  border-color: var(--tc-border) !important;
+}
+
+.tc-frontend-wrap .fc .fc-col-header-cell {
+  background: var(--tc-surface);
+  color: var(--tc-text-muted);
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  padding: 8px 0;
+}
+
+.tc-frontend-wrap .fc .fc-col-header-cell-cushion {
+  color: var(--tc-text-muted) !important;
+  text-decoration: none;
+}
+
+.tc-frontend-wrap .fc .fc-daygrid-day {
+  background: var(--tc-bg);
+}
+
+.tc-frontend-wrap .fc .fc-daygrid-day-number {
+  color: var(--tc-text) !important;
+  text-decoration: none;
+  font-size: 13px;
+  padding: 6px 8px;
+}
+
+/* Heutiger Tag */
+.tc-frontend-wrap .fc .fc-day-today {
+  background: var(--tc-today) !important;
+}
+
+.tc-frontend-wrap .fc .fc-day-today .fc-daygrid-day-number {
+  font-weight: 700;
+  color: var(--tc-btn-bg) !important;
+}
+
+/* Andere Monate leicht ausgrauen */
+.tc-frontend-wrap .fc .fc-day-other .fc-daygrid-day-number {
+  color: var(--tc-text-muted) !important;
+  opacity: .5;
+}
+
+/* Events */
 .tc-frontend-wrap .fc-event {
   cursor: pointer;
   border-radius: 4px;
   padding: 1px 5px;
   font-size: 12px;
-  border: none;
+  font-weight: 500;
+  border: none !important;
 }
 
 .tc-frontend-wrap .fc-event:hover {
   filter: brightness(1.1);
 }
 
-.tc-frontend-wrap .fc-daygrid-event-dot {
-  border-color: inherit;
+.tc-frontend-wrap .fc-event-title,
+.tc-frontend-wrap .fc-event-time {
+  color: #fff !important;
 }
 
-/* Liste: etwas mehr Luft */
-.tc-frontend-wrap .fc-list-event td {
+/* Listenansicht */
+.tc-frontend-wrap .fc-list {
+  border-color: var(--tc-border) !important;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tc-frontend-wrap .fc-list-day-cushion {
+  background: var(--tc-surface) !important;
+  color: var(--tc-text) !important;
+  font-weight: 600;
+}
+
+.tc-frontend-wrap .fc-list-day-text,
+.tc-frontend-wrap .fc-list-day-side-text {
+  color: var(--tc-text) !important;
+  text-decoration: none;
+}
+
+.tc-frontend-wrap .fc-list-event {
+  background: var(--tc-bg) !important;
+}
+
+.tc-frontend-wrap .fc-list-event:hover td {
+  background: var(--tc-surface) !important;
+}
+
+.tc-frontend-wrap .fc-list-event-title a,
+.tc-frontend-wrap .fc-list-event-time {
+  color: var(--tc-text) !important;
+  text-decoration: none;
+}
+
+.tc-frontend-wrap .fc-list-empty {
+  background: var(--tc-bg) !important;
+  color: var(--tc-text-muted) !important;
+}
+
+.tc-frontend-wrap .fc .fc-list-event td {
+  border-color: var(--tc-border) !important;
   padding: 8px 14px;
+}
+
+/* Wochenansicht Zeitachse */
+.tc-frontend-wrap .fc .fc-timegrid-slot-label-cushion,
+.tc-frontend-wrap .fc .fc-timegrid-axis-cushion {
+  color: var(--tc-text-muted) !important;
+  font-size: 11px;
+}
+
+.tc-frontend-wrap .fc .fc-timegrid-slot {
+  border-color: var(--tc-border) !important;
+}
+
+/* ─── Ladeanimation ───────────────────────────────────────────── */
+.tc-loader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 40px 20px;
+  color: var(--tc-text-muted);
+  font-size: 14px;
+}
+
+.tc-loader-spinner {
+  width: 22px;
+  height: 22px;
+  border: 3px solid var(--tc-border);
+  border-top-color: var(--tc-btn-bg);
+  border-radius: 50%;
+  animation: tc-spin .7s linear infinite;
+  flex-shrink: 0;
+}
+
+@keyframes tc-spin {
+  to { transform: rotate(360deg); }
 }
 
 /* ─── Event-Detail-Popover ────────────────────────────────────── */
 .tc-popover {
   position: absolute;
   z-index: 9999;
-  background: #fff;
-  border: 1px solid #e5e7eb;
+  background: var(--tc-bg);
+  border: 1px solid var(--tc-border);
   border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.15);
+  box-shadow: 0 8px 30px rgba(0,0,0,.2);
   width: 280px;
   padding: 18px 18px 20px;
+  color: var(--tc-text);
 }
 
 .tc-popover-close {
@@ -152,11 +323,11 @@
   font-size: 20px;
   line-height: 1;
   cursor: pointer;
-  color: #9ca3af;
+  color: var(--tc-text-muted);
   padding: 0;
 }
 
-.tc-popover-close:hover { color: #111; }
+.tc-popover-close:hover { color: var(--tc-text); }
 
 .tc-popover-type {
   display: inline-block;
@@ -182,7 +353,7 @@
 .tc-popover-title {
   font-size: 15px;
   font-weight: 700;
-  color: #111827;
+  color: var(--tc-text);
   margin: 0 0 12px;
   padding-right: 16px;
   line-height: 1.3;
@@ -202,7 +373,7 @@
   align-items: flex-start;
   gap: 7px;
   font-size: 13px;
-  color: #374151;
+  color: var(--tc-text);
   line-height: 1.4;
 }
 
@@ -215,8 +386,8 @@
   display: inline-block;
   margin-top: 14px;
   padding: 8px 16px;
-  background: #4f46e5;
-  color: #fff !important;
+  background: var(--tc-btn-bg);
+  color: var(--tc-btn-text) !important;
   border-radius: 6px;
   font-size: 13px;
   font-weight: 600;
@@ -225,8 +396,8 @@
 }
 
 .tc-popover-link:hover {
-  background: #4338ca;
-  color: #fff !important;
+  background: var(--tc-btn-active);
+  color: var(--tc-btn-text) !important;
 }
 
 /* ─── Popover-Backdrop ────────────────────────────────────────── */
