@@ -69,66 +69,67 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
     ob_start(); ?>
     <div class="tc-price-bar-wrapper <?php echo esc_attr( $dark_class ); ?>">
         <div class="tc-price-bar">
-        <div class="tc-price-bar-inner">
+            <div class="tc-price-bar-inner">
 
-            <div class="tc-price-bar-info">
-                <?php if ( $is_full ) : ?>
+                <div class="tc-price-bar-info">
+                    <?php if ( $is_full ) : ?>
 
-                    <div class="tc-price-bar-label tc-price-bar-label--full">Ausgebucht</div>
-                    <div class="tc-price-bar-amount tc-price-bar-amount--full">
-                        Leider keine Plätze mehr verfügbar.
-                    </div>
+                        <div class="tc-price-bar-label tc-price-bar-label--full">Ausgebucht</div>
+                        <div class="tc-price-bar-amount tc-price-bar-amount--full">
+                            Leider keine Plätze mehr verfügbar.
+                        </div>
 
-                <?php elseif ( $price_on_request ) : ?>
+                    <?php elseif ( $price_on_request ) : ?>
 
-                    <div class="tc-price-bar-label">Preis</div>
-                    <div class="tc-price-bar-amount tc-price-bar-amount--request">
-                        <?php echo esc_html( $request_label ); ?>
-                    </div>
+                        <div class="tc-price-bar-label">Preis</div>
+                        <div class="tc-price-bar-amount tc-price-bar-amount--request">
+                            <?php echo esc_html( $request_label ); ?>
+                        </div>
 
-                <?php elseif ( ! $has_price ) : ?>
+                    <?php elseif ( ! $has_price ) : ?>
 
-                    <div class="tc-price-bar-teaser">
-                        <strong>Neugierig geworden?</strong>
-                        <?php echo $no_price_teaser; ?>
-                    </div>
+                        <div class="tc-price-bar-teaser">
+                            <strong>Neugierig geworden?</strong>
+                            <?php echo $no_price_teaser; ?>
+                        </div>
 
-                <?php elseif ( $show_early ) : ?>
+                    <?php elseif ( $show_early ) : ?>
 
-                    <div class="tc-price-bar-badge">Early Bird</div>
-                    <div class="tc-price-bar-amount tc-price-bar-amount--early">
-                        <?php echo esc_html( $early_price ); ?>€
-                        <span>inkl. MwSt.</span>
-                    </div>
-                    <div class="tc-price-bar-deadline">
-                        Anmeldung bis <strong><?php echo date_format( $price_date, 'd.m.Y' ); ?></strong>
-                        — danach <?php echo esc_html( $normal_price ); ?>€
-                    </div>
+                        <div class="tc-price-bar-badge">Early Bird</div>
+                        <div class="tc-price-bar-amount tc-price-bar-amount--early">
+                            <?php echo esc_html( $early_price ); ?>€
+                            <span>inkl. MwSt.</span>
+                        </div>
+                        <div class="tc-price-bar-deadline">
+                            Anmeldung bis <strong><?php echo date_format( $price_date, 'd.m.Y' ); ?></strong>
+                            — danach <?php echo esc_html( $normal_price ); ?>€
+                        </div>
 
-                <?php else : ?>
+                    <?php else : ?>
 
-                    <div class="tc-price-bar-label">Regulärer Preis</div>
-                    <div class="tc-price-bar-amount">
-                        <?php echo esc_html( $normal_price ); ?>€
-                        <span>inkl. MwSt.</span>
-                    </div>
+                        <div class="tc-price-bar-label">Regulärer Preis</div>
+                        <div class="tc-price-bar-amount">
+                            <?php echo esc_html( $normal_price ); ?>€
+                            <span>inkl. MwSt.</span>
+                        </div>
 
-                <?php endif; ?>
-            </div>
+                    <?php endif; ?>
+                </div>
 
-            <a href="<?php echo $link; ?>"
-               class="tc-price-bar-btn <?php echo ( $show_early && $has_price ) ? 'tc-price-bar-btn--early' : ''; ?>"
-               <?php echo $is_full ? 'style="pointer-events: none; opacity: 0.5; cursor: not-allowed;"' : ''; ?>>
-                <?php
-                if ( $is_full )            echo 'Ausgebucht';
-                elseif ( $price_on_request )   echo $request_text;
-                elseif ( ! $has_price )    echo $no_price_text;
-                else                       echo $link_text;
-                ?>
-            </a>
+                <a href="<?php echo $link; ?>"
+                   class="tc-price-bar-btn <?php echo ( $show_early && $has_price ) ? 'tc-price-bar-btn--early' : ''; ?>"
+                   <?php echo $is_full ? 'style="pointer-events:none;opacity:.5;cursor:not-allowed;"' : ''; ?>>
+                    <?php
+                    if ( $is_full )           echo 'Ausgebucht';
+                    elseif ( $price_on_request )  echo $request_text;
+                    elseif ( ! $has_price )   echo $no_price_text;
+                    else                      echo $link_text;
+                    ?>
+                </a>
 
-        </div>
-    </div>
+            </div><!-- /.tc-price-bar-inner -->
+        </div><!-- /.tc-price-bar -->
+    </div><!-- /.tc-price-bar-wrapper -->
     <?php
     return ob_get_clean();
 } );
