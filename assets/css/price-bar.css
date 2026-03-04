@@ -69,6 +69,21 @@
   color: #374151;
 }
 
+/* Kein Preis – Teaser-Text */
+.tc-price-bar-teaser {
+  font-size: 13px;
+  color: #6b7280;
+  max-width: 420px;
+  line-height: 1.5;
+}
+
+.tc-price-bar-teaser strong {
+  display: block;
+  color: #111827;
+  font-size: 14px;
+  margin-bottom: 2px;
+}
+
 .tc-price-bar-amount span {
   font-size: 12px;
   font-weight: 400;
