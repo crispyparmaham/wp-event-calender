@@ -60,10 +60,15 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
     $show_early  = $price_date && $early_price && $price_date_string >= $today;
     $has_price   = ! $price_on_request && $normal_price;
 
+    // Dark/Light Mode Klasse
+    $calendar_mode = tc_get_setting( 'calendar_mode', 'light' );
+    $dark_class = ( $calendar_mode === 'dark' ) ? 'tc-dark' : '';
+
     tc_enqueue_price_bar_assets();
 
     ob_start(); ?>
-    <div class="tc-price-bar">
+    <div class="tc-price-bar-wrapper <?php echo esc_attr( $dark_class ); ?>">
+        <div class="tc-price-bar">
         <div class="tc-price-bar-inner">
 
             <div class="tc-price-bar-info">
