@@ -140,16 +140,6 @@ All endpoints require a valid `tc_nonce` nonce.
 
 ---
 
-## Page Builder Compatibility
-
-Assets are enqueued via `wp_localize_script` (`TC_Frontend` object) to ensure reliable availability of the AJAX URL and nonce regardless of when the page builder executes scripts.
-
-Tested with:
-- ✅ Oxygen Builder
-- ✅ Elementor
-
----
-
 ## Recurring Events
 
 Recurring events are stored as a **single post** with a recurrence rule — no duplicate posts are created. Occurrences are generated on the fly in PHP when events are loaded.
