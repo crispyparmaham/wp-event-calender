@@ -10,7 +10,8 @@ A WordPress plugin for managing and displaying trainings and seminars in an inte
 - **ACF field group** with tabs for general info, details, date & time, and pricing
 - **Admin calendar** with FullCalendar v6 — drag & drop, resize, and inline event creation
 - **Recurring events** — weekly recurrence with a configurable end date
-- **Frontend shortcode** `[training_calendar]` with filter tabs and event detail popover
+- **Settings page** under Events → Einstellungen for global plugin configuration
+- **Light / Dark Mode** toggle — set globally via the settings page, applies to all `[training_calendar]` shortcodes
 - **Price bar shortcode** `[training_price_bar]` — fixed bottom bar with price, Early Bird and on-request logic
 - **URL parameter filtering** for menu links (e.g. `?tc_type=training`)
 - **Client-side caching** — events are fetched once and filtered locally for instant UI response
@@ -146,7 +147,6 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 [training_calendar]
 [training_calendar type="training"]
 [training_calendar type="seminar" view="listMonth"]
-[training_calendar mode="dark"]
 ```
 
 **Via PHP template:**
@@ -154,7 +154,6 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 <?php echo do_shortcode('[training_calendar]'); ?>
 <?php echo do_shortcode('[training_calendar type="training"]'); ?>
 <?php echo do_shortcode('[training_calendar type="seminar" view="listMonth"]'); ?>
-<?php echo do_shortcode('[training_calendar mode="dark"]'); ?>
 ```
 
 ### Attributes
@@ -163,7 +162,8 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 |---|---|---|---|
 | `type` | `all`, `training`, `seminar` | `all` | Pre-selected filter tab |
 | `view` | `dayGridMonth`, `timeGridWeek`, `listMonth` | `dayGridMonth` | Initial calendar view |
-| `mode` | `light`, `dark` | `light` | Color scheme |
+
+The **color mode** (light/dark) is configured globally under **Events → Einstellungen** and applies automatically to all shortcode instances — no attribute needed.
 
 ### URL Parameter
 

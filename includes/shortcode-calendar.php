@@ -18,7 +18,6 @@ add_shortcode( 'training_calendar', function ( $atts ) {
     $atts = shortcode_atts( array(
         'type' => 'all',
         'view' => 'dayGridMonth',
-        'mode' => 'light', // light | dark
     ), $atts, 'training_calendar' );
 
     $allowed_types = array( 'all', 'training', 'seminar' );
@@ -31,7 +30,9 @@ add_shortcode( 'training_calendar', function ( $atts ) {
 
     $valid_views = array( 'dayGridMonth', 'timeGridWeek', 'listMonth' );
     $view        = in_array( $atts['view'], $valid_views, true ) ? $atts['view'] : 'dayGridMonth';
-    $dark        = $atts['mode'] === 'dark';
+
+    // Farbmodus aus Plugin-Einstellungen
+    $dark = tc_get_setting( 'calendar_mode', 'light' ) === 'dark';
 
     static $instance = 0;
     $instance++;
