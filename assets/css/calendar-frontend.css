@@ -20,6 +20,10 @@
  * ─────────────────────────────────────────────────────────────────
 */
 
+.tc-frontend-wrap {
+  position: static;
+}
+
 /* ─── Light Mode (default) ────────────────────────────────────── */
 .tc-frontend-wrap {
   --tc-bg:          #ffffff;
