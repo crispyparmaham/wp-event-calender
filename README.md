@@ -51,7 +51,8 @@ training-calendar/
 │   ├── admin-page.php             # Admin menu page & asset enqueue
 │   ├── shortcode-calendar.php     # Frontend calendar shortcode & asset enqueue
 │   ├── shortcode-price-bar.php    # Frontend price bar shortcode & asset enqueue
-│   ├── registration.php           # Registration CPT, ACF fields, & AJAX handlers
+│   ├── registration.php           # Registration data management & AJAX handlers
+│   ├── registration-admin-page.php# Registration admin interface
 │   └── shortcode-registration.php # Registration form shortcode & asset enqueue
 └── assets/
     ├── js/
@@ -176,24 +177,19 @@ Displays a registration form for trainings and seminars. Users can select an eve
 - **Real-time validation** — user-friendly error messages
 - **AJAX submission** — no page reload required
 - **Confirmation email** — automatic dispatch to registrant
-- **Admin management** — new post type `training_registration` with searchable columns
-- **Custom Post Type** — organize registrations in WordPress admin under **Anmeldungen**
+- **Database storage** — registrations stored in custom database table `wp_tc_registrations`
 
 ### Admin Management
 
-Navigate to **Anmeldungen** in the WordPress admin.
+Navigate to **Events → Anmeldungen** in the WordPress admin to manage registrations.
 
-| Column | Description |
+| Feature | Description |
 |---|---|
-| Vorname | First name |
-| Nachname | Last name |
-| E-Mail | Email address |
-| Telefon | Phone number |
-| Veranstaltung | Linked event title |
-| Status | Pending or confirmed |
-| Angemeldet am | Registration date/time |
-
-Edit individual registrations to change status or add notes.
+| **List view** | View all registrations with sortable columns (name, email, event, status, date) |
+| **Status dropdown** | Change registration status (pending/confirmed/cancelled) via AJAX |
+| **Edit registration** | View/edit registration details and add internal notes |
+| **Delete** | Remove registrations with confirmation prompt |
+| **Timestamps** | See when each registration was submitted |
 
 ---
 

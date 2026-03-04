@@ -21,4 +21,5 @@ require_once TC_PATH . 'includes/admin-page.php';
 require_once TC_PATH . 'includes/shortcode-calendar.php';
 require_once TC_PATH . 'includes/shortcode-price-bar.php';
 require_once TC_PATH . 'includes/registration.php';
+require_once TC_PATH . 'includes/registration-admin-page.php';
 require_once TC_PATH . 'includes/shortcode-registration.php';
