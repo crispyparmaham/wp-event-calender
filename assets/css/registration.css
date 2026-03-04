@@ -1,0 +1,363 @@
+/* ═════════════════════════════════════════════
+   Training Calendar - Anmeldeformular Styles
+   ═════════════════════════════════════════════ */
+
+.tc-registration-wrap {
+    max-width: 600px;
+    margin: 2rem auto;
+    padding: 0;
+}
+
+/* ─────────────────────────────────────────────
+   Formular Grundstruktur
+   ───────────────────────────────────────────── */
+
+.tc-registration-form {
+    background-color: #fff;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.tc-registration-form h2 {
+    margin: 0 0 1.5rem 0;
+    font-size: 1.5rem;
+    color: #333;
+    font-weight: 600;
+}
+
+/* ─────────────────────────────────────────────
+   Formular Nachrichten
+   ───────────────────────────────────────────── */
+
+.tc-form-messages {
+    margin-bottom: 1.5rem;
+    padding: 1rem;
+    border-radius: 4px;
+    font-size: 0.95rem;
+}
+
+.tc-form-messages.tc-success {
+    background-color: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.tc-form-messages.tc-error {
+    background-color: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.tc-form-messages.tc-warning {
+    background-color: #fff3cd;
+    color: #856404;
+    border: 1px solid #ffeaa7;
+}
+
+/* ─────────────────────────────────────────────
+   Formulargruppen
+   ───────────────────────────────────────────── */
+
+.tc-form-group {
+    margin-bottom: 1.5rem;
+}
+
+.tc-form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: #333;
+    font-size: 0.95rem;
+}
+
+.tc-required {
+    color: #dc3545;
+    font-weight: bold;
+}
+
+.tc-form-control {
+    width: 100%;
+    padding: 0.75rem;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-family: inherit;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    box-sizing: border-box;
+}
+
+.tc-form-control:focus {
+    outline: none;
+    border-color: #0066cc;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+}
+
+.tc-form-control::placeholder {
+    color: #999;
+}
+
+.tc-form-control:disabled {
+    background-color: #f5f5f5;
+    color: #666;
+    cursor: not-allowed;
+}
+
+textarea.tc-form-control {
+    resize: vertical;
+    min-height: 100px;
+}
+
+/* ─────────────────────────────────────────────
+   Formularzeilenlayout
+   ───────────────────────────────────────────── */
+
+.tc-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (max-width: 600px) {
+    .tc-form-row {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* ─────────────────────────────────────────────
+   Event Details
+   ───────────────────────────────────────────── */
+
+.tc-event-details {
+    background-color: #f9f9f9;
+    border-left: 4px solid #0066cc;
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    border-radius: 4px;
+}
+
+.tc-detail-item {
+    display: flex;
+    margin-bottom: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.tc-detail-item:last-child {
+    margin-bottom: 0;
+}
+
+.tc-detail-label {
+    font-weight: 600;
+    color: #333;
+    min-width: 80px;
+    margin-right: 1rem;
+}
+
+.tc-detail-leadership,
+.tc-detail-location,
+.tc-detail-date {
+    color: #666;
+}
+
+/* ─────────────────────────────────────────────
+   Buttons
+   ───────────────────────────────────────────── */
+
+.tc-btn {
+    display: inline-block;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: 4px;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+    text-decoration: none;
+    font-family: inherit;
+}
+
+.tc-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.tc-btn-primary {
+    background-color: #0066cc;
+    color: white;
+    width: 100%;
+}
+
+.tc-btn-primary:hover:not(:disabled) {
+    background-color: #0052a3;
+    box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
+}
+
+.tc-btn-primary:active:not(:disabled) {
+    background-color: #004080;
+    transform: scale(0.98);
+}
+
+.tc-submit-btn {
+    position: relative;
+}
+
+.tc-btn-text,
+.tc-btn-loader {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+}
+
+/* ─────────────────────────────────────────────
+   Loader Spinner
+   ───────────────────────────────────────────── */
+
+.tc-spinner {
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-top-color: white;
+    border-radius: 50%;
+    animation: tc-spin 0.8s linear infinite;
+}
+
+@keyframes tc-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ─────────────────────────────────────────────
+   Validierungsfeedback
+   ───────────────────────────────────────────── */
+
+.tc-form-control:invalid:not(:placeholder-shown) {
+    border-color: #dc3545;
+}
+
+.tc-form-group.tc-field-error .tc-form-control {
+    border-color: #dc3545;
+    background-color: #fff5f5;
+}
+
+.tc-field-error-message {
+    display: block;
+    color: #dc3545;
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+}
+
+/* ─────────────────────────────────────────────
+   Erfolgs-/Fehlerzustände
+   ───────────────────────────────────────────── */
+
+.tc-registration-form.tc-form-submitting .tc-submit-btn {
+    opacity: 0.7;
+}
+
+.tc-registration-form.tc-form-submitted {
+    opacity: 0.6;
+    pointer-events: none;
+}
+
+/* ─────────────────────────────────────────────
+   Dark Mode Support
+   ───────────────────────────────────────────── */
+
+.tc-dark .tc-registration-form {
+    background-color: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+}
+
+.tc-dark .tc-registration-form h2 {
+    color: #fff;
+}
+
+.tc-dark .tc-form-group label {
+    color: #e0e0e0;
+}
+
+.tc-dark .tc-form-control {
+    background-color: #3a3a3a;
+    border-color: #555;
+    color: #e0e0e0;
+}
+
+.tc-dark .tc-form-control:focus {
+    border-color: #6699ff;
+    box-shadow: 0 0 0 3px rgba(102, 153, 255, 0.1);
+}
+
+.tc-dark .tc-form-control::placeholder {
+    color: #999;
+}
+
+.tc-dark .tc-event-details {
+    background-color: #3a3a3a;
+    border-left-color: #6699ff;
+}
+
+.tc-dark .tc-detail-label {
+    color: #e0e0e0;
+}
+
+.tc-dark .tc-detail-leadership,
+.tc-dark .tc-detail-location,
+.tc-dark .tc-detail-date {
+    color: #bbb;
+}
+
+/* ─────────────────────────────────────────────
+   Responsive Design
+   ───────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .tc-registration-form {
+        padding: 1.5rem;
+    }
+
+    .tc-registration-form h2 {
+        font-size: 1.25rem;
+        margin-bottom: 1rem;
+    }
+
+    .tc-form-group {
+        margin-bottom: 1rem;
+    }
+
+    .tc-btn {
+        padding: 0.65rem 1.5rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .tc-registration-wrap {
+        margin: 1rem;
+    }
+
+    .tc-registration-form {
+        padding: 1rem;
+        border-radius: 6px;
+    }
+
+    .tc-registration-form h2 {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .tc-form-control {
+        padding: 0.65rem;
+        font-size: 16px; /* verhindert Zoom auf iOS */
+    }
+
+    .tc-btn {
+        padding: 0.6rem 1rem;
+        font-size: 0.9rem;
+    }
+}
