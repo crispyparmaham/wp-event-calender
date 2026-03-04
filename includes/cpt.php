@@ -141,21 +141,21 @@ add_action( 'acf/include_fields', function () {
                 'required'       => 1,
             ),
             array(
-                'key'         => 'field_tc_start_time',
-                'label'       => 'Startzeit',
-                'name'        => 'start_time',
-                'type'        => 'time_picker',
+                'key'            => 'field_tc_start_time',
+                'label'          => 'Startzeit',
+                'name'           => 'start_time',
+                'type'           => 'time_picker',
                 'display_format' => 'H:i',
                 'return_format'  => 'H:i',
             ),
             array(
-                'key'         => 'field_tc_end_time',
-                'label'       => 'Endzeit',
-                'name'        => 'end_time',
-                'type'        => 'time_picker',
+                'key'            => 'field_tc_end_time',
+                'label'          => 'Endzeit',
+                'name'           => 'end_time',
+                'type'           => 'time_picker',
                 'display_format' => 'H:i',
                 'return_format'  => 'H:i',
-                'instructions'=> 'Endzeit am selben Tag. Für mehrtägige Events unten das Enddatum setzen.',
+                'instructions'   => 'Endzeit am selben Tag. Für mehrtägige Events unten das Enddatum setzen.',
             ),
             array(
                 'key'            => 'field_tc_end_date',
@@ -230,6 +230,34 @@ add_action( 'acf/include_fields', function () {
                 'placement' => 'top',
                 'endpoint'  => 0,
             ),
+
+            // NEU: Preis auf Anfrage Toggle
+            array(
+                'key'           => 'field_tc_price_on_request',
+                'label'         => 'Preis auf Anfrage',
+                'name'          => 'price_on_request',
+                'type'          => 'true_false',
+                'ui'            => 1,
+                'default_value' => 0,
+                'instructions'  => 'Aktivieren wenn kein fixer Preis angegeben werden soll. Preisfelder werden dann ausgeblendet.',
+            ),
+
+            // Anfragetext (optional anpassbar)
+            array(
+                'key'          => 'field_tc_price_on_request_label',
+                'label'        => 'Anfragetext',
+                'name'         => 'price_on_request_label',
+                'type'         => 'text',
+                'default_value'=> 'Probetraining anfragen',
+                'instructions' => 'Wird angezeigt wenn "Preis auf Anfrage" aktiv ist.',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_price_on_request',
+                    'operator' => '==',
+                    'value'    => '1',
+                ) ) ),
+            ),
+
+            // Regulärer Preis — nur sichtbar wenn NICHT auf Anfrage
             array(
                 'key'     => 'field_tc_normal_price',
                 'label'   => 'Regulärer Preis (€)',
@@ -238,13 +266,25 @@ add_action( 'acf/include_fields', function () {
                 'min'     => 0,
                 'step'    => 0.01,
                 'prepend' => '€',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_price_on_request',
+                    'operator' => '==',
+                    'value'    => '0',
+                ) ) ),
             ),
+
+            // Early Bird — nur sichtbar wenn NICHT auf Anfrage
             array(
                 'key'        => 'field_tc_early_bird',
                 'label'      => 'Early Bird',
                 'name'       => 'early_bird',
                 'type'       => 'group',
                 'layout'     => 'row',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_price_on_request',
+                    'operator' => '==',
+                    'value'    => '0',
+                ) ) ),
                 'sub_fields' => array(
                     array(
                         'key'     => 'field_tc_eb_price',

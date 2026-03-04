@@ -11,6 +11,7 @@ A WordPress plugin for managing and displaying trainings and seminars in an inte
 - **Admin calendar** with FullCalendar v6 — drag & drop, resize, and inline event creation
 - **Recurring events** — weekly recurrence with a configurable end date
 - **Frontend shortcode** `[training_calendar]` with filter tabs and event detail popover
+- **Price bar shortcode** `[training_price_bar]` — fixed bottom bar with price, Early Bird and on-request logic
 - **URL parameter filtering** for menu links (e.g. `?tc_type=training`)
 - **Client-side caching** — events are fetched once and filtered locally for instant UI response
 - **Early Bird pricing logic** — automatically switches between Early Bird and regular price based on deadline
@@ -47,14 +48,16 @@ training-calendar/
 │   ├── cpt.php                    # CPT & ACF field group registration
 │   ├── ajax.php                   # AJAX handlers (load / create / update events)
 │   ├── admin-page.php             # Admin menu page & asset enqueue
-│   └── shortcode.php              # Frontend shortcode & asset enqueue
+│   ├── shortcode-calendar.php     # Frontend calendar shortcode & asset enqueue
+│   └── shortcode-price-bar.php    # Frontend price bar shortcode & asset enqueue
 └── assets/
     ├── js/
     │   ├── calendar.js            # Admin calendar logic (FullCalendar)
     │   └── calendar-frontend.js   # Frontend calendar logic (FullCalendar)
     └── css/
         ├── calendar.css           # Admin styles
-        └── calendar-frontend.css  # Frontend styles
+        ├── calendar-frontend.css  # Frontend calendar styles
+        └── price-bar.css          # Frontend price bar styles
 ```
 
 ---
@@ -98,6 +101,35 @@ Navigate to **Events → Kalender** in the WordPress admin.
 | Click on an event | Opens the post editor |
 
 Trainings are displayed in **indigo**, seminars in **green**. Recurring event occurrences are shown at reduced opacity and cannot be dragged individually — only the main post is editable.
+
+---
+
+## Price Bar Shortcode
+
+Displays a fixed bar at the bottom of the screen with pricing info and a CTA button. Reads ACF fields from the current post automatically.
+
+```
+[training_price_bar]
+[training_price_bar link="#contact" link_text="Jetzt buchen"]
+[training_price_bar post_id="42" request_text="Termin anfragen"]
+```
+
+### Attributes
+
+| Attribute | Default | Description |
+|---|---|---|
+| `post_id` | current post | Post ID to read pricing from |
+| `link` | `#anmelden` | Anchor or URL for the CTA button |
+| `link_text` | `Jetzt anmelden` | Button label when a price is set |
+| `request_text` | `Jetzt anfragen` | Button label when "Preis auf Anfrage" is active |
+
+### Behavior
+
+| State | Display |
+|---|---|
+| `price_on_request = true` | Shows `price_on_request_label` + request button |
+| Early Bird deadline not yet passed | Shows Early Bird price + deadline hint + regular price fallback |
+| Early Bird expired or not set | Shows regular price only |
 
 ---
 

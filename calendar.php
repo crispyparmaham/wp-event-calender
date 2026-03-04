@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Drag & Drop Event Calendar
  * Description:  Kalenderübersicht für Trainings & Seminare mit Drag & Drop Funktion.
- * Version:      1.1.5
+ * Version:      1.1.6
  * Author:		 Lucas Dühr | more than ads
  * Author URI:	 https://www.morethanads.de
  * Text Domain:  training-calendar
@@ -17,4 +17,5 @@ define( 'TC_VERSION', '1.0.0' );
 require_once TC_PATH . 'includes/cpt.php';
 require_once TC_PATH . 'includes/ajax.php';
 require_once TC_PATH . 'includes/admin-page.php';
-require_once TC_PATH . 'includes/shortcode.php';
+require_once TC_PATH . 'includes/shortcode-calendar.php';
+require_once TC_PATH . 'includes/shortcode-price-bar.php';

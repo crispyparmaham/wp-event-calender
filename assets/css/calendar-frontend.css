@@ -25,6 +25,7 @@
 
 /* ─── Wrapper ─────────────────────────────────────────────────── */
 .tc-frontend-wrap {
+  position: relative;
   font-family: inherit;
 }
 
@@ -91,7 +92,6 @@
 .tc-frontend-wrap .fc .fc-toolbar-title {
   font-size: 1.15em;
   font-weight: 600;
-  color: #000;
 }
 
 .tc-frontend-wrap .fc .fc-button-primary {
@@ -116,7 +116,6 @@
   padding: 1px 5px;
   font-size: 12px;
   border: none;
-  color: #000;
 }
 
 .tc-frontend-wrap .fc-event:hover {
@@ -130,22 +129,7 @@
 /* Liste: etwas mehr Luft */
 .tc-frontend-wrap .fc-list-event td {
   padding: 8px 14px;
-  color: #000;
 }
-
-.fc-list-empty-cushion {
-  color: #474747;
-}
-
-.fc-list-day-text,
-.fc-list-day-side-text,
-.fc .fc-daygrid-day-number,
-.fc .fc-col-header-cell-cushion,
-.fc .fc-timegrid-axis-cushion, 
-.fc .fc-timegrid-slot-label-cushion {
-  color: #2271b1;
-}
-
 
 /* ─── Event-Detail-Popover ────────────────────────────────────── */
 .tc-popover {
