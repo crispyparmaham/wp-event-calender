@@ -91,7 +91,7 @@
 
 .tc-price-bar-teaser strong {
   display: block;
-  color: #111827;
+  color: var(--tc-text);
   font-size: 22px;
   margin-bottom: 2px;
 }
@@ -119,8 +119,8 @@
   display: inline-block;
   flex-shrink: 0;
   padding: 13px 28px;
-  background: #111827;
-  color: #fff;
+  background: #a4d61f;
+  color: #1a2e00;
   font-size: 15px;
   font-weight: 700;
   border-radius: 8px;
@@ -130,8 +130,8 @@
 }
 
 .tc-price-bar-btn:hover {
-  background: #1f2937;
-  color: #fff;
+  background: #90c012;
+  color: #1a2e00;
 }
 
 /* Early Bird Variante */

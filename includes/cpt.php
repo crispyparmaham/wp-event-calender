@@ -243,7 +243,7 @@ add_action( 'acf/include_fields', function () {
             // NEU: Preis auf Anfrage Toggle
             array(
                 'key'           => 'field_tc_price_on_request',
-                'label'         => 'Preis auf Anfrage',
+                'label'         => 'Probetraining Button anzeigen (kein fixer Preis)',
                 'name'          => 'price_on_request',
                 'type'          => 'true_false',
                 'ui'            => 1,
@@ -251,30 +251,16 @@ add_action( 'acf/include_fields', function () {
                 'instructions'  => 'Aktivieren wenn kein fixer Preis angegeben werden soll. Preisfelder werden dann ausgeblendet.',
             ),
 
-            // Anfragetext (optional anpassbar)
-            array(
-                'key'          => 'field_tc_price_on_request_label',
-                'label'        => 'Anfragetext',
-                'name'         => 'price_on_request_label',
-                'type'         => 'text',
-                'default_value'=> 'Probetraining anfragen',
-                'instructions' => 'Wird angezeigt wenn "Preis auf Anfrage" aktiv ist.',
-                'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_price_on_request',
-                    'operator' => '==',
-                    'value'    => '1',
-                ) ) ),
-            ),
-
             // Regulärer Preis — nur sichtbar wenn NICHT auf Anfrage
             array(
-                'key'     => 'field_tc_normal_price',
-                'label'   => 'Regulärer Preis (€)',
-                'name'    => 'normal_preis',
-                'type'    => 'number',
-                'min'     => 0,
-                'step'    => 0.01,
-                'prepend' => '€',
+                'key'      => 'field_tc_normal_price',
+                'label'    => 'Regulärer Preis (€)',
+                'name'     => 'normal_preis',
+                'type'     => 'number',
+                'required' => 1,
+                'min'      => 0,
+                'step'     => 0.01,
+                'prepend'  => '€',
                 'conditional_logic' => array( array( array(
                     'field'    => 'field_tc_price_on_request',
                     'operator' => '==',

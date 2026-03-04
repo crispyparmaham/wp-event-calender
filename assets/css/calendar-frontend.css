@@ -417,18 +417,64 @@
 }
 
 /* ─── Responsive ──────────────────────────────────────────────── */
-@media (max-width: 600px) {
+@media (max-width: 767px) {
   .tc-frontend-calendar {
-    padding: 10px;
+    padding: 10px 6px;
   }
 
   .tc-frontend-wrap .fc .fc-toolbar {
-    flex-wrap: wrap;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
   }
 
+  .tc-frontend-wrap .fc .fc-toolbar-chunk {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .tc-frontend-wrap .fc .fc-toolbar-title {
+    font-size: 1em;
+  }
+
+  .tc-frontend-wrap .fc .fc-button {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .tc-frontend-wrap .fc .fc-list-event td {
+    padding: 10px;
+  }
+
+  .tc-frontend-wrap .fc-list-event-title a {
+    font-size: 14px;
+  }
+
+  .tc-frontend-wrap .fc .fc-daygrid-day-number {
+    font-size: 11px;
+    padding: 4px 5px;
+  }
+
+  .tc-frontend-wrap .fc .fc-col-header-cell {
+    font-size: 10px;
+    padding: 5px 0;
+  }
+
+  .tc-frontend-wrap .fc-event {
+    font-size: 10px;
+    padding: 1px 4px;
+  }
+
   .tc-popover {
-    width: calc(100vw - 32px);
+    position: fixed !important;
+    width: calc(100vw - 32px) !important;
     left: 16px !important;
+    top: 50% !important;
+    transform: translateY(-50%);
+    max-height: 80vh;
+    overflow-y: auto;
+    z-index: 10000;
   }
 }

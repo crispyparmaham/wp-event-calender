@@ -18,6 +18,8 @@ document.addEventListener('DOMContentLoaded', () => {
     let cachedEvents = null; // alle Events aus AJAX, einmalig geladen
 
     // ── Hilfsfunktionen ──────────────────────────────────────
+    const isMobile = () => window.innerWidth < 768;
+
     const showLoader = () => { if (loader) loader.style.display = 'flex'; };
     const hideLoader = () => { if (loader) loader.style.display = 'none'; };
 
@@ -79,22 +81,32 @@ document.addEventListener('DOMContentLoaded', () => {
       if (left + rect.width  > vpW - 16) left = jsEvent.clientX - rect.width  - 14;
       if (top  + rect.height > vpH - 16) top  = jsEvent.clientY - rect.height - 14;
 
-      popover.style.left = left + 'px';
-      popover.style.top  = (top + window.scrollY) + 'px';
+      if (isMobile()) {
+        popover.style.left      = '';
+        popover.style.top       = '';
+        popover.style.transform = '';
+      } else {
+        popover.style.left      = left + 'px';
+        popover.style.top       = (top + window.scrollY) + 'px';
+        popover.style.transform = '';
+      }
     };
+
+    // ── Responsive View-Logik ─────────────────────────────────
+    const getResponsiveView = () => isMobile() ? 'listMonth' : (el.dataset.view || 'dayGridMonth');
+
+    const getResponsiveToolbar = () => isMobile()
+      ? { left: 'prev,next', center: 'title', right: 'listMonth,dayGridMonth' }
+      : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
 
     // ── FullCalendar initialisieren (noch ohne Events) ────────
     const calendar = new FullCalendar.Calendar(el, {
-      initialView:  el.dataset.view || 'dayGridMonth',
+      initialView:  getResponsiveView(),
       locale:       'de',
       height:       'auto',
       firstDay:     1,
       editable:     false,
-      headerToolbar: {
-        left:   'prev,next today',
-        center: 'title',
-        right:  'dayGridMonth,timeGridWeek,listMonth',
-      },
+      headerToolbar: getResponsiveToolbar(),
       buttonText: {
         today: 'Heute',
         month: 'Monat',
@@ -102,6 +114,12 @@ document.addEventListener('DOMContentLoaded', () => {
         list:  'Liste',
       },
       noEventsText: 'Keine Events in diesem Zeitraum.',
+
+      windowResize() {
+        calendar.setOption('headerToolbar', getResponsiveToolbar());
+        const targetView = getResponsiveView();
+        if (calendar.view.type !== targetView) calendar.changeView(targetView);
+      },
 
       eventDidMount({ event, el: evEl }) {
         if (!event.startEditable) evEl.style.opacity = '0.8';

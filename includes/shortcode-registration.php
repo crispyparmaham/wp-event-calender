@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // ─────────────────────────────────────────────
-// CSS früh laden
+// CSS frueh laden
 // ─────────────────────────────────────────────
 add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
@@ -14,13 +14,13 @@ add_action( 'wp_enqueue_scripts', function () {
 } );
 
 // ─────────────────────────────────────────────
-// Helper: Upcoming Occurrences für ein
+// Helper: Upcoming Occurrences fuer ein
 // wiederkehrendes Event generieren.
-// Gibt nur Termine >= heute zurück.
+// Gibt nur Termine >= heute zurueck.
 // ─────────────────────────────────────────────
 function tc_get_upcoming_occurrences( $event_id ) {
     $start_date        = get_field( 'start_date',        $event_id ); // Y-m-d
-    $recurring_weekday = get_field( 'recurring_weekday', $event_id ); // '0'–'6'
+    $recurring_weekday = get_field( 'recurring_weekday', $event_id ); // '0'-'6'
     $recurring_until   = get_field( 'recurring_until',   $event_id ); // Y-m-d
 
     if ( ! $start_date || $recurring_weekday === '' || ! $recurring_until ) {
@@ -28,7 +28,7 @@ function tc_get_upcoming_occurrences( $event_id ) {
     }
 
     $today    = new DateTime( 'today' );
-    $target   = (int) $recurring_weekday; // 0=So … 6=Sa
+    $target   = (int) $recurring_weekday; // 0=So ... 6=Sa
     $cur      = new DateTime( $start_date );
     $until_dt = new DateTime( $recurring_until . ' 23:59:59' );
 
@@ -40,7 +40,7 @@ function tc_get_upcoming_occurrences( $event_id ) {
     $limit = 0;
 
     while ( $cur <= $until_dt && $limit < 260 ) {
-        // Nur zukünftige Termine
+        // Nur zukuenftige Termine
         if ( $cur >= $today ) {
             $dates[] = $cur->format( 'Y-m-d' );
         }
@@ -80,6 +80,12 @@ add_shortcode( 'training_registration', function ( $atts ) {
     $form_id = 'tc-registration-form-' . $instance;
     $nonce   = wp_create_nonce( 'tc_registration_nonce' );
 
+    // Probetraining-Modus pruefen
+    $is_trial = $event_id ? (bool) get_field( 'price_on_request', $event_id ) : false;
+
+    // Formulartitel: bei Probetraining angepasst, sonst Shortcode-Attribut
+    $form_title = $is_trial ? 'Kostenloses Probetraining anfragen' : esc_html( $atts['title'] );
+
     // Wiederkehrend? Termine server-seitig aufbereiten
     $is_recurring   = $event_id ? (bool) get_field( 'is_recurring', $event_id ) : false;
     $occurrences    = ( $event_id && $is_recurring ) ? tc_get_upcoming_occurrences( $event_id ) : array();
@@ -93,7 +99,14 @@ add_shortcode( 'training_registration', function ( $atts ) {
     <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
         <form id="<?php echo esc_attr( $form_id ); ?>" class="tc-registration-form" method="POST">
 
-            <h2><?php echo esc_html( $atts['title'] ); ?></h2>
+            <h2><?php echo esc_html( $form_title ); ?></h2>
+
+            <?php if ( $is_trial ) : ?>
+            <div class="tc-trial-notice">
+                <strong>Kostenlos &amp; unverbindlich</strong>
+                Schnupper einfach rein &ndash; ganz ohne Verpflichtungen. Wir melden uns nach deiner Anfrage zeitnah bei dir.
+            </div>
+            <?php endif; ?>
 
             <div class="tc-form-messages" style="display:none;"></div>
 
@@ -107,7 +120,7 @@ add_shortcode( 'training_registration', function ( $atts ) {
                             name="event_id"
                             class="tc-form-control tc-event-select"
                             required>
-                        <option value="">– Bitte wählen –</option>
+                        <option value="">&#8211; Bitte w&auml;hlen &#8211;</option>
                         <?php
                         foreach ( get_posts( array(
                             'post_type'      => 'training_event',
@@ -123,22 +136,22 @@ add_shortcode( 'training_registration', function ( $atts ) {
                     </select>
                 </div>
 
-                <!-- Event-Details (per AJAX gefüllt) -->
+                <!-- Event-Details (per AJAX gefuellt) -->
                 <div id="<?php echo esc_attr( $form_id ); ?>-details" class="tc-event-details" style="display:none;">
-                    <div class="tc-detail-item"><span class="tc-detail-label">Leitung:</span><span class="tc-detail-leadership">–</span></div>
-                    <div class="tc-detail-item"><span class="tc-detail-label">Ort:</span><span class="tc-detail-location">–</span></div>
-                    <div class="tc-detail-item"><span class="tc-detail-label">Datum:</span><span class="tc-detail-date">–</span></div>
+                    <div class="tc-detail-item"><span class="tc-detail-label">Leitung:</span><span class="tc-detail-leadership">&#8211;</span></div>
+                    <div class="tc-detail-item"><span class="tc-detail-label">Ort:</span><span class="tc-detail-location">&#8211;</span></div>
+                    <div class="tc-detail-item"><span class="tc-detail-label">Datum:</span><span class="tc-detail-date">&#8211;</span></div>
                 </div>
 
-                <!-- Datum-Picker (per AJAX eingeblendet bei wiederkehrend/mehrtägig) -->
+                <!-- Datum-Picker (per AJAX eingeblendet bei wiederkehrend/mehrtagig) -->
                 <div id="<?php echo esc_attr( $form_id ); ?>-date-picker" class="tc-form-group" style="display:none;">
                     <label for="<?php echo esc_attr( $form_id ); ?>-event-date" class="tc-date-picker-label">
-                        Wählen Sie einen Termin <span class="tc-required">*</span>
+                        W&auml;hlen Sie einen Termin <span class="tc-required">*</span>
                     </label>
                     <select id="<?php echo esc_attr( $form_id ); ?>-event-date"
                             name="event_date"
                             class="tc-form-control">
-                        <option value="">– Bitte wählen –</option>
+                        <option value="">&#8211; Bitte w&auml;hlen &#8211;</option>
                     </select>
                 </div>
 
@@ -150,18 +163,18 @@ add_shortcode( 'training_registration', function ( $atts ) {
                 <!-- Termin-Dropdown server-seitig gerendert -->
                 <div class="tc-form-group">
                     <label for="<?php echo esc_attr( $form_id ); ?>-occurrence">
-                        Termin wählen <span class="tc-required">*</span>
+                        Termin w&auml;hlen <span class="tc-required">*</span>
                     </label>
                     <select id="<?php echo esc_attr( $form_id ); ?>-occurrence"
                             name="event_date"
                             class="tc-form-control"
                             required>
-                        <option value="">– Bitte wählen –</option>
+                        <option value="">&#8211; Bitte w&auml;hlen &#8211;</option>
                         <?php
                         $de_days = array( 1 => 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag' );
                         foreach ( $occurrences as $date ) :
-                            $d       = DateTime::createFromFormat( 'Y-m-d', $date );
-                            $label   = $de_days[ (int) $d->format( 'N' ) ] . ', ' . $d->format( 'd.m.Y' );
+                            $d     = DateTime::createFromFormat( 'Y-m-d', $date );
+                            $label = $de_days[ (int) $d->format( 'N' ) ] . ', ' . $d->format( 'd.m.Y' );
                         ?>
                             <option value="<?php echo esc_attr( $date ); ?>">
                                 <?php echo esc_html( $label ); ?>
@@ -173,7 +186,7 @@ add_shortcode( 'training_registration', function ( $atts ) {
 
             <?php endif; ?>
 
-            <!-- ── Persönliche Daten ─────────────────────── -->
+            <!-- ── Persoenliche Daten ─────────────────────── -->
             <div class="tc-form-row">
                 <div class="tc-form-group">
                     <label for="<?php echo esc_attr( $form_id ); ?>-firstname">Vorname <span class="tc-required">*</span></label>
@@ -200,8 +213,9 @@ add_shortcode( 'training_registration', function ( $atts ) {
                 </div>
             </div>
 
+            <?php if ( ! $is_trial ) : ?>
             <div class="tc-form-group">
-                <label for="<?php echo esc_attr( $form_id ); ?>-address">Straße &amp; Hausnummer</label>
+                <label for="<?php echo esc_attr( $form_id ); ?>-address">Stra&szlig;e &amp; Hausnummer</label>
                 <input type="text" id="<?php echo esc_attr( $form_id ); ?>-address"
                        name="address" class="tc-form-control" autocomplete="street-address">
             </div>
@@ -218,25 +232,31 @@ add_shortcode( 'training_registration', function ( $atts ) {
                            name="city" class="tc-form-control" autocomplete="address-level2">
                 </div>
             </div>
+            <?php endif; ?>
 
             <div class="tc-form-group">
-                <label for="<?php echo esc_attr( $form_id ); ?>-notes">Besondere Anfragen / Notizen</label>
+                <label for="<?php echo esc_attr( $form_id ); ?>-notes">
+                    <?php echo $is_trial ? 'Nachricht / Fragen (optional)' : 'Besondere Anfragen / Notizen'; ?>
+                </label>
                 <textarea id="<?php echo esc_attr( $form_id ); ?>-notes"
                           name="notes" class="tc-form-control" rows="4"
-                          placeholder="z.B. Spezielle Anforderungen oder Fragen..."></textarea>
+                          placeholder="<?php echo $is_trial ? 'z.B. Vorerfahrungen, Fragen oder Wunschtermin...' : 'z.B. Spezielle Anforderungen oder Fragen...'; ?>"></textarea>
             </div>
 
             <div class="tc-form-group">
                 <button type="submit" class="tc-btn tc-btn-primary tc-submit-btn">
-                    <span class="tc-btn-text">Anmeldung absenden</span>
+                    <span class="tc-btn-text">
+                        <?php echo $is_trial ? 'Probetraining anfragen' : 'Anmeldung absenden'; ?>
+                    </span>
                     <span class="tc-btn-loader" style="display:none;">
                         <span class="tc-spinner"></span> Wird verarbeitet...
                     </span>
                 </button>
             </div>
 
-            <input type="hidden" name="action" value="tc_submit_registration">
-            <input type="hidden" name="nonce"  value="<?php echo esc_attr( $nonce ); ?>">
+            <input type="hidden" name="action"   value="tc_submit_registration">
+            <input type="hidden" name="nonce"    value="<?php echo esc_attr( $nonce ); ?>">
+            <input type="hidden" name="is_trial" value="<?php echo $is_trial ? '1' : '0'; ?>">
 
         </form>
     </div>
