@@ -87,7 +87,7 @@ add_shortcode( 'training_calendar', function ( $atts ) {
 add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-calendar-frontend',
-        TC_URL . 'assets/css/calendar-frontend.css',
+        TC_URL . 'assets/css/frontend/calendar-frontend.css',
         array(),
         TC_VERSION
     );
@@ -108,7 +108,7 @@ function tc_enqueue_calendar_assets() {
 
     wp_enqueue_script(
         'tc-frontend',
-        TC_URL . 'assets/js/calendar-frontend.js',
+        TC_URL . 'assets/js/frontend/calendar-frontend.js',
         array( 'fullcalendar' ),
         TC_VERSION,
         true

@@ -105,7 +105,7 @@ function tc_render_events_overview_page() {
 
                 // Anmeldezahlen
                 $c         = $counts[ $post->ID ] ?? array( 'total' => 0, 'confirmed' => 0, 'pending' => 0, 'cancelled' => 0 );
-                $active    = (int) $c['confirmed'] + (int) $c['pending']; // aktive Anmeldungen
+                $active    = (int) $c['confirmed'] + (int) $c['pending'];
                 $confirmed = (int) $c['confirmed'];
                 $pending   = (int) $c['pending'];
 
@@ -126,7 +126,7 @@ function tc_render_events_overview_page() {
                     $cap_html = '<span style="font-size:13px;color:#374151;">' . $active . ' angemeldet</span>';
                 }
 
-                // Event-Status (vergangen / aktuell / entwurf)
+                // Event-Status
                 $is_past   = $start_date && $start_date < $today && ! $is_recurring;
                 $status_badge = '';
                 if ( $post->post_status === 'draft' ) {
@@ -191,7 +191,6 @@ function tc_render_events_overview_page() {
         .tc-overview-table td { vertical-align: middle; padding: 10px 12px; }
         .tc-overview-table th { padding: 10px 12px; }
 
-        /* Typ-Dot */
         .tc-type-dot {
             display: inline-flex;
             align-items: center;
@@ -212,7 +211,6 @@ function tc_render_events_overview_page() {
         .tc-type-seminar  { background:#d1fae5; color:#059669; }
         .tc-type-seminar::before  { background:#059669; }
 
-        /* Status-Badge */
         .tc-badge {
             display: inline-block;
             padding: 3px 10px;

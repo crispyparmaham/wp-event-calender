@@ -7,7 +7,7 @@ defined( 'ABSPATH' ) || exit;
 add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-registration',
-        TC_URL . 'assets/css/registration.css',
+        TC_URL . 'assets/css/frontend/registration.css',
         array(),
         TC_VERSION
     );
@@ -91,9 +91,115 @@ add_shortcode( 'training_registration', function ( $atts ) {
     $occurrences    = ( $event_id && $is_recurring ) ? tc_get_upcoming_occurrences( $event_id ) : array();
     $show_date_pick = ! empty( $occurrences );
 
+    // Ausgebucht? Warteliste prüfen
+    $is_full = false;
+    if ( $event_id ) {
+        $track_p = get_field( 'track_participants', $event_id );
+        $max_p   = get_field( 'participants',       $event_id );
+        if ( $track_p && $max_p ) {
+            global $wpdb;
+            $cur_p   = (int) $wpdb->get_var( $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN ('pending','confirmed')",
+                $event_id
+            ) );
+            $is_full = $cur_p >= (int) $max_p;
+        }
+    }
+
     tc_enqueue_registration_assets();
 
     $dark_class = tc_get_setting( 'calendar_mode', 'light' ) === 'dark' ? 'tc-dark' : '';
+
+    // ── Wartelisten-Formular (Event ausgebucht, festes event_id) ──
+    if ( $is_full && $event_id ) {
+        $wl_form_id = 'tc-waitlist-form-' . $instance;
+        ob_start(); ?>
+        <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+            <form id="<?php echo esc_attr( $wl_form_id ); ?>" class="tc-registration-form tc-waitlist-form" method="POST">
+                <h2>Warteliste – <?php echo esc_html( get_the_title( $event_id ) ); ?></h2>
+                <div class="tc-waitlist-notice" style="background:#ede9fe;border-left:4px solid #7c3aed;padding:12px 16px;border-radius:4px;margin-bottom:16px;font-size:14px;">
+                    <strong>Diese Veranstaltung ist leider ausgebucht.</strong><br>
+                    Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.
+                </div>
+                <div class="tc-form-messages" style="display:none;"></div>
+                <input type="hidden" name="event_id" value="<?php echo esc_attr( $event_id ); ?>">
+                <?php if ( $show_date_pick ) : ?>
+                <div class="tc-form-group">
+                    <label>Termin <span class="tc-required">*</span></label>
+                    <select name="event_date" class="tc-form-control" required>
+                        <option value="">– Bitte wählen –</option>
+                        <?php
+                        $de_days = [ 1 => 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag' ];
+                        foreach ( $occurrences as $occ_date ) :
+                            $d_occ = DateTime::createFromFormat( 'Y-m-d', $occ_date );
+                            $lbl   = $de_days[ (int) $d_occ->format( 'N' ) ] . ', ' . $d_occ->format( 'd.m.Y' );
+                        ?>
+                            <option value="<?php echo esc_attr( $occ_date ); ?>"><?php echo esc_html( $lbl ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <?php endif; ?>
+                <div class="tc-form-row">
+                    <div class="tc-form-group">
+                        <label>Vorname <span class="tc-required">*</span></label>
+                        <input type="text" name="firstname" class="tc-form-control" required autocomplete="given-name">
+                    </div>
+                    <div class="tc-form-group">
+                        <label>Nachname <span class="tc-required">*</span></label>
+                        <input type="text" name="lastname" class="tc-form-control" required autocomplete="family-name">
+                    </div>
+                </div>
+                <div class="tc-form-row">
+                    <div class="tc-form-group">
+                        <label>E-Mail <span class="tc-required">*</span></label>
+                        <input type="email" name="email" class="tc-form-control" required autocomplete="email">
+                    </div>
+                    <div class="tc-form-group">
+                        <label>Telefon</label>
+                        <input type="tel" name="phone" class="tc-form-control" autocomplete="tel">
+                    </div>
+                </div>
+                <div class="tc-form-group">
+                    <label>Notizen (optional)</label>
+                    <textarea name="notes" class="tc-form-control" rows="3"></textarea>
+                </div>
+                <div class="tc-form-group">
+                    <button type="submit" class="tc-btn tc-btn-primary tc-submit-btn">
+                        <span class="tc-btn-text">Auf Warteliste eintragen</span>
+                        <span class="tc-btn-loader" style="display:none;"><span class="tc-spinner"></span> Wird verarbeitet...</span>
+                    </button>
+                </div>
+                <input type="hidden" name="action" value="tc_submit_waitlist">
+                <input type="hidden" name="nonce"  value="<?php echo esc_attr( $nonce ); ?>">
+            </form>
+        </div>
+        <script>
+        jQuery(function($) {
+            $('#<?php echo esc_js( $wl_form_id ); ?>').on('submit', function(e) {
+                e.preventDefault();
+                var $form = $(this);
+                var $msg  = $form.find('.tc-form-messages');
+                var $btn  = $form.find('.tc-submit-btn');
+                $btn.find('.tc-btn-text').hide();
+                $btn.find('.tc-btn-loader').show();
+                $msg.hide().removeClass('tc-success tc-error');
+                $.post(tcRegistration.ajaxUrl, $form.serialize(), function(res) {
+                    if (res.success) {
+                        $form.find(':input:not([type=hidden])').prop('disabled', true);
+                        $msg.addClass('tc-success').html(res.data.message).show();
+                        $btn.hide();
+                    } else {
+                        $msg.addClass('tc-error').html(res.data.message || 'Ein Fehler ist aufgetreten.').show();
+                        $btn.find('.tc-btn-text').show();
+                        $btn.find('.tc-btn-loader').hide();
+                    }
+                });
+            });
+        });
+        </script>
+        <?php
+        return ob_get_clean();
+    }
 
     ob_start(); ?>
     <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
@@ -274,7 +380,7 @@ function tc_enqueue_registration_assets() {
 
     wp_enqueue_script(
         'tc-registration',
-        TC_URL . 'assets/js/registration.js',
+        TC_URL . 'assets/js/frontend/registration.js',
         array( 'jquery' ),
         TC_VERSION,
         true
