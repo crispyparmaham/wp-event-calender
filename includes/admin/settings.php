@@ -362,15 +362,16 @@ add_action( 'admin_init', function () {
 // ─────────────────────────────────────────────
 function tc_field_plugin_version() {
     $last_checked = (int) get_option( TC_Plugin_Updater::LAST_CHECK_KEY, 0 );
+    $last_status  = get_option( 'tc_github_update_last_status', '' );
     $check_url    = wp_nonce_url(
         add_query_arg( 'tc_check_update', '1' ),
         'tc_check_update'
     );
+    $releases_url = 'https://github.com/' . TC_GITHUB_USER . '/' . TC_GITHUB_REPO . '/releases';
 
-    // Aktuelle GitHub-Version aus Cache lesen (kein Force-Fetch hier)
-    $release       = tc_fetch_latest_release( false );
-    $latest        = $release ? ltrim( $release->tag_name, 'v' ) : null;
-    $update_avail  = $latest && version_compare( $latest, TC_VERSION, '>' );
+    $release      = tc_fetch_latest_release( false );
+    $latest       = $release ? ltrim( $release->tag_name, 'v' ) : null;
+    $update_avail = $latest && version_compare( $latest, TC_VERSION, '>' );
 
     if ( $last_checked > 0 ) {
         $diff    = time() - $last_checked;
@@ -388,6 +389,19 @@ function tc_field_plugin_version() {
     } else {
         $last_check_text = 'noch nie';
     }
+
+    // Fehlermeldung ermitteln
+    $error_msg = '';
+    if ( ! $release && $last_checked > 0 ) {
+        if ( $last_status === '404' ) {
+            $error_msg = '⚠️ Kein GitHub Release gefunden (HTTP 404). '
+                . '<a href="' . esc_url( $releases_url ) . '/new" target="_blank">Jetzt Release erstellen →</a>';
+        } elseif ( str_starts_with( $last_status, 'wp_error:' ) ) {
+            $error_msg = '⚠️ Verbindungsfehler: ' . esc_html( substr( $last_status, 9 ) );
+        } elseif ( $last_status && $last_status !== '200' ) {
+            $error_msg = '⚠️ GitHub API Fehler (HTTP ' . esc_html( $last_status ) . ').';
+        }
+    }
     ?>
     <p style="margin:0 0 6px;">
         <strong>Installierte Version:</strong>
@@ -402,21 +416,29 @@ function tc_field_plugin_version() {
             </span>
         <?php endif; ?>
     </p>
+
     <?php if ( $latest ) : ?>
     <p style="margin:0 0 10px;color:#666;font-size:13px;">
         Neueste GitHub-Version: <code><?php echo esc_html( $latest ); ?></code>
         &nbsp;·&nbsp; Letzter Check: <?php echo $last_check_text; ?>
     </p>
+    <?php elseif ( $error_msg ) : ?>
+    <p style="margin:0 0 10px;color:#b32d2e;font-size:13px;">
+        <?php echo wp_kses( $error_msg, array( 'a' => array( 'href' => array(), 'target' => array() ) ) ); ?>
+        <br><small style="color:#999;">Letzter Check: <?php echo $last_check_text; ?></small>
+    </p>
     <?php else : ?>
     <p style="margin:0 0 10px;color:#666;font-size:13px;">
-        Letzter Update-Check: <?php echo $last_check_text; ?>
-        <?php if ( ! $last_checked ) : ?>
-            &nbsp;— Klicke auf „Jetzt prüfen" um die aktuelle GitHub-Version abzurufen.
-        <?php endif; ?>
+        Letzter Check: <?php echo $last_check_text; ?> — Klicke auf „Jetzt prüfen".
     </p>
     <?php endif; ?>
+
     <a href="<?php echo esc_url( $check_url ); ?>" class="button button-secondary">
         ↻ Jetzt auf Updates prüfen
+    </a>
+    &nbsp;
+    <a href="<?php echo esc_url( $releases_url ); ?>" target="_blank" class="button button-secondary">
+        GitHub Releases →
     </a>
     <?php
 }
