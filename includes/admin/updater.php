@@ -33,7 +33,7 @@ class TC_Plugin_Updater {
             'github_user'     => '',
             'github_repo'     => '',
             'plugin_file'     => '',
-            'current_version' => '2.0.8',
+            'current_version' => '0.0.0',
             'access_token'    => '',
         ) );
 
@@ -279,7 +279,10 @@ class TC_Plugin_Updater {
             return $source;
         }
 
-        $expected = trailingslashit( $remote_source ) . $this->config['github_repo'] . '/';
+        // Ziel-Ordnername = echter WordPress-Plugin-Ordner (training-calendar),
+        // nicht der GitHub-Repo-Name (wp-event-calender)
+        $plugin_folder = basename( dirname( $this->config['plugin_file'] ) );
+        $expected      = trailingslashit( $remote_source ) . $plugin_folder . '/';
 
         if ( trailingslashit( $source ) === $expected ) {
             return $source; // Ordnername passt bereits
