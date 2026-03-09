@@ -10,9 +10,11 @@
 
 defined( 'ABSPATH' ) || exit;
 
-define( 'TC_PATH',    plugin_dir_path( __FILE__ ) );
-define( 'TC_URL',     plugin_dir_url( __FILE__ ) );
-define( 'TC_VERSION', '2.0.6' );
+define( 'TC_PATH',        plugin_dir_path( __FILE__ ) );
+define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
+define( 'TC_VERSION',     '2.0.6' );
+define( 'TC_GITHUB_USER', 'crispyparmaham' );
+define( 'TC_GITHUB_REPO', 'wp-event-calender' );
 
 require_once TC_PATH . 'includes/admin/settings.php';
 require_once TC_PATH . 'includes/admin/dashboard.php';

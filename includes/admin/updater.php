@@ -296,3 +296,50 @@ class TC_Plugin_Updater {
         return $source;
     }
 }
+
+// ─────────────────────────────────────────────
+// Standalone-Helper: aktuelles GitHub-Release
+// Wird von der Settings-Seite direkt aufgerufen
+// ─────────────────────────────────────────────
+function tc_fetch_latest_release( bool $force = false ) {
+    if ( ! defined( 'TC_GITHUB_USER' ) || ! defined( 'TC_GITHUB_REPO' ) ) {
+        return false;
+    }
+
+    if ( ! $force ) {
+        $cached = get_transient( TC_Plugin_Updater::TRANSIENT_KEY );
+        if ( $cached !== false ) {
+            return $cached;
+        }
+    }
+
+    $api_url = sprintf(
+        'https://api.github.com/repos/%s/%s/releases/latest',
+        rawurlencode( TC_GITHUB_USER ),
+        rawurlencode( TC_GITHUB_REPO )
+    );
+
+    $response = wp_remote_get( $api_url, array(
+        'timeout' => 10,
+        'headers' => array(
+            'User-Agent' => 'WordPress/' . get_bloginfo( 'version' ) . '; ' . home_url(),
+            'Accept'     => 'application/vnd.github+json',
+        ),
+    ) );
+
+    update_option( TC_Plugin_Updater::LAST_CHECK_KEY, time(), false );
+
+    if ( is_wp_error( $response ) || (int) wp_remote_retrieve_response_code( $response ) !== 200 ) {
+        return false;
+    }
+
+    $data = json_decode( wp_remote_retrieve_body( $response ) );
+
+    if ( empty( $data->tag_name ) ) {
+        return false;
+    }
+
+    set_transient( TC_Plugin_Updater::TRANSIENT_KEY, $data, 12 * HOUR_IN_SECONDS );
+
+    return $data;
+}
