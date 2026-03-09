@@ -19,6 +19,18 @@ require_once TC_PATH . 'includes/admin/dashboard.php';
 require_once TC_PATH . 'includes/admin/admin-page.php';
 require_once TC_PATH . 'includes/admin/events-overview.php';
 
+// ── Auto-Updater via GitHub Releases ──────────────────────────
+if ( is_admin() ) {
+    require_once TC_PATH . 'includes/admin/updater.php';
+    new TC_Plugin_Updater( array(
+        'github_user'     => 'crispyparmaham', // ← hier anpassen
+        'github_repo'     => 'wp-event-calender',
+        'plugin_file'     => __FILE__,
+        'current_version' => TC_VERSION,
+        'access_token'    => '', // leer lassen für public repos
+    ) );
+}
+
 require_once TC_PATH . 'includes/post-type/cpt.php';
 
 require_once TC_PATH . 'includes/ajax.php';
