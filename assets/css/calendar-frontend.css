@@ -214,7 +214,7 @@
 }
 
 .tc-frontend-wrap .fc-event * {
-  color: #000 !important;
+  color: var(--tc-text) !important;
 }
 
 /* Listenansicht */
