@@ -198,7 +198,7 @@ function tc_handle_get_events() {
 add_action( 'wp_ajax_tc_create_event', function () {
     check_ajax_referer( 'tc_nonce', 'nonce' );
 
-    if ( ! current_user_can( 'publish_posts' ) ) {
+    if ( ! current_user_can( 'manage_options' ) ) {
         wp_send_json_error( array( 'message' => 'Keine Berechtigung.' ), 403 );
     }
 

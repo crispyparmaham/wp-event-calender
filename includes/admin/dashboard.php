@@ -212,14 +212,16 @@ function tc_dashboard_get_kpis() {
     ) );
 
     // Gesamte Anmeldungen (confirmed + pending)
-    $regs_active = (int) $wpdb->get_var(
-        "SELECT COUNT(*) FROM {$table} WHERE status IN ('confirmed','pending')"
-    );
+    $regs_active = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE status IN (%s,%s)",
+        'confirmed', 'pending'
+    ) );
 
     // Offene Anmeldungen (pending)
-    $regs_pending = (int) $wpdb->get_var(
-        "SELECT COUNT(*) FROM {$table} WHERE status = 'pending'"
-    );
+    $regs_pending = (int) $wpdb->get_var( $wpdb->prepare(
+        "SELECT COUNT(*) FROM {$table} WHERE status = %s",
+        'pending'
+    ) );
 
     // Auslastung: Events mit track_participants ermitteln
     $tracked_ids = get_posts( [
@@ -238,11 +240,14 @@ function tc_dashboard_get_kpis() {
             $max = (int) get_field( 'participants', $eid );
             if ( $max > 0 ) $capacity_total += $max;
         }
-        $ids_safe     = implode( ',', array_map( 'intval', $tracked_ids ) );
+        $placeholders  = implode( ',', array_fill( 0, count( $tracked_ids ), '%d' ) );
         $capacity_used = (int) $wpdb->get_var(
-            "SELECT COUNT(*) FROM {$table}
-             WHERE event_id IN ({$ids_safe})
-               AND status IN ('confirmed','pending')"
+            $wpdb->prepare(
+                "SELECT COUNT(*) FROM {$table}
+                 WHERE event_id IN ({$placeholders})
+                   AND status IN ('confirmed','pending')",
+                ...$tracked_ids
+            )
         );
     }
 
@@ -445,7 +450,7 @@ function tc_dashboard_render_chart( array $data ) {
             $lx  = round( $bx + $bw / 2 );
             $ly  = $pad_top + $chart_h + 14;
             $d_o = DateTime::createFromFormat( 'Y-m-d', $day );
-            $lbl = $d_o ? $d_o->format( 'd.m.' ) : '';
+            $lbl = $d_o ? htmlspecialchars( $d_o->format( 'd.m.' ), ENT_QUOTES, 'UTF-8' ) : '';
             $o  .= '<text x="' . $lx . '" y="' . $ly . '"'
                  . ' text-anchor="middle" font-size="9" fill="#6b7280">' . $lbl . '</text>';
         }
@@ -460,8 +465,8 @@ function tc_dashboard_render_chart( array $data ) {
     $lx = $pad_l + 8;
     $ly = $vh - 10;
     foreach ( $legend as $label => $color ) {
-        $o .= '<rect x="' . $lx . '" y="' . ( $ly - 8 ) . '" width="10" height="10" fill="' . $color . '" rx="2"/>';
-        $o .= '<text x="' . ( $lx + 13 ) . '" y="' . $ly . '" font-size="9" fill="#6b7280">' . $label . '</text>';
+        $o .= '<rect x="' . $lx . '" y="' . ( $ly - 8 ) . '" width="10" height="10" fill="' . htmlspecialchars( $color, ENT_QUOTES, 'UTF-8' ) . '" rx="2"/>';
+        $o .= '<text x="' . ( $lx + 13 ) . '" y="' . $ly . '" font-size="9" fill="#6b7280">' . htmlspecialchars( $label, ENT_QUOTES, 'UTF-8' ) . '</text>';
         $lx += 78;
     }
 

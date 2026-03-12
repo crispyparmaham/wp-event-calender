@@ -282,9 +282,9 @@ function tc_event_info_block( $info ) {
     return '<div style="background:#eef2ff;border-left:4px solid #4f46e5;padding:14px 18px;'
          . 'border-radius:4px;margin:16px 0;">'
          . '<table style="width:100%;border-collapse:collapse;font-size:14px;">'
-         . tc_mail_row( 'Veranstaltung', $info['title'] )
-         . tc_mail_row( 'Datum',         $info['date'] )
-         . tc_mail_row( 'Ort',           $info['location'] )
+         . tc_mail_row( 'Veranstaltung', esc_html( $info['title'] ) )
+         . tc_mail_row( 'Datum',         esc_html( $info['date'] ) )
+         . tc_mail_row( 'Ort',           esc_html( $info['location'] ) )
          . '</table></div>';
 }
 
@@ -313,6 +313,15 @@ add_action( 'wp_ajax_tc_submit_registration',        'tc_handle_registration_sub
 function tc_handle_registration_submission() {
     check_ajax_referer( 'tc_registration_nonce', 'nonce' );
 
+    // Rate Limiting: max. 5 Anmeldungen pro IP innerhalb von 15 Minuten
+    $ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
+    $rl_key    = 'tc_reg_limit_' . md5( $ip );
+    $rl_count  = (int) get_transient( $rl_key );
+    if ( $rl_count >= 5 ) {
+        wp_send_json_error( array( 'message' => 'Zu viele Anfragen. Bitte versuchen Sie es später erneut.' ) );
+    }
+    set_transient( $rl_key, $rl_count + 1, 15 * MINUTE_IN_SECONDS );
+
     global $wpdb;
     $table_name = $wpdb->prefix . 'tc_registrations';
 
@@ -326,6 +335,10 @@ function tc_handle_registration_submission() {
     $event_id   = absint(                 $_POST['event_id']   ?? 0  );
     $event_date = sanitize_text_field(    $_POST['event_date'] ?? '' );
     $notes      = sanitize_textarea_field($_POST['notes']      ?? '' );
+
+    if ( $event_date && ! preg_match( '/^\d{4}-\d{2}-\d{2}$/', $event_date ) ) {
+        wp_send_json_error( array( 'message' => 'Ungültiges Datumsformat.' ) );
+    }
 
     if ( ! $firstname || ! $lastname || ! $email || ! is_email( $email ) || ! $event_id ) {
         wp_send_json_error( array( 'message' => 'Bitte fuellen Sie alle erforderlichen Felder aus.' ) );
