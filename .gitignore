@@ -10,3 +10,6 @@ config.local.php
 
 # Node (falls verwendet)
 node_modules/
+
+# Composer
+vendor/
