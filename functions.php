@@ -6,6 +6,7 @@
  * Author:       Lucas Dühr | more than ads
  * Author URI:   https://www.morethanads.de
  * Text Domain:  training-calendar
+ * Update URI:   https://github.com/crispyparmaham/wp-event-calender
  */
 
 defined( 'ABSPATH' ) || exit;
@@ -22,16 +23,13 @@ require_once TC_PATH . 'includes/admin/admin-page.php';
 require_once TC_PATH . 'includes/admin/events-overview.php';
 
 // ── Auto-Updater via GitHub Releases ──────────────────────────
-if ( is_admin() ) {
-    require_once TC_PATH . 'includes/admin/updater.php';
-    new TC_Plugin_Updater( array(
-        'github_user'     => 'crispyparmaham', // ← hier anpassen
-        'github_repo'     => 'wp-event-calender',
-        'plugin_file'     => __FILE__,
-        'current_version' => TC_VERSION,
-        'access_token'    => '', // leer lassen für public repos
-    ) );
-}
+require_once TC_PATH . 'includes/admin/updater.php';
+new TC_Plugin_Updater( array(
+    'github_user'     => TC_GITHUB_USER,
+    'github_repo'     => TC_GITHUB_REPO,
+    'plugin_file'     => __FILE__,
+    'current_version' => TC_VERSION,
+) );
 
 require_once TC_PATH . 'includes/post-type/cpt.php';
 

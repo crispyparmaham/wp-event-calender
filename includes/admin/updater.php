@@ -4,8 +4,11 @@ defined( 'ABSPATH' ) || exit;
 /**
  * TC_Plugin_Updater
  *
- * Prüft GitHub Releases auf neue Versionen und integriert sich nahtlos
- * in den WordPress-Update-Mechanismus — ohne externen Update-Server.
+ * Nutzt den WordPress 5.8+ Update-URI-Mechanismus:
+ *   - Plugin-Header "Update URI" zeigt auf das GitHub-Repository
+ *   - WordPress feuert den Filter "update_plugins_github.com"
+ *   - Dieser Filter fragt die GitHub Releases API ab und liefert
+ *     die Update-Daten direkt an WordPress zurück.
  *
  * Konfigurationsparameter:
  *   github_user     – GitHub-Benutzername oder Organisation
@@ -25,6 +28,9 @@ class TC_Plugin_Updater {
     /** @var string  z.B. "training-calendar/functions.php" */
     private $plugin_slug;
 
+    /** @var string  z.B. "training-calendar" */
+    private $plugin_folder;
+
     // ─────────────────────────────────────────────
     // Konstruktor
     // ─────────────────────────────────────────────
@@ -37,18 +43,14 @@ class TC_Plugin_Updater {
             'access_token'    => '',
         ) );
 
-        // Aus den Settings gespeicherten Token bevorzugen
-        $saved_token = tc_get_setting( 'github_token', '' );
-        if ( $saved_token ) {
-            $this->config['access_token'] = $saved_token;
-        }
+        $this->plugin_slug   = plugin_basename( $this->config['plugin_file'] );
+        $this->plugin_folder = basename( dirname( $this->config['plugin_file'] ) );
 
-        $this->plugin_slug = plugin_basename( $this->config['plugin_file'] );
-
-        add_filter( 'pre_set_site_transient_update_plugins', array( $this, 'check_for_update'  )        );
-        add_filter( 'plugins_api',                           array( $this, 'plugin_info'       ), 20, 3 );
-        add_action( 'upgrader_process_complete',             array( $this, 'after_update'      ), 10, 2 );
-        add_filter( 'upgrader_source_selection',             array( $this, 'fix_folder_name'   ), 10, 3 );
+        // WordPress 5.8+: Update URI Hook (Domain = github.com)
+        add_filter( 'update_plugins_github.com',     array( $this, 'check_for_update' ), 10, 4 );
+        add_filter( 'plugins_api',                   array( $this, 'plugin_info'      ), 20, 3 );
+        add_action( 'upgrader_process_complete',     array( $this, 'after_update'     ), 10, 2 );
+        add_filter( 'upgrader_source_selection',     array( $this, 'fix_folder_name'  ), 10, 3 );
     }
 
     // ─────────────────────────────────────────────
@@ -57,7 +59,7 @@ class TC_Plugin_Updater {
 
     /**
      * Gibt das neueste Release-Objekt der GitHub API zurück.
-     * Ergebnis wird 12 Stunden per transient gecacht.
+     * Ergebnis wird 12 Stunden per Transient gecacht.
      *
      * @param bool $force  true = Cache ignorieren, frisch abfragen.
      * @return object|false
@@ -90,14 +92,16 @@ class TC_Plugin_Updater {
 
         $response = wp_remote_get( $api_url, $args );
 
-        // Letzten Check-Zeitpunkt immer aktualisieren (auch bei Fehler)
         update_option( self::LAST_CHECK_KEY, time(), false );
 
         if ( is_wp_error( $response ) ) {
+            update_option( 'tc_github_update_last_status', 'wp_error:' . $response->get_error_message(), false );
             return false;
         }
 
         $code = (int) wp_remote_retrieve_response_code( $response );
+        update_option( 'tc_github_update_last_status', (string) $code, false );
+
         if ( $code !== 200 ) {
             return false;
         }
@@ -105,6 +109,7 @@ class TC_Plugin_Updater {
         $data = json_decode( wp_remote_retrieve_body( $response ) );
 
         if ( empty( $data->tag_name ) ) {
+            update_option( 'tc_github_update_last_status', 'no_tag', false );
             return false;
         }
 
@@ -141,43 +146,42 @@ class TC_Plugin_Updater {
     }
 
     // ─────────────────────────────────────────────
-    // Hook: pre_set_site_transient_update_plugins
+    // Hook: update_plugins_github.com
+    //
+    // WordPress 5.8+ feuert diesen Filter für alle Plugins,
+    // deren "Update URI" Header auf github.com zeigt.
     // ─────────────────────────────────────────────
 
-    public function check_for_update( $transient ) {
-        if ( empty( $transient->checked ) ) {
-            return $transient;
+    public function check_for_update( $update, $plugin_data, $plugin_file, $locales ) {
+        // Nur für unser Plugin reagieren
+        if ( $plugin_file !== $this->plugin_slug ) {
+            return $update;
         }
 
         $release = $this->get_release_data();
         if ( ! $release ) {
-            return $transient;
+            return $update;
         }
 
         $latest = ltrim( $release->tag_name, 'v' );
 
-        if ( version_compare( $latest, $this->config['current_version'], '>' ) ) {
-            $download_url = $this->get_download_url( $release );
-
-            $transient->response[ $this->plugin_slug ] = (object) array(
-                'id'            => $this->plugin_slug,
-                'slug'          => $this->config['github_repo'],
-                'plugin'        => $this->plugin_slug,
-                'new_version'   => $latest,
-                'url'           => 'https://github.com/' . $this->config['github_user'] . '/' . $this->config['github_repo'],
-                'package'       => $download_url,
-                'icons'         => array(),
-                'banners'       => array(),
-                'tested'        => '',
-                'requires_php'  => '7.4',
-                'compatibility' => new stdClass(),
-            );
-
-            // Aus der "kein Update"-Liste entfernen falls vorhanden
-            unset( $transient->no_update[ $this->plugin_slug ] );
+        if ( ! version_compare( $latest, $this->config['current_version'], '>' ) ) {
+            return $update;
         }
 
-        return $transient;
+        return (object) array(
+            'id'            => $this->plugin_slug,
+            'slug'          => $this->plugin_folder,
+            'plugin'        => $this->plugin_slug,
+            'version'       => $latest,
+            'url'           => 'https://github.com/' . $this->config['github_user'] . '/' . $this->config['github_repo'],
+            'package'       => $this->get_download_url( $release ),
+            'icons'         => array(),
+            'banners'       => array(),
+            'tested'        => '6.7',
+            'requires_php'  => '7.4',
+            'compatibility' => new stdClass(),
+        );
     }
 
     // ─────────────────────────────────────────────
@@ -189,7 +193,7 @@ class TC_Plugin_Updater {
             return $result;
         }
 
-        if ( empty( $args->slug ) || $args->slug !== $this->config['github_repo'] ) {
+        if ( empty( $args->slug ) || $args->slug !== $this->plugin_folder ) {
             return $result;
         }
 
@@ -206,7 +210,7 @@ class TC_Plugin_Updater {
 
         return (object) array(
             'name'          => 'Drag &amp; Drop Event Calendar',
-            'slug'          => $this->config['github_repo'],
+            'slug'          => $this->plugin_folder,
             'version'       => $latest,
             'author'        => '<a href="https://www.morethanads.de">Lucas Dühr | more than ads</a>',
             'homepage'      => 'https://github.com/' . $this->config['github_user'] . '/' . $this->config['github_repo'],
@@ -228,8 +232,6 @@ class TC_Plugin_Updater {
         }
 
         $body = esc_html( $body );
-
-        // Einfache Markdown → HTML Konvertierung
         $body = preg_replace( '/^### (.+)$/m',  '<h4>$1</h4>', $body );
         $body = preg_replace( '/^## (.+)$/m',   '<h3>$1</h3>', $body );
         $body = preg_replace( '/^# (.+)$/m',    '<h2>$1</h2>', $body );
@@ -252,9 +254,7 @@ class TC_Plugin_Updater {
             return;
         }
 
-        $plugins = $options['plugins'] ?? array();
-
-        if ( in_array( $this->plugin_slug, (array) $plugins, true ) ) {
+        if ( in_array( $this->plugin_slug, (array) ( $options['plugins'] ?? array() ), true ) ) {
             delete_transient( self::TRANSIENT_KEY );
         }
     }
@@ -270,7 +270,6 @@ class TC_Plugin_Updater {
     public function fix_folder_name( $source, $remote_source, $upgrader ) {
         global $wp_filesystem;
 
-        // Nur für unser Plugin eingreifen
         $info = $upgrader->skin->plugin_info ?? null;
         if ( ! $info ) {
             return $source;
@@ -279,13 +278,10 @@ class TC_Plugin_Updater {
             return $source;
         }
 
-        // Ziel-Ordnername = echter WordPress-Plugin-Ordner (training-calendar),
-        // nicht der GitHub-Repo-Name (wp-event-calender)
-        $plugin_folder = basename( dirname( $this->config['plugin_file'] ) );
-        $expected      = trailingslashit( $remote_source ) . $plugin_folder . '/';
+        $expected = trailingslashit( $remote_source ) . $this->plugin_folder . '/';
 
         if ( trailingslashit( $source ) === $expected ) {
-            return $source; // Ordnername passt bereits
+            return $source;
         }
 
         if ( ! $wp_filesystem || ! $wp_filesystem->exists( $source ) ) {
