@@ -93,10 +93,19 @@ add_action( 'acf/include_fields', function () {
             ),
             array(
                 'key'         => 'field_tc_participants',
-                'label'       => 'Teilnehmer',
+                'label'       => 'Max. Teilnehmer (optional)',
                 'name'        => 'participants',
-                'type'        => 'text',
-                'placeholder' => 'z.B. 6 bis 15',
+                'type'        => 'number',
+                'placeholder' => 'z.B. 12',
+                'instructions' => 'Lassen Sie leer, wenn keine Kapazitätsbegrenzung verwendet wird.',
+            ),
+            array(
+                'key'         => 'field_tc_track_participants',
+                'label'       => 'Teilnehmer tracken?',
+                'name'        => 'track_participants',
+                'type'        => 'true_false',
+                'default_value' => 0,
+                'instructions' => 'Aktivieren Sie dies, um die Anmeldungen zu zählen und den Termin zu sperren, wenn die maximale Teilnehmerzahl erreicht ist.',
             ),
             array(
                 'key'          => 'field_tc_difficulty',

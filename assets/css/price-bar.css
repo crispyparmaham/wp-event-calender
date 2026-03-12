@@ -69,6 +69,18 @@
   color: #374151;
 }
 
+.tc-price-bar-label--full {
+  color: #dc3545;
+  font-size: 16px;
+}
+
+.tc-price-bar-amount--full {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #dc3545 !important;
+  font-weight: 700;
+}
+
 /* Kein Preis – Teaser-Text */
 .tc-price-bar-teaser {
   font-size: 16px;
