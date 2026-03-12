@@ -33,7 +33,7 @@ class TC_Plugin_Updater {
             'github_user'     => '',
             'github_repo'     => '',
             'plugin_file'     => '',
-            'current_version' => '0.0.0',
+            'current_version' => '2.0.8',
             'access_token'    => '',
         ) );
 
