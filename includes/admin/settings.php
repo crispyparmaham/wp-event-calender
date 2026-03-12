@@ -292,6 +292,22 @@ function tc_render_settings_page() { ?>
             submit_button( 'Einstellungen speichern' );
             ?>
         </form>
+
+        <hr style="margin: 32px 0;">
+
+        <h2 style="margin-bottom:8px;">Plugin-Update</h2>
+        <p style="margin-bottom:16px;color:#666;">
+            Aktuelle Version: <strong><?php echo esc_html( TC_VERSION ); ?></strong>
+            &nbsp;·&nbsp; Prüft auf neue Releases im
+            <a href="https://github.com/crispyparmaham/wp-event-calender/releases" target="_blank">GitHub-Repository</a>.
+        </p>
+        <a
+            href="<?php echo esc_url( admin_url( 'update-core.php?force-check=1' ) ); ?>"
+            class="button button-secondary"
+        >
+            <span class="dashicons dashicons-update" style="margin-top:3px;"></span>
+            Jetzt auf Updates prüfen
+        </a>
     </div>
 <?php }
 
