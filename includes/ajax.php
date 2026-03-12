@@ -71,15 +71,22 @@ function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $we
 }
 
 // ─────────────────────────────────────────────
-// 1. Events laden
+// 1. Events laden (eingeloggt + nicht eingeloggt)
 // ─────────────────────────────────────────────
-add_action( 'wp_ajax_tc_get_events', function () {
+add_action( 'wp_ajax_tc_get_events',        'tc_handle_get_events' );
+add_action( 'wp_ajax_nopriv_tc_get_events', 'tc_handle_get_events' );
+
+function tc_handle_get_events() {
     check_ajax_referer( 'tc_nonce', 'nonce' );
+
+    $statuses = is_user_logged_in()
+        ? array( 'publish', 'draft' )
+        : array( 'publish' );
 
     $posts = get_posts( array(
         'post_type'      => 'training_event',
         'posts_per_page' => -1,
-        'post_status'    => array( 'publish', 'draft' ),
+        'post_status'    => $statuses,
     ) );
 
     $events = array();
@@ -163,7 +170,7 @@ add_action( 'wp_ajax_tc_get_events', function () {
     }
 
     wp_send_json_success( $events );
-} );
+}
 
 // ─────────────────────────────────────────────
 // 2. Event direkt im Kalender anlegen
