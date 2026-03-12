@@ -142,7 +142,7 @@ add_shortcode( 'training_registration', function ( $atts ) {
         <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
             <form id="<?php echo esc_attr( $wl_form_id ); ?>" class="tc-registration-form tc-waitlist-form" method="POST">
                 <h2>Warteliste – <?php echo esc_html( get_the_title( $event_id ) ); ?></h2>
-                <div class="tc-waitlist-notice" style="background:#ede9fe;border-left:4px solid #7c3aed;padding:12px 16px;border-radius:4px;margin-bottom:16px;font-size:14px;">
+                <div class="tc-waitlist-notice" style="background:#ffff;border-left:4px solid #ce0000;padding:12px 16px;border-radius:4px;margin-bottom:16px;font-size:14px;color: #000;">
                     <strong>Diese Veranstaltung ist leider ausgebucht.</strong><br>
                     Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.
                 </div>

@@ -415,7 +415,7 @@ function tc_handle_registration_submission() {
     ) );
 
     $success_msg = $is_trial
-        ? 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich uebermittelt. Wir melden uns zeitnah bei dir.'
+        ? 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.'
         : 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.';
 
     wp_send_json_success( array(
