@@ -24,6 +24,7 @@ add_action( 'admin_init', function () {
         'default'           => array(
             'calendar_mode'      => 'light',
             'registration_email' => get_option( 'admin_email' ),
+            'reminder_enabled'   => '0',
         ),
     ) );
 
@@ -62,6 +63,14 @@ add_action( 'admin_init', function () {
         'training-calendar-settings',
         'tc_section_registration'
     );
+
+    add_settings_field(
+        'tc_reminder_enabled',
+        'Erinnerungsmail (3 Tage vorher)',
+        'tc_field_reminder_enabled',
+        'training-calendar-settings',
+        'tc_section_registration'
+    );
 } );
 
 // ─────────────────────────────────────────────
@@ -72,14 +81,16 @@ function tc_sanitize_settings( $input ) {
     $clean['calendar_mode'] = isset( $input['calendar_mode'] ) && $input['calendar_mode'] === 'dark'
         ? 'dark'
         : 'light';
-    $clean['registration_email'] = isset( $input['registration_email'] ) 
+    $clean['registration_email'] = isset( $input['registration_email'] )
         ? sanitize_email( $input['registration_email'] )
         : get_option( 'admin_email' );
-    
+
     if ( ! is_email( $clean['registration_email'] ) ) {
         $clean['registration_email'] = get_option( 'admin_email' );
     }
-    
+
+    $clean['reminder_enabled'] = ! empty( $input['reminder_enabled'] ) ? '1' : '0';
+
     return $clean;
 }
 
@@ -97,10 +108,10 @@ function tc_get_setting( $key, $default = '' ) {
 function tc_field_registration_email() {
     $email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
     ?>
-    <input 
-        type="email" 
-        name="tc_settings[registration_email]" 
-        value="<?php echo esc_attr( $email ); ?>" 
+    <input
+        type="email"
+        name="tc_settings[registration_email]"
+        value="<?php echo esc_attr( $email ); ?>"
         class="regular-text"
         required
     />
@@ -173,13 +184,39 @@ function tc_render_settings_page() { ?>
 <?php }
 
 // ─────────────────────────────────────────────
+// Feld: Erinnerungsmail-Toggle
+// ─────────────────────────────────────────────
+function tc_field_reminder_enabled() {
+    $enabled = tc_get_setting( 'reminder_enabled', '0' );
+    ?>
+    <div class="tc-settings-toggle-wrap">
+        <label class="tc-settings-toggle">
+            <input
+                type="checkbox"
+                name="tc_settings[reminder_enabled]"
+                value="1"
+                <?php checked( $enabled, '1' ); ?>
+            />
+            <span class="tc-settings-toggle-slider"></span>
+        </label>
+        <div class="tc-settings-toggle-labels">
+            <span class="tc-settings-toggle-hint">
+                Sendet automatisch 3 Tage vor jedem Event eine Erinnerungsmail an alle Teilnehmer mit Status <em>Bestätigt</em>.
+                Der Cron-Job läuft täglich. Bereits versendete Erinnerungen werden nicht erneut gesendet.
+            </span>
+        </div>
+    </div>
+    <?php
+}
+
+// ─────────────────────────────────────────────
 // Settings-CSS laden
 // ─────────────────────────────────────────────
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
     if ( $hook !== 'training_event_page_training-calendar-settings' ) return;
     wp_enqueue_style(
         'tc-settings',
-        TC_URL . 'assets/css/settings.css',
+        TC_URL . 'assets/css/admin/settings.css',
         array(),
         TC_VERSION
     );

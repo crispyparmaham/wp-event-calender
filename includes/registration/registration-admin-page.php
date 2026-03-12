@@ -31,7 +31,6 @@ function tc_render_registrations_page() {
         return;
     }
 
-    // Filterung nach Event (kommt von der Übersichtsseite)
     $filter_event  = isset( $_GET['event_id'] ) ? absint( $_GET['event_id'] ) : 0;
     $all           = tc_get_all_registrations();
     $registrations = $filter_event
@@ -52,7 +51,24 @@ function tc_render_registrations_page() {
             <?php endif; ?>
         </h1>
 
-        <?php if ( empty( $registrations ) ) : ?>
+        <?php
+    $export_url = wp_nonce_url(
+        add_query_arg( [
+            'page'       => 'training-registrations',
+            'tc_export'  => 'csv',
+            'event_id'   => $filter_event ?: '',
+        ], admin_url( 'admin.php' ) ),
+        'tc_export_csv',
+        'nonce'
+    );
+    ?>
+    <p>
+        <a href="<?php echo esc_url( $export_url ); ?>" class="button">
+            ⬇ Als CSV exportieren
+        </a>
+    </p>
+
+    <?php if ( empty( $registrations ) ) : ?>
             <p>Keine Anmeldungen vorhanden.</p>
         <?php else : ?>
         <table class="wp-list-table widefat striped tc-reg-table">
@@ -100,6 +116,7 @@ function tc_render_registrations_page() {
                             <?php echo match( $status ) {
                                 'confirmed' => '✓ Bestätigt',
                                 'cancelled' => '✗ Storniert',
+                                'waitlist'  => '⏸ Warteliste',
                                 default     => '⏳ Ausstehend',
                             }; ?>
                         </span>
@@ -137,14 +154,11 @@ function tc_render_registrations_page() {
 
     <script>
     jQuery(function($) {
-        // ── Bestätigen ──────────────────────────────────────────
         $(document).on('click', '.tc-btn-confirm', function() {
             var $btn = $(this);
             var id   = $btn.data('id');
             if ( ! confirm('Anmeldung bestätigen und Bestätigungsmail senden?') ) return;
-
             $btn.prop('disabled', true).text('…');
-
             $.post(ajaxurl, {
                 action: 'tc_update_registration_status',
                 nonce:  $btn.data('nonce'),
@@ -165,14 +179,11 @@ function tc_render_registrations_page() {
             });
         });
 
-        // ── Stornieren ──────────────────────────────────────────
         $(document).on('click', '.tc-btn-cancel', function() {
             var $btn = $(this);
             var id   = $btn.data('id');
             if ( ! confirm('Anmeldung stornieren?') ) return;
-
             $btn.prop('disabled', true).text('…');
-
             $.post(ajaxurl, {
                 action: 'tc_update_registration_status',
                 nonce:  $btn.data('nonce'),
@@ -211,9 +222,12 @@ add_action( 'wp_ajax_tc_update_registration_status', function () {
     $new_status = sanitize_text_field( $_POST['status'] ?? '' );
     $send_mail  = ! empty( $_POST['send_confirmation_mail'] );
 
-    if ( ! $id || ! in_array( $new_status, array( 'pending', 'confirmed', 'cancelled' ), true ) ) {
+    if ( ! $id || ! in_array( $new_status, array( 'pending', 'confirmed', 'cancelled', 'waitlist' ), true ) ) {
         wp_send_json_error( 'Ungültige Daten.' );
     }
+
+    $old_reg    = tc_get_registration( $id );
+    $old_status = $old_reg ? $old_reg['status'] : '';
 
     tc_update_registration( $id, array( 'status' => $new_status ) );
 
@@ -223,6 +237,10 @@ add_action( 'wp_ajax_tc_update_registration_status', function () {
 
     if ( $new_status === 'cancelled' && $send_mail ) {
         tc_send_cancellation_mail( $id );
+    }
+
+    if ( $new_status === 'cancelled' && $old_status === 'confirmed' ) {
+        do_action( 'tc_registration_cancelled', $id );
     }
 
     wp_send_json_success();
@@ -309,6 +327,7 @@ function tc_render_registration_form( $registration_id ) {
                             <option value="pending"   <?php selected( $reg['status'], 'pending' ); ?>>Ausstehend</option>
                             <option value="confirmed" <?php selected( $reg['status'], 'confirmed' ); ?>>Bestätigt</option>
                             <option value="cancelled" <?php selected( $reg['status'], 'cancelled' ); ?>>Storniert</option>
+                            <option value="waitlist"  <?php selected( $reg['status'], 'waitlist' ); ?>>Warteliste</option>
                         </select>
                     </td>
                 </tr>
@@ -335,7 +354,6 @@ function tc_render_registration_form( $registration_id ) {
 add_action( 'admin_head', function () { ?>
     <style>
         .tc-reg-table td { vertical-align: middle; }
-
         .tc-status-badge {
             display: inline-block;
             padding: 3px 10px;
@@ -347,14 +365,12 @@ add_action( 'admin_head', function () { ?>
         .tc-status-pending   { background: #fef3c7; color: #92400e; }
         .tc-status-confirmed { background: #d1fae5; color: #065f46; }
         .tc-status-cancelled { background: #fee2e2; color: #991b1b; }
-
+        .tc-status-waitlist  { background: #ede9fe; color: #5b21b6; }
         .tc-action-btns { white-space: nowrap; display: flex; gap: 4px; align-items: center; }
-
         .tc-btn-confirm.button {
             background: #059669; border-color: #047857; color: #fff; font-weight: 700; min-width: 30px;
         }
         .tc-btn-confirm.button:hover { background: #047857; color: #fff; }
-
         .tc-btn-cancel.button {
             background: #dc2626; border-color: #b91c1c; color: #fff; font-weight: 700; min-width: 30px;
         }

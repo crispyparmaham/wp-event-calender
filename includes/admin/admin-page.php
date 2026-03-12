@@ -106,7 +106,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 
     wp_enqueue_script(
         'tc-calendar',
-        TC_URL . 'assets/js/calendar.js',
+        TC_URL . 'assets/js/admin/calendar.js',
         array( 'fullcalendar' ),
         TC_VERSION,
         true
@@ -119,7 +119,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
 
     wp_enqueue_style(
         'tc-calendar',
-        TC_URL . 'assets/css/calendar.css',
+        TC_URL . 'assets/css/admin/calendar.css',
         array(),
         TC_VERSION
     );

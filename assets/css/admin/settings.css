@@ -1,0 +1,135 @@
+/* ─── Settings Wrap ───────────────────────────────────────────── */
+.tc-settings-wrap h1 {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  margin-bottom: 24px;
+}
+
+.tc-settings-wrap h1 .dashicons {
+  font-size: 1.5rem;
+  width: auto;
+  height: auto;
+  color: #4f46e5;
+}
+
+/* ─── Settings Tabelle ────────────────────────────────────────── */
+.tc-settings-wrap .form-table th {
+  font-weight: 600;
+  color: #111827;
+  padding-top: 20px;
+  width: 220px;
+}
+
+.tc-settings-wrap .form-table td {
+  padding-top: 16px;
+}
+
+/* ─── Sektions-Beschreibung ───────────────────────────────────── */
+.tc-settings-desc {
+  color: #6b7280;
+  font-size: 13px;
+  margin-top: 4px;
+}
+
+/* ─── Toggle Switch ───────────────────────────────────────────── */
+.tc-settings-toggle-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.tc-settings-toggle {
+  position: relative;
+  display: inline-block;
+  width: 52px;
+  height: 28px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.tc-settings-toggle input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+  position: absolute;
+}
+
+.tc-settings-toggle-slider {
+  position: absolute;
+  inset: 0;
+  background: #d1d5db;
+  border-radius: 999px;
+  transition: background .2s;
+  cursor: pointer;
+}
+
+.tc-settings-toggle-slider::before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 22px;
+  left: 3px;
+  top: 3px;
+  background: #fff;
+  border-radius: 50%;
+  transition: transform .2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,.2);
+}
+
+.tc-settings-toggle input:checked + .tc-settings-toggle-slider {
+  background: #4f46e5;
+}
+
+.tc-settings-toggle input:checked + .tc-settings-toggle-slider::before {
+  transform: translateX(24px);
+}
+
+.tc-settings-toggle input:focus + .tc-settings-toggle-slider {
+  box-shadow: 0 0 0 3px rgba(79,70,229,.25);
+}
+
+/* ─── Toggle Labels ───────────────────────────────────────────── */
+.tc-settings-toggle-labels {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tc-settings-toggle-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.tc-settings-toggle-hint {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.tc-settings-toggle-hint code {
+  background: #f3f4f6;
+  padding: 1px 5px;
+  border-radius: 4px;
+  font-size: 11px;
+  color: #4f46e5;
+}
+
+/* ─── Submit Button ───────────────────────────────────────────── */
+.tc-settings-wrap .submit input.button-primary {
+  background: #4f46e5;
+  border-color: #4338ca;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  padding: 6px 20px;
+  height: auto;
+  border-radius: 6px;
+  transition: background .2s;
+}
+
+.tc-settings-wrap .submit input.button-primary:hover {
+  background: #4338ca;
+  border-color: #3730a3;
+}

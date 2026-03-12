@@ -22,6 +22,7 @@ function tc_create_registrations_table() {
         event_date date DEFAULT NULL,
         status varchar(20) DEFAULT 'pending',
         notes longtext,
+        reminder_sent tinyint(1) NOT NULL DEFAULT 0,
         created_at bigint(20) NOT NULL,
         PRIMARY KEY (id),
         KEY email (email),
@@ -57,7 +58,7 @@ function tc_get_registration( $id ) {
 
 function tc_update_registration( $id, $data ) {
     global $wpdb;
-    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'address', 'zip', 'city', 'event_id', 'event_date', 'status', 'notes' );
+    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'address', 'zip', 'city', 'event_id', 'event_date', 'status', 'notes', 'reminder_sent' );
     $clean   = array_intersect_key( $data, array_flip( $allowed ) );
     if ( empty( $clean ) ) return false;
     return $wpdb->update( "{$wpdb->prefix}tc_registrations", $clean, array( 'id' => $id ) );
@@ -69,18 +70,16 @@ function tc_delete_registration( $id ) {
 }
 
 // ---------------------------------------------
-// Helper: Event-Infos fuer Mails aufbereiten
-// Gibt array( 'title', 'date', 'location' )
+// Helper: Event-Infos für Mails aufbereiten
 // ---------------------------------------------
 function tc_get_event_mail_info( $event_id, $event_date = '' ) {
     $event      = get_post( $event_id );
     $title      = $event ? $event->post_title : '-';
-    $start_date = get_field( 'start_date', $event_id ); // Y-m-d
-    $start_time = get_field( 'start_time', $event_id ); // H:i
-    $end_date   = get_field( 'end_date',   $event_id ); // Y-m-d
+    $start_date = get_field( 'start_date', $event_id );
+    $start_time = get_field( 'start_time', $event_id );
+    $end_date   = get_field( 'end_date',   $event_id );
     $location   = wp_strip_all_tags( get_field( 'location', $event_id ) ?: '' );
 
-    // Datum formatieren
     if ( $event_date ) {
         $d        = DateTime::createFromFormat( 'Y-m-d', $event_date );
         $date_str = $d ? $d->format( 'd.m.Y' ) : $event_date;
@@ -118,20 +117,20 @@ function tc_send_thank_you_mail( $data ) {
         $msg  = tc_mail_wrapper_open( $blogname );
         $msg .= '<h2 style="color:#5a7a00;margin-top:0;">Deine Anfrage ist bei uns eingegangen!</h2>';
         $msg .= '<p>Hallo ' . esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) . ',</p>';
-        $msg .= '<p>vielen Dank, dass du dich fuer ein <strong>kostenloses Probetraining</strong> interessierst! Wir haben deine Anfrage erhalten und melden uns zeitnah bei dir.</p>';
+        $msg .= '<p>vielen Dank, dass du dich für ein <strong>kostenloses Probetraining</strong> interessierst! Wir haben deine Anfrage erhalten und melden uns zeitnah bei dir.</p>';
         $msg .= tc_event_info_block( $info );
-        $msg .= '<p>Das Probetraining ist selbstverstaendlich <strong>kostenlos und unverbindlich</strong>. Schnupper einfach rein und schau, ob es dir gefaellt.</p>';
+        $msg .= '<p>Das Probetraining ist selbstverständlich <strong>kostenlos und unverbindlich</strong>. Schnupper einfach rein und schau, ob es dir gefällt.</p>';
         $msg .= '<p>Bei Fragen kannst du dich jederzeit bei uns melden.</p>';
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
-        $subject = 'Vielen Dank fuer Ihre Anmeldung - ' . $info['title'];
+        $subject = 'Vielen Dank für Ihre Anmeldung - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#0066cc;margin-top:0;">Vielen Dank fuer Ihre Anmeldung!</h2>';
+        $msg .= '<h2 style="color:#0066cc;margin-top:0;">Vielen Dank für Ihre Anmeldung!</h2>';
         $msg .= '<p>Hallo ' . esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) . ',</p>';
-        $msg .= '<p>wir haben Ihre Anmeldung erhalten und melden uns zeitnah mit einer Bestaetigung bei Ihnen.</p>';
+        $msg .= '<p>wir haben Ihre Anmeldung erhalten und melden uns zeitnah mit einer Bestätigung bei Ihnen.</p>';
         $msg .= tc_event_info_block( $info );
-        $msg .= '<p>Bei Fragen stehen wir Ihnen gerne zur Verfuegung.</p>';
+        $msg .= '<p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>';
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     }
@@ -152,19 +151,19 @@ function tc_send_confirmation_mail( $registration_id ) {
     $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
 
     if ( $is_trial ) {
-        $subject = 'Dein Probetraining ist bestaetigt - ' . $info['title'];
+        $subject = 'Dein Probetraining ist bestätigt - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#059669;margin-top:0;">Dein Probetraining ist bestaetigt! &#10003;</h2>';
+        $msg .= '<h2 style="color:#059669;margin-top:0;">Dein Probetraining ist bestätigt! &#10003;</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
-        $msg .= '<p>wir freuen uns auf dich! Dein kostenloses Probetraining ist hiermit bestaetigt. Wir sehen uns beim Termin!</p>';
+        $msg .= '<p>wir freuen uns auf dich! Dein kostenloses Probetraining ist hiermit bestätigt. Wir sehen uns beim Termin!</p>';
         $msg .= tc_event_info_block( $info );
         $msg .= '<p>Bring bequeme Sportkleidung mit und komm einfach vorbei. Bei Fragen melde dich gerne jederzeit.</p>';
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
-        $subject = 'Ihre Anmeldung ist bestaetigt - ' . $info['title'];
+        $subject = 'Ihre Anmeldung ist bestätigt - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#059669;margin-top:0;">Ihre Anmeldung ist bestaetigt! &#10003;</h2>';
+        $msg .= '<h2 style="color:#059669;margin-top:0;">Ihre Anmeldung ist bestätigt! &#10003;</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
         $msg .= '<p>wir freuen uns, Ihre Anmeldung hiermit offiziell zu bestaetigen. Wir sehen Sie beim Termin!</p>';
         $msg .= tc_event_info_block( $info );
@@ -189,23 +188,23 @@ function tc_send_cancellation_mail( $registration_id ) {
     $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
 
     if ( $is_trial ) {
-        $subject = 'Deine Probetraining-Anfrage konnte leider nicht bestaetigt werden - ' . $info['title'];
+        $subject = 'Deine Probetraining-Anfrage konnte leider nicht bestätigt werden - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#dc2626;margin-top:0;">Deine Probetraining-Anfrage konnte nicht bestaetigt werden</h2>';
+        $msg .= '<h2 style="color:#dc2626;margin-top:0;">Deine Probetraining-Anfrage konnte nicht bestätigt werden</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
-        $msg .= '<p>leider muessen wir dir mitteilen, dass deine Anfrage fuer ein Probetraining fuer den folgenden Termin nicht bestaetigt werden konnte.</p>';
+        $msg .= '<p>leider muessen wir dir mitteilen, dass deine Anfrage für ein Probetraining für den folgenden Termin nicht bestätigt werden konnte.</p>';
         $msg .= tc_event_info_block( $info );
-        $msg .= '<p>Melde dich gerne bei uns, wenn du einen anderen Termin finden moechtest. Wir helfen dir gerne weiter!</p>';
+        $msg .= '<p>Melde dich gerne bei uns, wenn du einen anderen Termin finden möchtest. Wir helfen dir gerne weiter!</p>';
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
-        $subject = 'Ihre Anmeldung konnte leider nicht bestaetigt werden - ' . $info['title'];
+        $subject = 'Ihre Anmeldung konnte leider nicht bestätigt werden - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#dc2626;margin-top:0;">Ihre Anmeldung konnte nicht bestaetigt werden</h2>';
+        $msg .= '<h2 style="color:#dc2626;margin-top:0;">Ihre Anmeldung konnte nicht bestätigt werden</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
-        $msg .= '<p>leider muessen wir Ihnen mitteilen, dass Ihre Anmeldung fuer den folgenden Termin nicht bestaetigt werden konnte.</p>';
+        $msg .= '<p>leider muessen wir Ihnen mitteilen, dass Ihre Anmeldung für den folgenden Termin nicht bestätigt werden konnte.</p>';
         $msg .= tc_event_info_block( $info );
-        $msg .= '<p>Bei Fragen oder wenn Sie einen alternativen Termin buchen moechten, melden Sie sich gerne bei uns.</p>';
+        $msg .= '<p>Bei Fragen oder wenn Sie einen alternativen Termin buchen möchten, melden Sie sich gerne bei uns.</p>';
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     }
@@ -336,7 +335,6 @@ function tc_handle_registration_submission() {
         wp_send_json_error( array( 'message' => 'Diese Veranstaltung existiert nicht.' ) );
     }
 
-    // Probetraining serverseitig pruefen (nicht dem POST-Feld vertrauen)
     $is_trial = (bool) get_field( 'price_on_request', $event_id );
 
     $track_p = get_field( 'track_participants', $event_id );
@@ -357,8 +355,8 @@ function tc_handle_registration_submission() {
     ) );
     if ( $existing ) {
         $dup_msg = $is_trial
-            ? 'Du hast bereits eine Probetraining-Anfrage fuer diese Veranstaltung gestellt.'
-            : 'Sie sind bereits fuer diese Veranstaltung angemeldet.';
+            ? 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.'
+            : 'Sie sind bereits für diese Veranstaltung angemeldet.';
         wp_send_json_error( array( 'message' => $dup_msg ) );
     }
 
@@ -404,7 +402,7 @@ function tc_handle_registration_submission() {
     ) );
 
     $success_msg = $is_trial
-        ? 'Vielen Dank! Deine Anfrage fuer ein Probetraining wurde erfolgreich uebermittelt. Wir melden uns zeitnah bei dir.'
+        ? 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich uebermittelt. Wir melden uns zeitnah bei dir.'
         : 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.';
 
     wp_send_json_success( array(

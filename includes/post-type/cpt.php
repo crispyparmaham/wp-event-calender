@@ -7,8 +7,8 @@ defined( 'ABSPATH' ) || exit;
 add_action( 'init', function () {
     register_post_type( 'training_event', array(
         'labels' => array(
-            'name'          => 'Events',
-            'singular_name' => 'Event',
+            'name'          => 'Kalender',
+            'singular_name' => 'Kalender',
             'add_new'       => 'Event hinzufügen',
             'add_new_item'  => 'Neuen Event hinzufügen',
             'edit_item'     => 'Event bearbeiten',
@@ -316,4 +316,17 @@ add_action( 'acf/include_fields', function () {
         'instruction_placement' => 'label',
         'active'                => true,
     ) );
+} );
+
+// ─────────────────────────────────────────────
+// 3. Single-Post-Template
+// ─────────────────────────────────────────────
+add_filter( 'single_template', function ( $template ) {
+    if ( is_singular( 'training_event' ) ) {
+        $plugin_tpl = TC_PATH . 'templates/single-training_event.php';
+        if ( file_exists( $plugin_tpl ) ) {
+            return $plugin_tpl;
+        }
+    }
+    return $template;
 } );

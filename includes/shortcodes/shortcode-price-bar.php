@@ -128,7 +128,7 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
 add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-price-bar',
-        TC_URL . 'assets/css/price-bar.css',
+        TC_URL . 'assets/css/frontend/price-bar.css',
         array(),
         TC_VERSION
     );
