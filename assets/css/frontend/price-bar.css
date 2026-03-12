@@ -120,8 +120,8 @@
   display: inline-block;
   flex-shrink: 0;
   padding: 13px 28px;
-  background: #a4d61f;
-  color: #1a2e00;
+  background: var(--tc-primary, #4f46e5);
+  color: #fff;
   font-size: 15px;
   font-weight: 700;
   border-radius: 8px;
@@ -131,11 +131,11 @@
 }
 
 .tc-price-bar-btn:hover {
-  background: #90c012;
-  color: #1a2e00;
+  background: var(--tc-primary-dark, #3730a3);
+  color: #fff;
 }
 
-/* Early Bird Variante */
+/* Early Bird Variante – behält grün */
 .tc-price-bar-btn--early {
   background: #a4d61f;
   color: #1a2e00;
@@ -199,12 +199,12 @@
   color: #bbb;
 }
 
-.tc-dark .tc-price-bar-btn {
-  background: #a4d61f;
-  color: #1a2e00;
+.tc-dark .tc-price-bar-btn:not(.tc-price-bar-btn--early) {
+  background: var(--tc-primary, #4f46e5);
+  color: #fff;
 }
 
-.tc-dark .tc-price-bar-btn:hover {
-  background: #90c012;
-  color: #1a2e00;
+.tc-dark .tc-price-bar-btn:not(.tc-price-bar-btn--early):hover {
+  background: var(--tc-primary-dark, #3730a3);
+  color: #fff;
 }

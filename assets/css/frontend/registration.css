@@ -111,8 +111,8 @@
 
 .tc-registration-wrap .tc-form-control:focus {
     outline: none !important;
-    border-color: #0066cc !important;
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
+    border-color: var(--tc-primary, #4f46e5) !important;
+    box-shadow: 0 0 0 3px var(--tc-primary-light, rgba(79,70,229,0.15)) !important;
 }
 
 .tc-registration-wrap .tc-form-control::placeholder {
@@ -154,7 +154,7 @@
 
 .tc-registration-wrap .tc-event-details {
     background-color: #f9f9f9 !important;
-    border-left: 4px solid #0066cc !important;
+    border-left: 4px solid var(--tc-primary, #4f46e5) !important;
     padding: 1rem !important;
     margin-bottom: 1.5rem !important;
     border-radius: 4px !important;
@@ -216,18 +216,18 @@
 }
 
 .tc-registration-wrap .tc-btn-primary {
-    background-color: #0066cc !important;
+    background-color: var(--tc-primary, #4f46e5) !important;
     color: #ffffff !important;
 }
 
 .tc-registration-wrap .tc-btn-primary:hover,
 .tc-registration-wrap .tc-btn-primary:focus {
-    background-color: #0052a3 !important;
+    background-color: var(--tc-primary-dark, #3730a3) !important;
     color: #ffffff !important;
 }
 
 .tc-registration-wrap .tc-btn-primary:active {
-    background-color: #003d7a !important;
+    background-color: var(--tc-primary-dark, #3730a3) !important;
     color: #ffffff !important;
 }
 
@@ -328,8 +328,8 @@
 }
 
 .tc-dark .tc-form-control:focus {
-    border-color: #6699ff !important;
-    box-shadow: 0 0 0 3px rgba(102, 153, 255, 0.1) !important;
+    border-color: var(--tc-primary, #4f46e5) !important;
+    box-shadow: 0 0 0 3px var(--tc-primary-light, rgba(79,70,229,0.25)) !important;
 }
 
 .tc-dark .tc-form-control::placeholder {
@@ -338,7 +338,7 @@
 
 .tc-dark .tc-event-details {
     background-color: #3a3a3a !important;
-    border-left-color: #6699ff !important;
+    border-left-color: var(--tc-primary, #4f46e5) !important;
 }
 
 .tc-dark .tc-detail-label {
@@ -353,12 +353,12 @@
 }
 
 .tc-dark .tc-btn-primary {
-    background-color: #4f46e5 !important;
+    background-color: var(--tc-primary, #4f46e5) !important;
     color: #fff !important;
 }
 
 .tc-dark .tc-btn-primary:hover {
-    background-color: #4338ca !important;
+    background-color: var(--tc-primary-dark, #3730a3) !important;
     color: #fff !important;
 }
 
