@@ -78,8 +78,18 @@ add_shortcode( 'training_calendar', function ( $atts ) {
 } );
 
 // ─────────────────────────────────────────────
-// Assets Kalender (einmalig laden)
+// Assets Kalender – früh einreihen damit
+// Oxygen Builder die Styles im <head> ausgibt.
 // ─────────────────────────────────────────────
+add_action( 'wp_enqueue_scripts', function () {
+    wp_enqueue_style(
+        'tc-calendar-frontend',
+        TC_URL . 'assets/css/calendar-frontend.css',
+        array(),
+        TC_VERSION
+    );
+} );
+
 function tc_enqueue_calendar_assets() {
     static $loaded = false;
     if ( $loaded ) return;
@@ -106,10 +116,5 @@ function tc_enqueue_calendar_assets() {
         'nonce'   => wp_create_nonce( 'tc_nonce' ),
     ) );
 
-    wp_enqueue_style(
-        'tc-calendar-frontend',
-        TC_URL . 'assets/css/calendar-frontend.css',
-        array(),
-        TC_VERSION
-    );
+    // CSS bereits via wp_enqueue_scripts geladen – kein Duplikat nötig.
 }

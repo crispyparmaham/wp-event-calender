@@ -89,17 +89,19 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
 } );
 
 // ─────────────────────────────────────────────
-// Assets Price Bar (einmalig laden)
+// Assets Price Bar – früh einreihen damit
+// Oxygen Builder die Styles im <head> ausgibt.
 // ─────────────────────────────────────────────
-function tc_enqueue_price_bar_assets() {
-    static $loaded = false;
-    if ( $loaded ) return;
-    $loaded = true;
-
+add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-price-bar',
         TC_URL . 'assets/css/price-bar.css',
         array(),
         TC_VERSION
     );
+} );
+
+function tc_enqueue_price_bar_assets() {
+    // Leer – Styles werden bereits via wp_enqueue_scripts geladen.
+    // Funktion bleibt für Rückwärtskompatibilität erhalten.
 }
