@@ -23,6 +23,7 @@ function tc_create_registrations_table() {
         phone varchar(20),
         company varchar(255),
         event_id bigint(20) NOT NULL,
+        event_date date,
         status varchar(20) DEFAULT 'pending',
         notes longtext,
         created_at bigint(20) NOT NULL,
@@ -71,7 +72,7 @@ function tc_update_registration( $registration_id, $data ) {
     global $wpdb;
     $table_name = $wpdb->prefix . 'tc_registrations';
 
-    $allowed_fields = array( 'firstname', 'lastname', 'email', 'phone', 'company', 'event_id', 'status', 'notes' );
+    $allowed_fields = array( 'firstname', 'lastname', 'email', 'phone', 'company', 'event_id', 'event_date', 'status', 'notes' );
     $update_data = array();
 
     foreach ( $data as $key => $value ) {
@@ -126,6 +127,7 @@ function tc_handle_registration_submission() {
     $phone     = isset( $_POST['phone'] ) ? sanitize_text_field( $_POST['phone'] ) : '';
     $company   = isset( $_POST['company'] ) ? sanitize_text_field( $_POST['company'] ) : '';
     $event_id  = isset( $_POST['event_id'] ) ? absint( $_POST['event_id'] ) : 0;
+    $event_date = isset( $_POST['event_date'] ) ? sanitize_text_field( $_POST['event_date'] ) : '';
     $notes     = isset( $_POST['notes'] ) ? sanitize_textarea_field( $_POST['notes'] ) : '';
 
     // Validierung
@@ -165,11 +167,12 @@ function tc_handle_registration_submission() {
             'phone'      => $phone,
             'company'    => $company,
             'event_id'   => $event_id,
+            'event_date' => $event_date ?: null,
             'status'     => 'pending',
             'notes'      => $notes,
             'created_at' => time(),
         ),
-        array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d' )
+        array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d' )
     );
 
     if ( ! $registration_id ) {
@@ -186,6 +189,7 @@ function tc_handle_registration_submission() {
         'phone'     => $phone,
         'company'   => $company,
         'event_id'  => $event_id,
+        'event_date' => $event_date,
         'notes'     => $notes,
     ) );
 
@@ -215,13 +219,30 @@ function tc_get_event_details_ajax() {
     $location = get_field( 'location', $event_id );
     $start_date = get_field( 'start_date', $event_id );
     $start_time = get_field( 'start_time', $event_id );
+    $more_days = get_field( 'more_days', $event_id );
+    $end_date = get_field( 'end_date', $event_id );
+
+    // Datumsarray für mehrtägige Events generieren
+    $dates = array();
+    if ( $more_days && $end_date ) {
+        $start_dt = new DateTime( $start_date );
+        $end_dt = new DateTime( $end_date );
+        $current = clone $start_dt;
+
+        while ( $current <= $end_dt ) {
+            $dates[] = $current->format( 'Y-m-d' );
+            $current->modify( '+1 day' );
+        }
+    }
 
     wp_send_json_success( array(
-        'title'      => $event->post_title,
-        'leadership' => $leadership ?: 'Nicht angegeben',
-        'location'   => $location ?: 'Nicht angegeben',
-        'start_date' => $start_date ?: 'Nicht angegeben',
-        'start_time' => $start_time ?: '',
+        'title'       => $event->post_title,
+        'leadership'  => $leadership ?: 'Nicht angegeben',
+        'location'    => $location ?: 'Nicht angegeben',
+        'start_date'  => $start_date ?: 'Nicht angegeben',
+        'start_time'  => $start_time ?: '',
+        'is_multiday' => (bool) $more_days,
+        'dates'       => $dates,
     ) );
 }
 
@@ -233,14 +254,35 @@ add_action( 'tc_registration_submitted', function ( $registration_id, $data ) {
     $event_title = $event ? $event->post_title : 'Veranstaltung';
     
     $to      = $data['email'];
+    $from_email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
+    $blogname = get_option( 'blogname' );
+    
     $subject = 'Anmeldungsbestätigung: ' . $event_title;
-    $headers = array( 'Content-Type: text/html; charset=UTF-8' );
+    $headers = array(
+        'Content-Type: text/html; charset=UTF-8',
+        'From: ' . $blogname . ' <' . $from_email . '>',
+    );
 
-    $message = '<h2>Vielen Dank für Ihre Anmeldung!</h2>';
+    $message = '<html><body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333;">';
+    $message .= '<div style="max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9; border: 1px solid #e0e0e0; border-radius: 8px;">';
+    $message .= '<h2 style="color: #0066cc; margin-top: 0;">Vielen Dank für Ihre Anmeldung!</h2>';
     $message .= '<p>Hallo ' . esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) . ',</p>';
     $message .= '<p>Ihre Anmeldung für die Veranstaltung <strong>' . esc_html( $event_title ) . '</strong> wurde erfolgreich gespeichert.</p>';
+    
+    // Wenn ein konkretes Datum vorhanden (für mehrtägige Events)
+    if ( ! empty( $data['event_date'] ) ) {
+        $event_date_obj = DateTime::createFromFormat( 'Y-m-d', $data['event_date'] );
+        $formatted_date = $event_date_obj ? $event_date_obj->format( 'd.m.Y' ) : $data['event_date'];
+        $message .= '<p><strong>Gewähltes Datum:</strong> ' . esc_html( $formatted_date ) . '</p>';
+    }
+    
     $message .= '<p>Wir werden Sie kontaktieren, sobald Ihre Anmeldung bestätigt wurde.</p>';
-    $message .= '<p>Mit freundlichen Grüßen<br>Ihr Team</p>';
+    $message .= '<hr style="border: none; border-top: 1px solid #ddd; margin: 20px 0;">';
+    $message .= '<p style="font-size: 0.9em; color: #666;">';
+    $message .= 'Mit freundlichen Grüßen<br>';
+    $message .= '<strong>' . esc_html( $blogname ) . '</strong>';
+    $message .= '</p>';
+    $message .= '</div></body></html>';
 
     wp_mail( $to, $subject, $message, $headers );
 }, 10, 2 );

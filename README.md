@@ -162,22 +162,24 @@ Displays a registration form for trainings and seminars. Users can select an eve
 <?php echo do_shortcode('[training_registration event_id="42" title="Anmeldeformular"]'); ?>
 ```
 
+### Features
+
+- **Automatic event detection** — on single event pages, the current event is pre-selected
+- **Dynamic event selection** — loads all published events when no event_id specified
+- **Event details** — displays trainer, location, and date when event is selected
+- **Multi-day support** — shows date picker if event spans multiple days
+- **Form fields** — First name, last name, email (required), phone, company, notes
+- **Real-time validation** — user-friendly error messages
+- **AJAX submission** — no page reload required
+- **Confirmation email** — automatic dispatch from configured sender address
+- **Database storage** — registrations stored in custom database table `wp_tc_registrations`
+
 ### Attributes
 
 | Attribute | Default | Description |
 |---|---|---|
-| `event_id` | `0` | Post ID of a specific event (optional). If omitted, users can select from all events |
+| `event_id` | `0` | Post ID of a specific event (optional). If omitted, users can select from all events. Auto-detected on single event pages. |
 | `title` | `Anmelden` | Form title heading |
-
-### Features
-
-- **Dynamic event selection** — loads all published events
-- **Event details** — displays trainer, location, and date when event is selected
-- **Form fields** — First name, last name, email (required), phone, company, notes
-- **Real-time validation** — user-friendly error messages
-- **AJAX submission** — no page reload required
-- **Confirmation email** — automatic dispatch to registrant
-- **Database storage** — registrations stored in custom database table `wp_tc_registrations`
 
 ### Admin Management
 
@@ -190,6 +192,14 @@ Navigate to **Events → Anmeldungen** in the WordPress admin to manage registra
 | **Edit registration** | View/edit registration details and add internal notes |
 | **Delete** | Remove registrations with confirmation prompt |
 | **Timestamps** | See when each registration was submitted |
+
+### Settings
+
+Navigate to **Events → Einstellungen** to configure:
+
+| Setting | Description |
+|---|---|
+| **Bestätigungs-E-Mail von** | Sender email address for confirmation emails (defaults to admin email). Uses Fluent SMTP if installed. |
 
 ---
 

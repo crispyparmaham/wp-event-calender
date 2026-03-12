@@ -22,7 +22,8 @@ add_action( 'admin_init', function () {
     register_setting( 'tc_settings_group', 'tc_settings', array(
         'sanitize_callback' => 'tc_sanitize_settings',
         'default'           => array(
-            'calendar_mode' => 'light',
+            'calendar_mode'      => 'light',
+            'registration_email' => get_option( 'admin_email' ),
         ),
     ) );
 
@@ -43,6 +44,24 @@ add_action( 'admin_init', function () {
         'training-calendar-settings',
         'tc_section_frontend'
     );
+
+    // ── Sektion: Anmeldeformular ────────────
+    add_settings_section(
+        'tc_section_registration',
+        'Anmeldeformular',
+        function () {
+            echo '<p class="tc-settings-desc">Einstellungen für das Anmeldeformular und Bestätigungsmails.</p>';
+        },
+        'training-calendar-settings'
+    );
+
+    add_settings_field(
+        'tc_registration_email',
+        'Bestätigungs-E-Mail von',
+        'tc_field_registration_email',
+        'training-calendar-settings',
+        'tc_section_registration'
+    );
 } );
 
 // ─────────────────────────────────────────────
@@ -53,6 +72,14 @@ function tc_sanitize_settings( $input ) {
     $clean['calendar_mode'] = isset( $input['calendar_mode'] ) && $input['calendar_mode'] === 'dark'
         ? 'dark'
         : 'light';
+    $clean['registration_email'] = isset( $input['registration_email'] ) 
+        ? sanitize_email( $input['registration_email'] )
+        : get_option( 'admin_email' );
+    
+    if ( ! is_email( $clean['registration_email'] ) ) {
+        $clean['registration_email'] = get_option( 'admin_email' );
+    }
+    
     return $clean;
 }
 
@@ -62,6 +89,27 @@ function tc_sanitize_settings( $input ) {
 function tc_get_setting( $key, $default = '' ) {
     $settings = get_option( 'tc_settings', array() );
     return $settings[ $key ] ?? $default;
+}
+
+// ─────────────────────────────────────────────
+// Feld: Registrierungs-E-Mail
+// ─────────────────────────────────────────────
+function tc_field_registration_email() {
+    $email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
+    ?>
+    <input 
+        type="email" 
+        name="tc_settings[registration_email]" 
+        value="<?php echo esc_attr( $email ); ?>" 
+        class="regular-text"
+        required
+    />
+    <p class="description">
+        Von dieser E-Mail-Adresse werden die Anmeldebestätigungen an die Teilnehmer versendet.
+        <br>
+        <strong>Hinweis:</strong> Wird durch das Fluent SMTP Plugin abgewickelt (soweit installiert/konfiguriert).
+    </p>
+    <?php
 }
 
 // ─────────────────────────────────────────────
