@@ -26,7 +26,6 @@ add_action( 'admin_init', function () {
             'registration_email' => get_option( 'admin_email' ),
             'reminder_enabled'   => '0',
             'primary_color'      => '#4f46e5',
-            'github_token'       => '',
         ),
     ) );
 
@@ -110,13 +109,6 @@ add_action( 'admin_init', function () {
         'tc_section_update'
     );
 
-    add_settings_field(
-        'tc_github_token',
-        'GitHub Access Token',
-        'tc_field_github_token',
-        'training-calendar-settings',
-        'tc_section_update'
-    );
 } );
 
 // ─────────────────────────────────────────────
@@ -139,10 +131,6 @@ function tc_sanitize_settings( $input ) {
 
     $color = isset( $input['primary_color'] ) ? sanitize_hex_color( $input['primary_color'] ) : '';
     $clean['primary_color'] = $color ?: '#4f46e5';
-
-    $clean['github_token'] = isset( $input['github_token'] )
-        ? sanitize_text_field( $input['github_token'] )
-        : '';
 
     return $clean;
 }
@@ -406,28 +394,6 @@ function tc_field_plugin_version() {
     <a href="<?php echo esc_url( $check_url ); ?>" class="button button-secondary">
         ↻ Jetzt auf Updates prüfen
     </a>
-    <?php
-}
-
-// ─────────────────────────────────────────────
-// Feld: GitHub Access Token
-// ─────────────────────────────────────────────
-function tc_field_github_token() {
-    $token = tc_get_setting( 'github_token', '' );
-    ?>
-    <input
-        type="password"
-        name="tc_settings[github_token]"
-        value="<?php echo esc_attr( $token ); ?>"
-        class="regular-text"
-        autocomplete="new-password"
-        placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
-    />
-    <p class="description">
-        Nur für <strong>private</strong> GitHub-Repositories erforderlich.<br>
-        Benötigte Berechtigung: <code>repo</code> (read) oder <code>contents: read</code> (fine-grained).<br>
-        Für öffentliche Repos dieses Feld leer lassen.
-    </p>
     <?php
 }
 
