@@ -91,7 +91,8 @@
 
 .tc-price-bar-teaser strong {
   display: block;
-  color: var(--tc-text);
+  color: #90c012;
+  font-weight: 600;
   font-size: 22px;
   margin-bottom: 2px;
 }
