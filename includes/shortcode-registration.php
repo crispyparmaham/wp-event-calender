@@ -2,6 +2,18 @@
 defined( 'ABSPATH' ) || exit;
 
 // ─────────────────────────────────────────────
+// CSS früh laden (wie alle anderen Shortcodes)
+// ─────────────────────────────────────────────
+add_action( 'wp_enqueue_scripts', function () {
+    wp_enqueue_style(
+        'tc-registration',
+        TC_URL . 'assets/css/registration.css',
+        array(),
+        TC_VERSION
+    );
+} );
+
+// ─────────────────────────────────────────────
 // Shortcode: [training_registration]
 //
 // Attribute:
@@ -16,12 +28,12 @@ add_shortcode( 'training_registration', function ( $atts ) {
     ), $atts, 'training_registration' );
 
     $event_id = absint( $atts['event_id'] );
-    
+
     // Wenn keine Event-ID übergeben, versuchen das aktuelle Event zu erkennen
     if ( ! $event_id && is_singular( 'training_event' ) ) {
         $event_id = get_the_ID();
     }
-    
+
     // Wenn Event-ID übergeben, Existenz prüfen
     if ( $event_id && get_post_type( $event_id ) !== 'training_event' ) {
         return '<p class="tc-error">Veranstaltung nicht gefunden.</p>';
@@ -30,19 +42,18 @@ add_shortcode( 'training_registration', function ( $atts ) {
     static $instance = 0;
     $instance++;
     $form_id = 'tc-registration-form-' . $instance;
-    $nonce = wp_create_nonce( 'tc_registration_nonce' );
+    $nonce   = wp_create_nonce( 'tc_registration_nonce' );
 
-    // Assets enqueuen
+    // JS + Lokalisierung enqueuen
     tc_enqueue_registration_assets();
 
     // Dark/Light Mode Klasse
-    $calendar_mode = tc_get_setting( 'calendar_mode', 'light' );
-    $dark_class = ( $calendar_mode === 'dark' ) ? 'tc-dark' : '';
+    $dark_class = tc_get_setting( 'calendar_mode', 'light' ) === 'dark' ? 'tc-dark' : '';
 
     ob_start(); ?>
     <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
         <form id="<?php echo esc_attr( $form_id ); ?>" class="tc-registration-form" method="POST">
-            
+
             <h2><?php echo esc_html( $atts['title'] ); ?></h2>
 
             <div class="tc-form-messages" style="display:none;"></div>
@@ -53,9 +64,9 @@ add_shortcode( 'training_registration', function ( $atts ) {
                     <label for="<?php echo esc_attr( $form_id ); ?>-event">
                         Veranstaltung <span class="tc-required">*</span>
                     </label>
-                    <select id="<?php echo esc_attr( $form_id ); ?>-event" 
-                            name="event_id" 
-                            class="tc-form-control tc-event-select" 
+                    <select id="<?php echo esc_attr( $form_id ); ?>-event"
+                            name="event_id"
+                            class="tc-form-control tc-event-select"
                             required>
                         <option value="">-- Bitte wählen --</option>
                         <?php
@@ -65,11 +76,10 @@ add_shortcode( 'training_registration', function ( $atts ) {
                             'orderby'        => 'title',
                             'order'          => 'ASC',
                         ) );
-
                         foreach ( $events as $event ) {
                             $selected = ( is_singular( 'training_event' ) && $event->ID === get_the_ID() ) ? 'selected' : '';
-                            echo '<option value="' . esc_attr( $event->ID ) . '" ' . esc_attr( $selected ) . '>' 
-                                . esc_html( $event->post_title ) 
+                            echo '<option value="' . esc_attr( $event->ID ) . '" ' . esc_attr( $selected ) . '>'
+                                . esc_html( $event->post_title )
                                 . '</option>';
                         }
                         ?>
@@ -80,15 +90,15 @@ add_shortcode( 'training_registration', function ( $atts ) {
                 <div id="<?php echo esc_attr( $form_id ); ?>-details" class="tc-event-details" style="display:none;">
                     <div class="tc-detail-item">
                         <span class="tc-detail-label">Leitung:</span>
-                        <span class="tc-detail-leadership">-</span>
+                        <span class="tc-detail-leadership">–</span>
                     </div>
                     <div class="tc-detail-item">
                         <span class="tc-detail-label">Ort:</span>
-                        <span class="tc-detail-location">-</span>
+                        <span class="tc-detail-location">–</span>
                     </div>
                     <div class="tc-detail-item">
                         <span class="tc-detail-label">Datum:</span>
-                        <span class="tc-detail-date">-</span>
+                        <span class="tc-detail-date">–</span>
                     </div>
                 </div>
             <?php else : ?>
@@ -101,7 +111,7 @@ add_shortcode( 'training_registration', function ( $atts ) {
                     Wählen Sie ein Datum <span class="tc-required">*</span>
                 </label>
                 <select id="<?php echo esc_attr( $form_id ); ?>-event-date"
-                        name="event_date" 
+                        name="event_date"
                         class="tc-form-control">
                     <option value="">-- Bitte wählen --</option>
                 </select>
@@ -113,23 +123,22 @@ add_shortcode( 'training_registration', function ( $atts ) {
                     <label for="<?php echo esc_attr( $form_id ); ?>-firstname">
                         Vorname <span class="tc-required">*</span>
                     </label>
-                    <input type="text" 
+                    <input type="text"
                            id="<?php echo esc_attr( $form_id ); ?>-firstname"
-                           name="firstname" 
-                           class="tc-form-control" 
-                           required 
+                           name="firstname"
+                           class="tc-form-control"
+                           required
                            autocomplete="given-name">
                 </div>
-
                 <div class="tc-form-group">
                     <label for="<?php echo esc_attr( $form_id ); ?>-lastname">
                         Nachname <span class="tc-required">*</span>
                     </label>
-                    <input type="text" 
+                    <input type="text"
                            id="<?php echo esc_attr( $form_id ); ?>-lastname"
-                           name="lastname" 
-                           class="tc-form-control" 
-                           required 
+                           name="lastname"
+                           class="tc-form-control"
+                           required
                            autocomplete="family-name">
                 </div>
             </div>
@@ -139,22 +148,21 @@ add_shortcode( 'training_registration', function ( $atts ) {
                     <label for="<?php echo esc_attr( $form_id ); ?>-email">
                         E-Mail <span class="tc-required">*</span>
                     </label>
-                    <input type="email" 
+                    <input type="email"
                            id="<?php echo esc_attr( $form_id ); ?>-email"
-                           name="email" 
-                           class="tc-form-control" 
-                           required 
+                           name="email"
+                           class="tc-form-control"
+                           required
                            autocomplete="email">
                 </div>
-
                 <div class="tc-form-group">
                     <label for="<?php echo esc_attr( $form_id ); ?>-phone">
                         Telefon
                     </label>
-                    <input type="tel" 
+                    <input type="tel"
                            id="<?php echo esc_attr( $form_id ); ?>-phone"
-                           name="phone" 
-                           class="tc-form-control" 
+                           name="phone"
+                           class="tc-form-control"
                            autocomplete="tel">
                 </div>
             </div>
@@ -163,22 +171,21 @@ add_shortcode( 'training_registration', function ( $atts ) {
                 <label for="<?php echo esc_attr( $form_id ); ?>-company">
                     Unternehmen
                 </label>
-                <input type="text" 
+                <input type="text"
                        id="<?php echo esc_attr( $form_id ); ?>-company"
-                       name="company" 
-                       class="tc-form-control" 
+                       name="company"
+                       class="tc-form-control"
                        autocomplete="organization">
             </div>
 
-            <!-- Notizen -->
             <div class="tc-form-group">
                 <label for="<?php echo esc_attr( $form_id ); ?>-notes">
                     Besondere Anfragen / Notizen
                 </label>
                 <textarea id="<?php echo esc_attr( $form_id ); ?>-notes"
-                          name="notes" 
-                          class="tc-form-control" 
-                          rows="4" 
+                          name="notes"
+                          class="tc-form-control"
+                          rows="4"
                           placeholder="z.B. Spezielle Anforderungen oder Fragen..."></textarea>
             </div>
 
@@ -194,33 +201,21 @@ add_shortcode( 'training_registration', function ( $atts ) {
 
             <!-- Hidden Fields -->
             <input type="hidden" name="action" value="tc_submit_registration">
-            <input type="hidden" name="nonce" value="<?php echo esc_attr( $nonce ); ?>">
+            <input type="hidden" name="nonce"  value="<?php echo esc_attr( $nonce ); ?>">
 
         </form>
     </div>
-
     <?php
     return ob_get_clean();
-});
+} );
 
 // ─────────────────────────────────────────────
-// Assets enqueuen
+// JS enqueuen (CSS läuft über wp_enqueue_scripts)
 // ─────────────────────────────────────────────
 function tc_enqueue_registration_assets() {
     static $enqueued = false;
-    
-    if ( $enqueued ) {
-        return;
-    }
-    
+    if ( $enqueued ) return;
     $enqueued = true;
-
-    wp_enqueue_style(
-        'tc-registration',
-        TC_URL . 'assets/css/registration.css',
-        array(),
-        TC_VERSION
-    );
 
     wp_enqueue_script(
         'tc-registration',
