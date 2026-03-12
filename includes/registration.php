@@ -2,173 +2,122 @@
 defined( 'ABSPATH' ) || exit;
 
 // ─────────────────────────────────────────────
-// 1. Custom Post Type für Anmeldungen
+// Datenbankversion check
 // ─────────────────────────────────────────────
-add_action( 'init', function () {
-    register_post_type( 'training_registration', array(
-        'labels' => array(
-            'name'          => 'Anmeldungen',
-            'singular_name' => 'Anmeldung',
-            'add_new'       => 'Anmeldung hinzufügen',
-            'add_new_item'  => 'Neue Anmeldung hinzufügen',
-            'edit_item'     => 'Anmeldung bearbeiten',
-            'all_items'     => 'Alle Anmeldungen',
-            'search_items'  => 'Anmeldungen suchen',
-            'not_found'     => 'Keine Anmeldungen gefunden.',
-        ),
-        'public'            => false,
-        'show_in_menu'      => true,
-        'menu_icon'         => 'dashicons-clipboard',
-        'show_ui'           => true,
-        'supports'          => array( 'title' ),
-        'has_archive'       => false,
-        'show_in_rest'      => true,
-        'capability_type'   => 'post',
-    ) );
+add_action( 'admin_init', 'tc_create_registrations_table' );
 
-    // Spalten in der Admin-Liste definieren
-    add_filter( 'manage_training_registration_posts_columns', function ( $columns ) {
-        unset( $columns['date'] );
-        return array_merge( $columns, array(
-            'firstname'  => 'Vorname',
-            'lastname'   => 'Nachname',
-            'email'      => 'E-Mail',
-            'phone'      => 'Telefon',
-            'event'      => 'Veranstaltung',
-            'status'     => 'Status',
-            'registered' => 'Angemeldet am',
-        ) );
-    } );
+function tc_create_registrations_table() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'tc_registrations';
+    $charset_collate = $wpdb->get_charset_collate();
 
-    // Spalten-Inhalte
-    add_action( 'manage_training_registration_posts_custom_column', function ( $column, $post_id ) {
-        switch ( $column ) {
-            case 'firstname':
-                echo esc_html( get_post_meta( $post_id, '_tc_firstname', true ) );
-                break;
-            case 'lastname':
-                echo esc_html( get_post_meta( $post_id, '_tc_lastname', true ) );
-                break;
-            case 'email':
-                echo esc_html( get_post_meta( $post_id, '_tc_email', true ) );
-                break;
-            case 'phone':
-                echo esc_html( get_post_meta( $post_id, '_tc_phone', true ) );
-                break;
-            case 'event':
-                $event_id = get_post_meta( $post_id, '_tc_event_id', true );
-                if ( $event_id ) {
-                    echo '<a href="' . esc_url( get_edit_post_link( $event_id ) ) . '">';
-                    echo esc_html( get_the_title( $event_id ) );
-                    echo '</a>';
-                }
-                break;
-            case 'status':
-                $status = get_post_meta( $post_id, '_tc_status', true );
-                $status_label = $status === 'confirmed' ? 'Bestätigt' : 'Ausstehend';
-                echo '<span class="tc-status-badge tc-status-' . esc_attr( $status ) . '">' . esc_html( $status_label ) . '</span>';
-                break;
-            case 'registered':
-                $post = get_post( $post_id );
-                echo esc_html( date_i18n( 'd.m.Y H:i', strtotime( $post->post_date ) ) );
-                break;
+    if ( $wpdb->get_var( "SHOW TABLES LIKE '$table_name'" ) === $table_name ) {
+        return;
+    }
+
+    $sql = "CREATE TABLE $table_name (
+        id bigint(20) NOT NULL AUTO_INCREMENT,
+        firstname varchar(255) NOT NULL,
+        lastname varchar(255) NOT NULL,
+        email varchar(255) NOT NULL,
+        phone varchar(20),
+        company varchar(255),
+        event_id bigint(20) NOT NULL,
+        status varchar(20) DEFAULT 'pending',
+        notes longtext,
+        created_at bigint(20) NOT NULL,
+        PRIMARY KEY (id),
+        KEY email (email),
+        KEY event_id (event_id),
+        KEY status (status)
+    ) $charset_collate;";
+
+    require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+    dbDelta( $sql );
+}
+
+// ─────────────────────────────────────────────
+// Helper: Alle Anmeldungen abrufen
+// ─────────────────────────────────────────────
+function tc_get_all_registrations() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'tc_registrations';
+
+    $registrations = $wpdb->get_results(
+        "SELECT * FROM $table_name ORDER BY created_at DESC",
+        ARRAY_A
+    );
+
+    return $registrations ? $registrations : array();
+}
+
+// ─────────────────────────────────────────────
+// Helper: Einzelne Anmeldung abrufen
+// ─────────────────────────────────────────────
+function tc_get_registration( $registration_id ) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'tc_registrations';
+
+    return $wpdb->get_row(
+        $wpdb->prepare( "SELECT * FROM $table_name WHERE id = %d", $registration_id ),
+        ARRAY_A
+    );
+}
+
+// ─────────────────────────────────────────────
+// Helper: Anmeldung aktualisieren
+// ─────────────────────────────────────────────
+function tc_update_registration( $registration_id, $data ) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'tc_registrations';
+
+    $allowed_fields = array( 'firstname', 'lastname', 'email', 'phone', 'company', 'event_id', 'status', 'notes' );
+    $update_data = array();
+
+    foreach ( $data as $key => $value ) {
+        if ( in_array( $key, $allowed_fields, true ) ) {
+            $update_data[ $key ] = $value;
         }
-    }, 10, 2 );
-} );
+    }
+
+    if ( empty( $update_data ) ) {
+        return false;
+    }
+
+    return $wpdb->update(
+        $table_name,
+        $update_data,
+        array( 'id' => $registration_id ),
+        null,
+        array( '%d' )
+    );
+}
 
 // ─────────────────────────────────────────────
-// 2. ACF Feldgruppe für Anmeldungen
+// Helper: Anmeldung löschen
 // ─────────────────────────────────────────────
-add_action( 'acf/include_fields', function () {
-    if ( ! function_exists( 'acf_add_local_field_group' ) ) return;
+function tc_delete_registration( $registration_id ) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'tc_registrations';
 
-    acf_add_local_field_group( array(
-        'key'    => 'group_training_registration',
-        'title'  => 'Anmeldungsdetails',
-        'fields' => array(
-            array(
-                'key'           => 'field_tc_reg_firstname',
-                'label'         => 'Vorname',
-                'name'          => 'tc_firstname',
-                'type'          => 'text',
-                'required'      => 1,
-            ),
-            array(
-                'key'           => 'field_tc_reg_lastname',
-                'label'         => 'Nachname',
-                'name'          => 'tc_lastname',
-                'type'          => 'text',
-                'required'      => 1,
-            ),
-            array(
-                'key'           => 'field_tc_reg_email',
-                'label'         => 'E-Mail',
-                'name'          => 'tc_email',
-                'type'          => 'email',
-                'required'      => 1,
-            ),
-            array(
-                'key'           => 'field_tc_reg_phone',
-                'label'         => 'Telefon',
-                'name'          => 'tc_phone',
-                'type'          => 'text',
-            ),
-            array(
-                'key'           => 'field_tc_reg_company',
-                'label'         => 'Unternehmen',
-                'name'          => 'tc_company',
-                'type'          => 'text',
-            ),
-            array(
-                'key'           => 'field_tc_reg_event',
-                'label'         => 'Veranstaltung',
-                'name'          => 'tc_event_id',
-                'type'          => 'post_object',
-                'post_type'     => array( 'training_event' ),
-                'required'      => 1,
-                'return_format' => 'id',
-            ),
-            array(
-                'key'           => 'field_tc_reg_status',
-                'label'         => 'Anmeldestatus',
-                'name'          => 'tc_status',
-                'type'          => 'select',
-                'choices'       => array(
-                    'pending'   => 'Ausstehend',
-                    'confirmed' => 'Bestätigt',
-                    'cancelled' => 'Storniert',
-                ),
-                'default_value' => 'pending',
-                'return_format' => 'value',
-            ),
-            array(
-                'key'           => 'field_tc_reg_notes',
-                'label'         => 'Notizen',
-                'name'          => 'tc_notes',
-                'type'          => 'textarea',
-                'rows'          => 3,
-            ),
-        ),
-        'location' => array(
-            array(
-                array(
-                    'param'    => 'post_type',
-                    'operator' => '==',
-                    'value'    => 'training_registration',
-                ),
-            ),
-        ),
-    ) );
-} );
+    return $wpdb->delete(
+        $table_name,
+        array( 'id' => $registration_id ),
+        array( '%d' )
+    );
+}
 
 // ─────────────────────────────────────────────
-// 3. AJAX: Anmeldung erstellen
+// AJAX: Anmeldung erstellen
 // ─────────────────────────────────────────────
 add_action( 'wp_ajax_nopriv_tc_submit_registration', 'tc_handle_registration_submission' );
 add_action( 'wp_ajax_tc_submit_registration', 'tc_handle_registration_submission' );
 
 function tc_handle_registration_submission() {
     check_ajax_referer( 'tc_registration_nonce', 'nonce' );
+
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'tc_registrations';
 
     // Daten validieren und bereinigen
     $firstname = isset( $_POST['firstname'] ) ? sanitize_text_field( $_POST['firstname'] ) : '';
@@ -194,58 +143,43 @@ function tc_handle_registration_submission() {
     }
 
     // Doppelten Antrag prüfen
-    $existing = new WP_Query( array(
-        'post_type'     => 'training_registration',
-        'meta_query'    => array(
-            'relation' => 'AND',
-            array(
-                'key'   => '_tc_email',
-                'value' => $email,
-            ),
-            array(
-                'key'   => '_tc_event_id',
-                'value' => $event_id,
-            ),
-        ),
-        'posts_per_page' => 1,
+    $existing = $wpdb->get_row( $wpdb->prepare(
+        "SELECT id FROM $table_name WHERE email = %s AND event_id = %d",
+        $email,
+        $event_id
     ) );
 
-    if ( $existing->found_posts > 0 ) {
+    if ( $existing ) {
         wp_send_json_error( array(
             'message' => 'Sie sind bereits für diese Veranstaltung angemeldet.',
         ) );
     }
 
     // Anmeldung erstellen
-    $post_title = $firstname . ' ' . $lastname . ' - ' . get_the_title( $event_id );
-    
-    $registration_id = wp_insert_post( array(
-        'post_type'   => 'training_registration',
-        'post_title'  => $post_title,
-        'post_status' => 'publish',
-    ) );
+    $registration_id = $wpdb->insert(
+        $table_name,
+        array(
+            'firstname'  => $firstname,
+            'lastname'   => $lastname,
+            'email'      => $email,
+            'phone'      => $phone,
+            'company'    => $company,
+            'event_id'   => $event_id,
+            'status'     => 'pending',
+            'notes'      => $notes,
+            'created_at' => time(),
+        ),
+        array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%d' )
+    );
 
-    if ( is_wp_error( $registration_id ) ) {
+    if ( ! $registration_id ) {
         wp_send_json_error( array(
             'message' => 'Es gab einen Fehler beim speichern der Anmeldung.',
         ) );
     }
 
-    // Metadaten speichern
-    update_post_meta( $registration_id, '_tc_firstname', $firstname );
-    update_post_meta( $registration_id, '_tc_lastname', $lastname );
-    update_post_meta( $registration_id, '_tc_email', $email );
-    update_post_meta( $registration_id, '_tc_phone', $phone );
-    update_post_meta( $registration_id, '_tc_company', $company );
-    update_post_meta( $registration_id, '_tc_event_id', $event_id );
-    update_post_meta( $registration_id, '_tc_status', 'pending' );
-
-    if ( $notes ) {
-        update_post_meta( $registration_id, '_tc_notes', $notes );
-    }
-
     // Hook für externe Verarbeitung
-    do_action( 'tc_registration_submitted', $registration_id, array(
+    do_action( 'tc_registration_submitted', $wpdb->insert_id, array(
         'firstname' => $firstname,
         'lastname'  => $lastname,
         'email'     => $email,
@@ -257,12 +191,12 @@ function tc_handle_registration_submission() {
 
     wp_send_json_success( array(
         'message'          => 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.',
-        'registration_id'  => $registration_id,
+        'registration_id'  => $wpdb->insert_id,
     ) );
 }
 
 // ─────────────────────────────────────────────
-// 4. AJAX: Event-Details laden
+// AJAX: Event-Details laden
 // ─────────────────────────────────────────────
 add_action( 'wp_ajax_nopriv_tc_get_event_details', 'tc_get_event_details_ajax' );
 add_action( 'wp_ajax_tc_get_event_details', 'tc_get_event_details_ajax' );
@@ -292,7 +226,7 @@ function tc_get_event_details_ajax() {
 }
 
 // ─────────────────────────────────────────────
-// 5. Registrierungs-Bestätigungsmail
+// Registrierungs-Bestätigungsmail
 // ─────────────────────────────────────────────
 add_action( 'tc_registration_submitted', function ( $registration_id, $data ) {
     $event = get_post( $data['event_id'] );
