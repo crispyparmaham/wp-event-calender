@@ -15,7 +15,6 @@ function tc_create_registrations_table() {
         lastname varchar(255) NOT NULL,
         email varchar(255) NOT NULL,
         phone varchar(20),
-        company varchar(255),
         event_id bigint(20) NOT NULL,
         event_date date DEFAULT NULL,
         status varchar(20) DEFAULT 'pending',
@@ -55,7 +54,7 @@ function tc_get_registration( $id ) {
 
 function tc_update_registration( $id, $data ) {
     global $wpdb;
-    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'company', 'event_id', 'event_date', 'status', 'notes' );
+    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'event_id', 'event_date', 'status', 'notes' );
     $clean   = array_intersect_key( $data, array_flip( $allowed ) );
     if ( empty( $clean ) ) return false;
     return $wpdb->update( "{$wpdb->prefix}tc_registrations", $clean, array( 'id' => $id ) );
@@ -264,7 +263,6 @@ function tc_handle_registration_submission() {
     $lastname   = sanitize_text_field(    $_POST['lastname']   ?? '' );
     $email      = sanitize_email(         $_POST['email']      ?? '' );
     $phone      = sanitize_text_field(    $_POST['phone']      ?? '' );
-    $company    = sanitize_text_field(    $_POST['company']    ?? '' );
     $event_id   = absint(                 $_POST['event_id']   ?? 0  );
     $event_date = sanitize_text_field(    $_POST['event_date'] ?? '' );
     $notes      = sanitize_textarea_field($_POST['notes']      ?? '' );
@@ -304,7 +302,6 @@ function tc_handle_registration_submission() {
             'lastname'   => $lastname,
             'email'      => $email,
             'phone'      => $phone,
-            'company'    => $company,
             'event_id'   => $event_id,
             'event_date' => $event_date ?: null,
             'status'     => 'pending',
@@ -328,7 +325,6 @@ function tc_handle_registration_submission() {
         'lastname'   => $lastname,
         'email'      => $email,
         'phone'      => $phone,
-        'company'    => $company,
         'event_id'   => $event_id,
         'event_date' => $event_date,
         'notes'      => $notes,

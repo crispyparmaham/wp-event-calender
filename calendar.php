@@ -15,7 +15,6 @@ define( 'TC_URL',     plugin_dir_url( __FILE__ ) );
 define( 'TC_VERSION', '2.0.6' );
 
 require_once TC_PATH . 'includes/cpt.php';
-require_once TC_PATH . 'includes/cpt-columns.php';
 require_once TC_PATH . 'includes/ajax.php';
 require_once TC_PATH . 'includes/settings.php';
 require_once TC_PATH . 'includes/admin-page.php';

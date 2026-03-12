@@ -157,10 +157,14 @@ add_shortcode( 'training_registration', function ( $atts ) {
                             class="tc-form-control"
                             required>
                         <option value="">– Bitte wählen –</option>
-                        <?php foreach ( $occurrences as $date ) :
-                            $d = DateTime::createFromFormat( 'Y-m-d', $date ); ?>
+                        <?php
+                        $de_days = array( 1 => 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag' );
+                        foreach ( $occurrences as $date ) :
+                            $d       = DateTime::createFromFormat( 'Y-m-d', $date );
+                            $label   = $de_days[ (int) $d->format( 'N' ) ] . ', ' . $d->format( 'd.m.Y' );
+                        ?>
                             <option value="<?php echo esc_attr( $date ); ?>">
-                                <?php echo esc_html( $d->format( 'l, d.m.Y' ) ); ?>
+                                <?php echo esc_html( $label ); ?>
                             </option>
                         <?php endforeach; ?>
                     </select>
