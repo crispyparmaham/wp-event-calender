@@ -18,6 +18,7 @@ add_shortcode( 'training_calendar', function ( $atts ) {
     $atts = shortcode_atts( array(
         'type' => 'all',
         'view' => 'dayGridMonth',
+        'mode' => 'light', // light | dark
     ), $atts, 'training_calendar' );
 
     $allowed_types = array( 'all', 'training', 'seminar' );
@@ -30,6 +31,7 @@ add_shortcode( 'training_calendar', function ( $atts ) {
 
     $valid_views = array( 'dayGridMonth', 'timeGridWeek', 'listMonth' );
     $view        = in_array( $atts['view'], $valid_views, true ) ? $atts['view'] : 'dayGridMonth';
+    $dark        = $atts['mode'] === 'dark';
 
     static $instance = 0;
     $instance++;
@@ -38,7 +40,7 @@ add_shortcode( 'training_calendar', function ( $atts ) {
     tc_enqueue_calendar_assets();
 
     ob_start(); ?>
-    <div class="tc-frontend-wrap" id="<?php echo esc_attr( $uid ); ?>-wrap">
+    <div class="tc-frontend-wrap<?php echo $dark ? ' tc-dark' : ''; ?>" id="<?php echo esc_attr( $uid ); ?>-wrap">
 
         <div class="tc-filter-bar" role="tablist" aria-label="Event-Typ filtern">
             <button class="tc-filter-btn <?php echo $active_type === 'all'      ? 'is-active' : ''; ?>"
