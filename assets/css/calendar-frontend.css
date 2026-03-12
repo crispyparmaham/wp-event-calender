@@ -207,18 +207,14 @@
 .tc-frontend-wrap .fc-event {
   cursor: pointer;
   border-radius: 4px;
-  padding: 1px 5px;
+  padding: 2px 6px;
   font-size: 12px;
   font-weight: 500;
   border: none !important;
+  color: #fff !important;
 }
 
-.tc-frontend-wrap .fc-event:hover {
-  filter: brightness(1.1);
-}
-
-.tc-frontend-wrap .fc-event-title,
-.tc-frontend-wrap .fc-event-time {
+.tc-frontend-wrap .fc-event * {
   color: #fff !important;
 }
 
@@ -380,6 +376,21 @@
 .tc-popover-meta li span {
   flex-shrink: 0;
   width: 18px;
+}
+
+.tc-popover-cta {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tc-popover-cta-text {
+  font-size: 13px;
+  color: var(--tc-text-muted);
+  line-height: 1.5;
+  margin: 0;
+  font-style: italic;
 }
 
 .tc-popover-link {

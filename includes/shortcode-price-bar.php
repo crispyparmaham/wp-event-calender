@@ -16,16 +16,20 @@ defined( 'ABSPATH' ) || exit;
 add_shortcode( 'training_price_bar', function ( $atts ) {
 
     $atts = shortcode_atts( array(
-        'post_id'      => get_the_ID(),
-        'link'         => '#anmelden',
-        'link_text'    => 'Jetzt anmelden',
-        'request_text' => 'Jetzt anfragen',
+        'post_id'         => get_the_ID(),
+        'link'            => '#anmelden',
+        'link_text'       => 'Jetzt anmelden',
+        'request_text'    => 'Jetzt anfragen',
+        'no_price_text'   => 'Probetraining anfragen',
+        'no_price_teaser' => 'Probier’s aus – ganz entspannt, ohne Verpflichtungen.',
     ), $atts, 'training_price_bar' );
 
     $post_id           = intval( $atts['post_id'] );
     $link              = esc_url( $atts['link'] );
     $link_text         = esc_html( $atts['link_text'] );
     $request_text      = esc_html( $atts['request_text'] );
+    $no_price_text     = esc_html( $atts['no_price_text'] );
+    $no_price_teaser   = esc_html( $atts['no_price_teaser'] );
 
     $today             = date( 'Y-m-d' );
     $price_on_request  = get_field( 'price_on_request',       $post_id );
@@ -38,7 +42,8 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
         ? date_create_from_format( 'Y-m-d', $price_date_string )
         : null;
 
-    $show_early = $price_date && $early_price && $price_date_string >= $today;
+    $show_early  = $price_date && $early_price && $price_date_string >= $today;
+    $has_price   = ! $price_on_request && $normal_price;
 
     tc_enqueue_price_bar_assets();
 
@@ -54,6 +59,13 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
                         <?php echo esc_html( $request_label ); ?>
                     </div>
 
+                <?php elseif ( ! $has_price ) : ?>
+
+                    <div class="tc-price-bar-teaser">
+                        <strong>Neugierig geworden?</strong>
+                        <?php echo $no_price_teaser; ?>
+                    </div>
+
                 <?php elseif ( $show_early ) : ?>
 
                     <div class="tc-price-bar-badge">Early Bird</div>
@@ -66,7 +78,7 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
                         — danach <?php echo esc_html( $normal_price ); ?>€
                     </div>
 
-                <?php elseif ( $normal_price ) : ?>
+                <?php else : ?>
 
                     <div class="tc-price-bar-label">Regulärer Preis</div>
                     <div class="tc-price-bar-amount">
@@ -78,8 +90,12 @@ add_shortcode( 'training_price_bar', function ( $atts ) {
             </div>
 
             <a href="<?php echo $link; ?>"
-               class="tc-price-bar-btn <?php echo ( $show_early && ! $price_on_request ) ? 'tc-price-bar-btn--early' : ''; ?>">
-                <?php echo $price_on_request ? $request_text : $link_text; ?>
+               class="tc-price-bar-btn <?php echo ( $show_early && $has_price ) ? 'tc-price-bar-btn--early' : ''; ?>">
+                <?php
+                if ( $price_on_request )   echo $request_text;
+                elseif ( ! $has_price )    echo $no_price_text;
+                else                       echo $link_text;
+                ?>
             </a>
 
         </div>
