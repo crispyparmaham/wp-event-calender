@@ -20,7 +20,8 @@ add_shortcode( 'training_calendar', function ( $atts ) {
         'view' => 'dayGridMonth',
     ), $atts, 'training_calendar' );
 
-    $allowed_types = array( 'all', 'training', 'seminar' );
+    $categories    = tc_get_all_categories();
+    $allowed_types = array_merge( array( 'all' ), array_column( $categories, 'slug' ) );
     $url_type      = isset( $_GET['tc_type'] )
         ? sanitize_text_field( $_GET['tc_type'] )
         : null;
@@ -44,16 +45,15 @@ add_shortcode( 'training_calendar', function ( $atts ) {
     <div class="tc-frontend-wrap<?php echo $dark ? ' tc-dark' : ''; ?>" id="<?php echo esc_attr( $uid ); ?>-wrap">
 
         <div class="tc-filter-bar" role="tablist" aria-label="Event-Typ filtern">
-            <button class="tc-filter-btn <?php echo $active_type === 'all'      ? 'is-active' : ''; ?>"
-                    data-type="all"      role="tab">Alle</button>
-            <button class="tc-filter-btn <?php echo $active_type === 'training' ? 'is-active' : ''; ?>"
-                    data-type="training" role="tab">
-                <span class="tc-dot tc-dot--training"></span>Gruppentraining
+            <button class="tc-filter-btn <?php echo $active_type === 'all' ? 'is-active' : ''; ?>"
+                    data-type="all" role="tab">Alle</button>
+            <?php foreach ( $categories as $cat ) : ?>
+            <button class="tc-filter-btn <?php echo $active_type === $cat['slug'] ? 'is-active' : ''; ?>"
+                    data-type="<?php echo esc_attr( $cat['slug'] ); ?>" role="tab">
+                <span class="tc-dot" style="background:<?php echo esc_attr( $cat['color'] ); ?>;"></span>
+                <?php echo esc_html( $cat['name'] ); ?>
             </button>
-            <button class="tc-filter-btn <?php echo $active_type === 'seminar'  ? 'is-active' : ''; ?>"
-                    data-type="seminar"  role="tab">
-                <span class="tc-dot tc-dot--seminar"></span>Seminare
-            </button>
+            <?php endforeach; ?>
         </div>
 
         <div class="tc-loader" id="<?php echo esc_attr( $uid ); ?>-loader" style="display:none;">

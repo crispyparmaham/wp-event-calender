@@ -92,12 +92,8 @@
   flex-shrink: 0;
 }
 
-.tc-dot--training { background: #3788d8; }
-.tc-dot--seminar  { background: #059669; }
-
-.tc-filter-btn.is-active .tc-dot--training,
-.tc-filter-btn.is-active .tc-dot--seminar {
-  background: #fff;
+.tc-filter-btn.is-active .tc-dot {
+  background: #fff !important;
 }
 
 /* ─── Kalender Container ──────────────────────────────────────── */
