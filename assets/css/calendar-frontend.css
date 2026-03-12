@@ -20,10 +20,6 @@
  * ─────────────────────────────────────────────────────────────────
 */
 
-.tc-frontend-wrap {
-  position: static;
-}
-
 /* ─── Light Mode (default) ────────────────────────────────────── */
 .tc-frontend-wrap {
   --tc-bg:          #ffffff;
@@ -35,8 +31,7 @@
   --tc-btn-bg:      #4f46e5;
   --tc-btn-text:    #ffffff;
   --tc-btn-active:  #3730a3;
-
-  position: relative;
+  position: static;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--tc-text);
 }
