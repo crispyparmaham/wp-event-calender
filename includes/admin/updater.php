@@ -306,6 +306,7 @@ class TC_Plugin_Updater {
 // ─────────────────────────────────────────────
 function tc_fetch_latest_release( bool $force = false ) {
     if ( ! defined( 'TC_GITHUB_USER' ) || ! defined( 'TC_GITHUB_REPO' ) ) {
+        update_option( 'tc_github_update_last_status', 'config_missing', false );
         return false;
     }
 
@@ -332,13 +333,22 @@ function tc_fetch_latest_release( bool $force = false ) {
 
     update_option( TC_Plugin_Updater::LAST_CHECK_KEY, time(), false );
 
-    if ( is_wp_error( $response ) || (int) wp_remote_retrieve_response_code( $response ) !== 200 ) {
+    if ( is_wp_error( $response ) ) {
+        update_option( 'tc_github_update_last_status', 'wp_error:' . $response->get_error_message(), false );
+        return false;
+    }
+
+    $code = (int) wp_remote_retrieve_response_code( $response );
+    update_option( 'tc_github_update_last_status', (string) $code, false );
+
+    if ( $code !== 200 ) {
         return false;
     }
 
     $data = json_decode( wp_remote_retrieve_body( $response ) );
 
     if ( empty( $data->tag_name ) ) {
+        update_option( 'tc_github_update_last_status', 'no_tag', false );
         return false;
     }
 
