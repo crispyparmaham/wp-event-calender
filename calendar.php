@@ -16,6 +16,7 @@ define( 'TC_VERSION', '1.0.0' );
 
 require_once TC_PATH . 'includes/cpt.php';
 require_once TC_PATH . 'includes/ajax.php';
+require_once TC_PATH . 'includes/settings.php';
 require_once TC_PATH . 'includes/admin-page.php';
 require_once TC_PATH . 'includes/shortcode-calendar.php';
 require_once TC_PATH . 'includes/shortcode-price-bar.php';
