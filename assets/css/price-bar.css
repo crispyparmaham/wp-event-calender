@@ -166,3 +166,44 @@
     white-space: normal;
   }
 }
+
+/* ─── Dark Mode Support ───────────────────────────────────────── */
+.tc-dark .tc-price-bar {
+  background: #2d2d2d;
+  border-top-color: #444;
+  color: #e0e0e0;
+}
+
+.tc-dark .tc-price-bar-label {
+  color: #bbb;
+}
+
+.tc-dark .tc-price-bar-deadline {
+  color: #bbb;
+}
+
+.tc-dark .tc-price-bar-deadline strong {
+  color: #e0e0e0;
+}
+
+.tc-dark .tc-price-bar-amount {
+  color: #e0e0e0;
+}
+
+.tc-dark .tc-price-bar-amount span {
+  color: #aaa;
+}
+
+.tc-dark .tc-price-bar-teaser {
+  color: #bbb;
+}
+
+.tc-dark .tc-price-bar-btn {
+  background: #444;
+  color: #e0e0e0;
+}
+
+.tc-dark .tc-price-bar-btn:hover {
+  background: #555;
+  color: #e0e0e0;
+}

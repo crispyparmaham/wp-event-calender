@@ -238,12 +238,19 @@ function tc_get_event_details_ajax() {
     $start_time = get_field( 'start_time', $event_id );
     $more_days = get_field( 'more_days', $event_id );
     $end_date = get_field( 'end_date', $event_id );
+    $is_recurring = get_field( 'is_recurring', $event_id );
+    $recurring_weekday = get_field( 'recurring_weekday', $event_id );
+    $recurring_until = get_field( 'recurring_until', $event_id );
     $track_participants = get_field( 'track_participants', $event_id );
     $max_participants = get_field( 'participants', $event_id );
 
     // Datumsarray für mehrtägige Events generieren
     $dates = array();
+    $is_multiday = false;
+    $is_recurring_event = false;
+
     if ( $more_days && $end_date ) {
+        $is_multiday = true;
         $start_dt = new DateTime( $start_date );
         $end_dt = new DateTime( $end_date );
         $current = clone $start_dt;
@@ -252,6 +259,32 @@ function tc_get_event_details_ajax() {
             $dates[] = $current->format( 'Y-m-d' );
             $current->modify( '+1 day' );
         }
+    } elseif ( $is_recurring && $recurring_weekday !== '' && $recurring_until ) {
+        // Wiederkehrende Termine generieren
+        $is_recurring_event = true;
+        $start_dt = new DateTime( $start_date );
+        $until_dt = new DateTime( $recurring_until );
+        $weekday_target = absint( $recurring_weekday ); // 0=Montag, 6=Sonntag
+
+        // Aktuelle Wochentag des Startdatums ermitteln
+        $current = clone $start_dt;
+        $current_weekday = (int) $current->format( 'N' ) - 1; // ISO-8601 (1-7) zu 0-6 konvertieren
+
+        // Zum nächsten passenden Wochentag spulen
+        $days_to_add = ( $weekday_target - $current_weekday ) % 7;
+        if ( $days_to_add < 0 ) $days_to_add += 7;
+        if ( $days_to_add > 0 ) {
+            $current->modify( '+' . $days_to_add . ' day' );
+        }
+
+        // Alle passenden Wochentage sammeln
+        while ( $current <= $until_dt ) {
+            $dates[] = $current->format( 'Y-m-d' );
+            $current->modify( '+7 day' );
+        }
+    } else {
+        // Einzelner Termin
+        $dates[] = $start_date;
     }
 
     // Aktueller Anmeldungsstand
@@ -273,7 +306,8 @@ function tc_get_event_details_ajax() {
         'location'    => $location ?: 'Nicht angegeben',
         'start_date'  => $start_date ?: 'Nicht angegeben',
         'start_time'  => $start_time ?: '',
-        'is_multiday' => (bool) $more_days,
+        'is_multiday' => (bool) $is_multiday,
+        'is_recurring' => (bool) $is_recurring_event,
         'dates'       => $dates,
         'track_participants' => (bool) $track_participants,
         'max_participants'   => $max_participants ?: 0,

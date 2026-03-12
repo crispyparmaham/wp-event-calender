@@ -35,8 +35,12 @@ add_shortcode( 'training_registration', function ( $atts ) {
     // Assets enqueuen
     tc_enqueue_registration_assets();
 
+    // Dark/Light Mode Klasse
+    $calendar_mode = tc_get_setting( 'calendar_mode', 'light' );
+    $dark_class = ( $calendar_mode === 'dark' ) ? 'tc-dark' : '';
+
     ob_start(); ?>
-    <div class="tc-registration-wrap">
+    <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
         <form id="<?php echo esc_attr( $form_id ); ?>" class="tc-registration-form" method="POST">
             
             <h2><?php echo esc_html( $atts['title'] ); ?></h2>
@@ -91,9 +95,9 @@ add_shortcode( 'training_registration', function ( $atts ) {
                 <input type="hidden" name="event_id" value="<?php echo esc_attr( $event_id ); ?>">
             <?php endif; ?>
 
-            <!-- Datum-Auswahl (für mehrtägige Events) -->
+            <!-- Datum-Auswahl (für mehrtägige und wiederkehrende Events) -->
             <div id="<?php echo esc_attr( $form_id ); ?>-date-picker" class="tc-form-group" style="display:none;">
-                <label for="<?php echo esc_attr( $form_id ); ?>-event-date">
+                <label for="<?php echo esc_attr( $form_id ); ?>-event-date" class="tc-date-picker-label">
                     Wählen Sie ein Datum <span class="tc-required">*</span>
                 </label>
                 <select id="<?php echo esc_attr( $form_id ); ?>-event-date"

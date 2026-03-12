@@ -77,10 +77,18 @@
                             submitBtn.find('.tc-btn-text').text('Anmeldung absenden');
                         }
 
-                        // Datum-Auswahl für mehrtägige Events
+                        // Datum-/Terminauswahl für mehrtägige und wiederkehrende Events
                         var datePickerField = form.find('[id*="-date-picker"]');
-                        if (data.is_multiday && data.dates.length > 0 && datePickerField.length) {
+                        var showDatePicker = (data.is_multiday || data.is_recurring) && data.dates.length > 0;
+
+                        if (showDatePicker && datePickerField.length) {
                             var selectField = datePickerField.find('select');
+                            var labelText = data.is_recurring ? 'Wählen Sie einen Termin' : 'Wählen Sie ein Datum';
+                            
+                            // Label aktualisieren
+                            datePickerField.find('.tc-date-picker-label').text(labelText + ' ');
+                            datePickerField.find('.tc-required').text('*');
+                            
                             selectField.find('option:not(:first)').remove();
 
                             $.each(data.dates, function(i, date) {

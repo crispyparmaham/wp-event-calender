@@ -169,6 +169,7 @@ Displays a registration form for trainings and seminars. Users can select an eve
 - **Dynamic event selection** — loads all published events when no event_id specified
 - **Event details** — displays trainer, location, and date when event is selected
 - **Multi-day support** — shows date picker if event spans multiple days
+- **Recurring event support** — shows date picker for recurring events, allowing users to select a specific occurrence
 - **Capacity tracking** — shows current registrations and max capacity (if enabled)
 - **Booking closure** — when event is full, registration form is disabled with "Ausgebucht" message
 - **Form fields** — First name, last name, email (required), phone, company, notes
@@ -177,6 +178,7 @@ Displays a registration form for trainings and seminars. Users can select an eve
 - **Confirmation email** — automatic dispatch to registrant
 - **Admin notification** — admin receives notification email for new registrations
 - **Database storage** — registrations stored in custom database table `wp_tc_registrations`
+- **Dark/Light Mode** — applies global color scheme from WordPress settings to the form
 
 ### Attributes
 
