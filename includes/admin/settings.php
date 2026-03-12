@@ -348,10 +348,10 @@ add_action( 'admin_init', function () {
     if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'tc_check_update' ) ) return;
 
     delete_transient( TC_Plugin_Updater::TRANSIENT_KEY );
-
-    // WordPress-eigenen Update-Transient ebenfalls löschen damit
-    // check_for_update sofort beim nächsten Seitenaufruf greift.
     delete_site_transient( 'update_plugins' );
+
+    // Sofort neu abrufen, damit die Settings-Seite die aktuelle Version zeigt
+    tc_fetch_latest_release( true );
 
     wp_safe_redirect( remove_query_arg( array( 'tc_check_update', '_wpnonce' ) ) );
     exit;
@@ -366,6 +366,11 @@ function tc_field_plugin_version() {
         add_query_arg( 'tc_check_update', '1' ),
         'tc_check_update'
     );
+
+    // Aktuelle GitHub-Version aus Cache lesen (kein Force-Fetch hier)
+    $release       = tc_fetch_latest_release( false );
+    $latest        = $release ? ltrim( $release->tag_name, 'v' ) : null;
+    $update_avail  = $latest && version_compare( $latest, TC_VERSION, '>' );
 
     if ( $last_checked > 0 ) {
         $diff    = time() - $last_checked;
@@ -384,13 +389,32 @@ function tc_field_plugin_version() {
         $last_check_text = 'noch nie';
     }
     ?>
-    <p style="margin:0 0 8px;">
+    <p style="margin:0 0 6px;">
         <strong>Installierte Version:</strong>
         <code><?php echo esc_html( TC_VERSION ); ?></code>
+        <?php if ( $update_avail ) : ?>
+            &nbsp;<span style="display:inline-block;background:#d63638;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;">
+                Update verfügbar: <?php echo esc_html( $latest ); ?>
+            </span>
+        <?php elseif ( $latest ) : ?>
+            &nbsp;<span style="display:inline-block;background:#00a32a;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;">
+                Aktuell
+            </span>
+        <?php endif; ?>
     </p>
+    <?php if ( $latest ) : ?>
+    <p style="margin:0 0 10px;color:#666;font-size:13px;">
+        Neueste GitHub-Version: <code><?php echo esc_html( $latest ); ?></code>
+        &nbsp;·&nbsp; Letzter Check: <?php echo $last_check_text; ?>
+    </p>
+    <?php else : ?>
     <p style="margin:0 0 10px;color:#666;font-size:13px;">
         Letzter Update-Check: <?php echo $last_check_text; ?>
+        <?php if ( ! $last_checked ) : ?>
+            &nbsp;— Klicke auf „Jetzt prüfen" um die aktuelle GitHub-Version abzurufen.
+        <?php endif; ?>
     </p>
+    <?php endif; ?>
     <a href="<?php echo esc_url( $check_url ); ?>" class="button button-secondary">
         ↻ Jetzt auf Updates prüfen
     </a>
