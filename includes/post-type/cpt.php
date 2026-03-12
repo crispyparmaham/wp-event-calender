@@ -50,10 +50,7 @@ add_action( 'acf/include_fields', function () {
                 'label'         => 'Event-Typ',
                 'name'          => 'event_type',
                 'type'          => 'select',
-                'choices'       => array(
-                    'training' => 'Gruppentraining',
-                    'seminar'  => 'Seminar',
-                ),
+                'choices'       => array(),   // wird per acf/load_field dynamisch befüllt
                 'default_value' => 'training',
                 'return_format' => 'value',
                 'required'      => 1,
@@ -231,6 +228,75 @@ add_action( 'acf/include_fields', function () {
                 ) ) ),
             ),
 
+            // ── TAB: Termine ────────────────────────
+            array(
+                'key'       => 'field_tc_tab_dates',
+                'label'     => 'Termine',
+                'type'      => 'tab',
+                'placement' => 'top',
+                'endpoint'  => 0,
+            ),
+            array(
+                'key'          => 'field_tc_event_dates',
+                'label'        => 'Mehrere Termine',
+                'name'         => 'event_dates',
+                'type'         => 'repeater',
+                'layout'       => 'block',
+                'button_label' => 'Termin hinzufügen',
+                'instructions' => 'Fügen Sie hier einzelne Termine hinzu. Wenn Termine eingetragen sind, werden die Felder im Tab "Datum & Uhrzeit" ignoriert.',
+                'sub_fields'   => array(
+                    array(
+                        'key'            => 'field_tc_ed_start',
+                        'label'          => 'Startdatum',
+                        'name'           => 'date_start',
+                        'type'           => 'date_picker',
+                        'display_format' => 'd.m.Y',
+                        'return_format'  => 'Y-m-d',
+                        'first_day'      => 1,
+                        'required'       => 1,
+                        'wrapper'        => array( 'width' => '25' ),
+                    ),
+                    array(
+                        'key'            => 'field_tc_ed_end',
+                        'label'          => 'Enddatum (optional, nur mehrtägig)',
+                        'name'           => 'date_end',
+                        'type'           => 'date_picker',
+                        'display_format' => 'd.m.Y',
+                        'return_format'  => 'Y-m-d',
+                        'first_day'      => 1,
+                        'wrapper'        => array( 'width' => '25' ),
+                    ),
+                    array(
+                        'key'            => 'field_tc_ed_time_start',
+                        'label'          => 'Startzeit',
+                        'name'           => 'time_start',
+                        'type'           => 'time_picker',
+                        'display_format' => 'H:i',
+                        'return_format'  => 'H:i',
+                        'wrapper'        => array( 'width' => '15' ),
+                    ),
+                    array(
+                        'key'            => 'field_tc_ed_time_end',
+                        'label'          => 'Endzeit',
+                        'name'           => 'time_end',
+                        'type'           => 'time_picker',
+                        'display_format' => 'H:i',
+                        'return_format'  => 'H:i',
+                        'wrapper'        => array( 'width' => '15' ),
+                    ),
+                    array(
+                        'key'          => 'field_tc_ed_seats',
+                        'label'        => 'Max. Plätze (optional)',
+                        'name'         => 'seats',
+                        'type'         => 'number',
+                        'min'          => 0,
+                        'placeholder'  => 'unbegrenzt',
+                        'instructions' => 'Überschreibt die globale Teilnehmerzahl für diesen Termin.',
+                        'wrapper'      => array( 'width' => '20' ),
+                    ),
+                ),
+            ),
+
             // ── TAB: Preis ──────────────────────────
             array(
                 'key'       => 'field_tc_tab_price',
@@ -319,7 +385,20 @@ add_action( 'acf/include_fields', function () {
 } );
 
 // ─────────────────────────────────────────────
-// 3. Single-Post-Template
+// 3. ACF: event_type Select dynamisch befüllen
+// ─────────────────────────────────────────────
+add_filter( 'acf/load_field/key=field_tc_event_type', function ( $field ) {
+    $categories = tc_get_all_categories();
+    $choices = array();
+    foreach ( $categories as $cat ) {
+        $choices[ $cat['slug'] ] = $cat['name'];
+    }
+    $field['choices'] = $choices;
+    return $field;
+} );
+
+// ─────────────────────────────────────────────
+// 4. Single-Post-Template
 // ─────────────────────────────────────────────
 add_filter( 'single_template', function ( $template ) {
     if ( is_singular( 'training_event' ) ) {

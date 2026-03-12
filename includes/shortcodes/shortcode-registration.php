@@ -14,6 +14,28 @@ add_action( 'wp_enqueue_scripts', function () {
 } );
 
 // ─────────────────────────────────────────────
+// Helper: Repeater-Termine für Registrierungsformular
+// Gibt zukünftige Termine aus dem event_dates Repeater zurück.
+// ─────────────────────────────────────────────
+function tc_get_repeater_dates_for_registration( $event_id ) {
+    $rows = get_field( 'event_dates', $event_id );
+    if ( empty( $rows ) || ! is_array( $rows ) ) return array();
+
+    $today   = date( 'Y-m-d' );
+    $results = array();
+    foreach ( $rows as $row ) {
+        $date = $row['date_start'] ?? '';
+        if ( ! $date || $date < $today ) continue;
+        $results[] = array(
+            'date'  => $date,
+            'time'  => $row['time_start'] ?? '',
+            'seats' => isset( $row['seats'] ) && $row['seats'] > 0 ? (int) $row['seats'] : null,
+        );
+    }
+    return $results;
+}
+
+// ─────────────────────────────────────────────
 // Helper: Upcoming Occurrences fuer ein
 // wiederkehrendes Event generieren.
 // Gibt nur Termine >= heute zurueck.
@@ -86,10 +108,13 @@ add_shortcode( 'training_registration', function ( $atts ) {
     // Formulartitel: bei Probetraining angepasst, sonst Shortcode-Attribut
     $form_title = $is_trial ? 'Kostenloses Probetraining anfragen' : esc_html( $atts['title'] );
 
-    // Wiederkehrend? Termine server-seitig aufbereiten
+    // Termine aufbereiten: Repeater-Termine haben Vorrang vor Wiederholungen
     $is_recurring   = $event_id ? (bool) get_field( 'is_recurring', $event_id ) : false;
-    $occurrences    = ( $event_id && $is_recurring ) ? tc_get_upcoming_occurrences( $event_id ) : array();
-    $show_date_pick = ! empty( $occurrences );
+    $repeater_dates = $event_id ? tc_get_repeater_dates_for_registration( $event_id ) : array();
+    $occurrences    = empty( $repeater_dates ) && $event_id && $is_recurring
+        ? tc_get_upcoming_occurrences( $event_id )
+        : array();
+    $show_date_pick = ! empty( $repeater_dates ) || ! empty( $occurrences );
 
     // Ausgebucht? Warteliste prüfen
     $is_full = false;
@@ -278,14 +303,30 @@ add_shortcode( 'training_registration', function ( $atts ) {
                         <option value="">&#8211; Bitte w&auml;hlen &#8211;</option>
                         <?php
                         $de_days = array( 1 => 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag' );
-                        foreach ( $occurrences as $date ) :
-                            $d     = DateTime::createFromFormat( 'Y-m-d', $date );
-                            $label = $de_days[ (int) $d->format( 'N' ) ] . ', ' . $d->format( 'd.m.Y' );
+                        if ( ! empty( $repeater_dates ) ) :
+                            foreach ( $repeater_dates as $rd ) :
+                                $d     = DateTime::createFromFormat( 'Y-m-d', $rd['date'] );
+                                $label = $de_days[ (int) $d->format( 'N' ) ] . ', ' . $d->format( 'd.m.Y' );
+                                if ( $rd['time'] ) $label .= ' · ' . $rd['time'] . ' Uhr';
+                                if ( $rd['seats'] !== null ) $label .= ' (noch ' . $rd['seats'] . ' Plätze)';
+                        ?>
+                            <option value="<?php echo esc_attr( $rd['date'] ); ?>">
+                                <?php echo esc_html( $label ); ?>
+                            </option>
+                        <?php
+                            endforeach;
+                        else :
+                            foreach ( $occurrences as $date ) :
+                                $d     = DateTime::createFromFormat( 'Y-m-d', $date );
+                                $label = $de_days[ (int) $d->format( 'N' ) ] . ', ' . $d->format( 'd.m.Y' );
                         ?>
                             <option value="<?php echo esc_attr( $date ); ?>">
                                 <?php echo esc_html( $label ); ?>
                             </option>
-                        <?php endforeach; ?>
+                        <?php
+                            endforeach;
+                        endif;
+                        ?>
                     </select>
                 </div>
                 <?php endif; ?>

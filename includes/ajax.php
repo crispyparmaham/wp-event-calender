@@ -92,27 +92,10 @@ function tc_handle_get_events() {
     $events = array();
 
     foreach ( $posts as $post ) {
-        $type       = get_field( 'event_type',  $post->ID ) ?: 'training';
-        $start_date = get_field( 'start_date',  $post->ID ); // Y-m-d
-        $start_time = get_field( 'start_time',  $post->ID ); // H:i
-        $end_date   = get_field( 'end_date',    $post->ID ); // Y-m-d | null
-        $end_time   = get_field( 'end_time',    $post->ID ); // H:i   | null
-        $color      = $type === 'seminar' ? '#059669' : '#4f46e5';
+        $type  = get_field( 'event_type', $post->ID ) ?: 'training';
+        $color = tc_get_category_color( $type );
 
-        if ( ! $start_date ) continue;
-
-        $is_recurring    = (bool) get_field( 'is_recurring',       $post->ID );
-        $recurring_until = get_field( 'recurring_until',           $post->ID ); // Y-m-d
-        $recurring_day   = get_field( 'recurring_weekday',         $post->ID ); // '0'–'6'
-
-        // Basis-ISO für Haupt-Post
-        $main_start = tc_build_iso( $start_date, $start_time );
-        // Enddatum: mehrtägig → end_date, sonst selber Tag mit end_time
-        $main_end   = $end_date
-            ? tc_build_iso( $end_date, $end_time )
-            : ( $end_time ? tc_build_iso( $start_date, $end_time ) : null );
-
-        $shared = array(
+        $shared_props = array(
             'id'      => $post->ID,
             'title'   => $post->post_title,
             'url'     => get_permalink( $post->ID ),
@@ -121,18 +104,61 @@ function tc_handle_get_events() {
             'status'  => $post->post_status,
             'extendedProps' => array(
                 'type'         => $type,
-                'isRecurring'  => $is_recurring,
                 'permalink'    => get_permalink( $post->ID ),
                 'leadership'   => get_field( 'seminar_leadership', $post->ID ),
                 'location'     => wp_strip_all_tags( get_field( 'location', $post->ID ) ),
                 'participants' => get_field( 'participants',        $post->ID ),
                 'price'        => get_field( 'normal_preis',        $post->ID ),
                 'editUrl'      => get_edit_post_link( $post->ID, 'raw' ),
+                'isRecurring'  => false,
+                'dateIndex'    => null,
             ),
         );
 
+        // ── Mehrere Termine (Repeater) ─────────────
+        $event_dates = get_field( 'event_dates', $post->ID );
+        if ( ! empty( $event_dates ) && is_array( $event_dates ) ) {
+            foreach ( $event_dates as $idx => $ed ) {
+                if ( empty( $ed['date_start'] ) ) continue;
+                $ev_start = tc_build_iso( $ed['date_start'], $ed['time_start'] ?? '' );
+                $ev_end   = ! empty( $ed['date_end'] )
+                    ? tc_build_iso( $ed['date_end'],   $ed['time_end'] ?? '' )
+                    : ( ! empty( $ed['time_end'] ) ? tc_build_iso( $ed['date_start'], $ed['time_end'] ) : null );
+
+                $ep              = $shared_props['extendedProps'];
+                $ep['dateIndex'] = $idx;
+
+                $events[] = array_merge( $shared_props, array(
+                    'start'    => $ev_start,
+                    'end'      => $ev_end,
+                    'editable' => true,
+                    'extendedProps' => $ep,
+                ) );
+            }
+            continue; // Repeater-Modus: Legacy-Felder ignorieren
+        }
+
+        // ── Legacy: Einzeldatum + optionale Wiederholung ──
+        $start_date = get_field( 'start_date',      $post->ID );
+        $start_time = get_field( 'start_time',      $post->ID );
+        $end_date   = get_field( 'end_date',        $post->ID );
+        $end_time   = get_field( 'end_time',        $post->ID );
+
+        if ( ! $start_date ) continue;
+
+        $is_recurring    = (bool) get_field( 'is_recurring',   $post->ID );
+        $recurring_until = get_field( 'recurring_until',       $post->ID );
+        $recurring_day   = get_field( 'recurring_weekday',     $post->ID );
+
+        $main_start = tc_build_iso( $start_date, $start_time );
+        $main_end   = $end_date
+            ? tc_build_iso( $end_date, $end_time )
+            : ( $end_time ? tc_build_iso( $start_date, $end_time ) : null );
+
+        $shared = $shared_props;
+        $shared['extendedProps']['isRecurring'] = $is_recurring;
+
         if ( $is_recurring && $recurring_day !== false && $recurring_until ) {
-            // ── Haupt-Post (erster Termin) ─────────
             $events[] = array_merge( $shared, array(
                 'start'    => $main_start,
                 'end'      => $main_end,
@@ -140,14 +166,9 @@ function tc_handle_get_events() {
                 'editable' => true,
             ) );
 
-            // ── Folge-Occurrences ──────────────────
             $occurrences = tc_get_occurrences(
-                $start_date,
-                $start_time,
-                $end_date,
-                $end_time,
-                (int) $recurring_day,
-                $recurring_until
+                $start_date, $start_time, $end_date, $end_time,
+                (int) $recurring_day, $recurring_until
             );
 
             foreach ( $occurrences as $occ ) {
@@ -160,7 +181,6 @@ function tc_handle_get_events() {
                 ) );
             }
         } else {
-            // ── Einmaliges Event ───────────────────
             $events[] = array_merge( $shared, array(
                 'start'    => $main_start,
                 'end'      => $main_end,
@@ -251,9 +271,42 @@ add_action( 'wp_ajax_tc_update_event', function () {
         wp_send_json_error( array( 'message' => 'Keine Berechtigung.' ), 403 );
     }
 
-    $start = sanitize_text_field( $_POST['start'] ?? '' );
-    $end   = sanitize_text_field( $_POST['end']   ?? '' );
+    $start      = sanitize_text_field( $_POST['start']      ?? '' );
+    $end        = sanitize_text_field( $_POST['end']        ?? '' );
+    $date_index = isset( $_POST['date_index'] ) && $_POST['date_index'] !== '' ? (int) $_POST['date_index'] : null;
 
+    // ── Repeater-Modus: einzelnen Termin aktualisieren ──
+    if ( $date_index !== null ) {
+        $event_dates = get_field( 'event_dates', $post_id );
+        if ( ! is_array( $event_dates ) || ! isset( $event_dates[ $date_index ] ) ) {
+            wp_send_json_error( array( 'message' => 'Termin nicht gefunden.' ) );
+        }
+
+        if ( $start ) {
+            $sp = explode( 'T', $start );
+            $event_dates[ $date_index ]['date_start'] = $sp[0];
+            if ( ! empty( $sp[1] ) ) $event_dates[ $date_index ]['time_start'] = substr( $sp[1], 0, 5 );
+        }
+
+        if ( $end ) {
+            $ep         = explode( 'T', $end );
+            $start_date = explode( 'T', $start )[0] ?? '';
+            if ( $ep[0] !== $start_date ) {
+                $event_dates[ $date_index ]['date_end'] = $ep[0];
+            } else {
+                $event_dates[ $date_index ]['date_end'] = '';
+            }
+            if ( ! empty( $ep[1] ) ) $event_dates[ $date_index ]['time_end'] = substr( $ep[1], 0, 5 );
+        } else {
+            $event_dates[ $date_index ]['date_end'] = '';
+            $event_dates[ $date_index ]['time_end'] = '';
+        }
+
+        update_field( 'event_dates', $event_dates, $post_id );
+        wp_send_json_success( array( 'id' => $post_id ) );
+    }
+
+    // ── Legacy-Modus: klassische Einzeldatum-Felder ──
     if ( $start ) {
         $sp = explode( 'T', $start );
         update_field( 'start_date', $sp[0], $post_id );
@@ -265,11 +318,9 @@ add_action( 'wp_ajax_tc_update_event', function () {
         $start_date = explode( 'T', $start )[0] ?? '';
 
         if ( $ep[0] !== $start_date ) {
-            // Anderes Datum → mehrtägig
-            update_field( 'more_days', 1,       $post_id );
-            update_field( 'end_date',  $ep[0],  $post_id );
+            update_field( 'more_days', 1,      $post_id );
+            update_field( 'end_date',  $ep[0], $post_id );
         } else {
-            // Selber Tag → nur Endzeit
             update_field( 'more_days', 0,    $post_id );
             update_field( 'end_date',  null, $post_id );
         }

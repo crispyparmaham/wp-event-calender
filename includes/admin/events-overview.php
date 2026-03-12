@@ -87,9 +87,24 @@ function tc_render_events_overview_page() {
                 $track_p     = (bool) get_field( 'track_participants', $post->ID );
                 $is_recurring = (bool) get_field( 'is_recurring',     $post->ID );
 
-                // Datum formatieren
-                $date_str = '–';
-                if ( $start_date ) {
+                // Datum formatieren – Repeater-Termine haben Vorrang
+                $event_dates_raw = get_field( 'event_dates', $post->ID );
+                $date_str        = '–';
+
+                if ( ! empty( $event_dates_raw ) && is_array( $event_dates_raw ) ) {
+                    $today    = date( 'Y-m-d' );
+                    $upcoming = array_filter( $event_dates_raw, fn( $r ) => ! empty( $r['date_start'] ) && $r['date_start'] >= $today );
+                    $count    = count( $event_dates_raw );
+                    if ( ! empty( $upcoming ) ) {
+                        $next  = reset( $upcoming );
+                        $d_obj = DateTime::createFromFormat( 'Y-m-d', $next['date_start'] );
+                        $date_str = $d_obj ? $d_obj->format( 'd.m.Y' ) : $next['date_start'];
+                        if ( ! empty( $next['time_start'] ) ) $date_str .= ' ' . $next['time_start'] . ' Uhr';
+                        $date_str .= ' <span style="font-size:11px;color:#6b7280;">(' . $count . ' Termin' . ( $count !== 1 ? 'e' : '' ) . ' gesamt)</span>';
+                    } else {
+                        $date_str = '<span style="color:#9ca3af;">Alle ' . $count . ' Termine vergangen</span>';
+                    }
+                } elseif ( $start_date ) {
                     $d        = DateTime::createFromFormat( 'Y-m-d', $start_date );
                     $date_str = $d ? $d->format( 'd.m.Y' ) : $start_date;
                     if ( $start_time ) $date_str .= ' ' . $start_time . ' Uhr';
@@ -146,8 +161,19 @@ function tc_render_events_overview_page() {
                         </a>
                     </td>
                     <td>
-                        <span class="tc-type-dot tc-type-<?php echo esc_attr( $type ); ?>">
-                            <?php echo $type === 'seminar' ? 'Seminar' : 'Gruppentraining'; ?>
+                        <?php
+                        $cat      = tc_get_category( $type );
+                        $cat_name = $cat ? $cat['name'] : esc_html( $type );
+                        $cat_col  = $cat ? $cat['color'] : '#4f46e5';
+                        $cat_bg   = $cat_col . '22'; // transparent tint
+                        ?>
+                        <span style="display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;
+                                     padding:2px 10px;border-radius:999px;
+                                     background:<?php echo esc_attr( $cat_bg ); ?>;
+                                     color:<?php echo esc_attr( $cat_col ); ?>;">
+                            <span style="width:8px;height:8px;border-radius:50%;flex-shrink:0;
+                                         background:<?php echo esc_attr( $cat_col ); ?>;"></span>
+                            <?php echo esc_html( $cat_name ); ?>
                         </span>
                     </td>
                     <td style="font-size:13px;"><?php echo esc_html( $date_str ); ?></td>
@@ -191,25 +217,7 @@ function tc_render_events_overview_page() {
         .tc-overview-table td { vertical-align: middle; padding: 10px 12px; }
         .tc-overview-table th { padding: 10px 12px; }
 
-        .tc-type-dot {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            font-size: 12px;
-            font-weight: 600;
-            padding: 2px 10px;
-            border-radius: 999px;
-        }
-        .tc-type-dot::before {
-            content: '';
-            display: inline-block;
-            width: 8px; height: 8px;
-            border-radius: 50%;
-        }
-        .tc-type-training { background:#ede9fe; color:#4f46e5; }
-        .tc-type-training::before { background:#4f46e5; }
-        .tc-type-seminar  { background:#d1fae5; color:#059669; }
-        .tc-type-seminar::before  { background:#059669; }
+        /* category type badges: colors inline-generated from DB */
 
         .tc-badge {
             display: inline-block;

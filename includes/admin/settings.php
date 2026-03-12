@@ -91,24 +91,6 @@ add_action( 'admin_init', function () {
         'tc_section_registration'
     );
 
-    // ── Sektion: Update ─────────────────────
-    add_settings_section(
-        'tc_section_update',
-        'Update',
-        function () {
-            echo '<p class="tc-settings-desc">Automatische Updates via GitHub Releases.</p>';
-        },
-        'training-calendar-settings'
-    );
-
-    add_settings_field(
-        'tc_plugin_version',
-        'Plugin-Version',
-        'tc_field_plugin_version',
-        'training-calendar-settings',
-        'tc_section_update'
-    );
-
 } );
 
 // ─────────────────────────────────────────────
@@ -336,110 +318,6 @@ function tc_field_reminder_enabled() {
             </span>
         </div>
     </div>
-    <?php
-}
-
-// ─────────────────────────────────────────────
-// Action: Update-Cache leeren ("Jetzt prüfen")
-// ─────────────────────────────────────────────
-add_action( 'admin_init', function () {
-    if ( empty( $_GET['tc_check_update'] ) ) return;
-    if ( ! current_user_can( 'manage_options' ) ) return;
-    if ( ! wp_verify_nonce( $_GET['_wpnonce'] ?? '', 'tc_check_update' ) ) return;
-
-    delete_transient( TC_Plugin_Updater::TRANSIENT_KEY );
-    delete_site_transient( 'update_plugins' );
-
-    // Sofort neu abrufen, damit die Settings-Seite die aktuelle Version zeigt
-    tc_fetch_latest_release( true );
-
-    wp_safe_redirect( remove_query_arg( array( 'tc_check_update', '_wpnonce' ) ) );
-    exit;
-} );
-
-// ─────────────────────────────────────────────
-// Feld: Plugin-Version + Update-Status
-// ─────────────────────────────────────────────
-function tc_field_plugin_version() {
-    $last_checked = (int) get_option( TC_Plugin_Updater::LAST_CHECK_KEY, 0 );
-    $last_status  = get_option( 'tc_github_update_last_status', '' );
-    $check_url    = wp_nonce_url(
-        add_query_arg( 'tc_check_update', '1' ),
-        'tc_check_update'
-    );
-    $releases_url = 'https://github.com/' . TC_GITHUB_USER . '/' . TC_GITHUB_REPO . '/releases';
-
-    $release      = tc_fetch_latest_release( false );
-    $latest       = $release ? ltrim( $release->tag_name, 'v' ) : null;
-    $update_avail = $latest && version_compare( $latest, TC_VERSION, '>' );
-
-    if ( $last_checked > 0 ) {
-        $diff    = time() - $last_checked;
-        $minutes = (int) round( $diff / 60 );
-        if ( $minutes < 60 ) {
-            $since = $minutes <= 1 ? 'vor 1 Minute' : "vor {$minutes} Minuten";
-        } elseif ( $minutes < 1440 ) {
-            $hours = (int) round( $minutes / 60 );
-            $since = "vor {$hours} Stunde" . ( $hours !== 1 ? 'n' : '' );
-        } else {
-            $days  = (int) round( $minutes / 1440 );
-            $since = "vor {$days} Tag" . ( $days !== 1 ? 'en' : '' );
-        }
-        $last_check_text = esc_html( $since );
-    } else {
-        $last_check_text = 'noch nie';
-    }
-
-    // Fehlermeldung ermitteln
-    $error_msg = '';
-    if ( ! $release && $last_checked > 0 ) {
-        if ( $last_status === '404' ) {
-            $error_msg = '⚠️ Kein GitHub Release gefunden (HTTP 404). '
-                . '<a href="' . esc_url( $releases_url ) . '/new" target="_blank">Jetzt Release erstellen →</a>';
-        } elseif ( str_starts_with( $last_status, 'wp_error:' ) ) {
-            $error_msg = '⚠️ Verbindungsfehler: ' . esc_html( substr( $last_status, 9 ) );
-        } elseif ( $last_status && $last_status !== '200' ) {
-            $error_msg = '⚠️ GitHub API Fehler (HTTP ' . esc_html( $last_status ) . ').';
-        }
-    }
-    ?>
-    <p style="margin:0 0 6px;">
-        <strong>Installierte Version:</strong>
-        <code><?php echo esc_html( TC_VERSION ); ?></code>
-        <?php if ( $update_avail ) : ?>
-            &nbsp;<span style="display:inline-block;background:#d63638;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;">
-                Update verfügbar: <?php echo esc_html( $latest ); ?>
-            </span>
-        <?php elseif ( $latest ) : ?>
-            &nbsp;<span style="display:inline-block;background:#00a32a;color:#fff;font-size:11px;font-weight:700;padding:2px 8px;border-radius:999px;vertical-align:middle;">
-                Aktuell
-            </span>
-        <?php endif; ?>
-    </p>
-
-    <?php if ( $latest ) : ?>
-    <p style="margin:0 0 10px;color:#666;font-size:13px;">
-        Neueste GitHub-Version: <code><?php echo esc_html( $latest ); ?></code>
-        &nbsp;·&nbsp; Letzter Check: <?php echo $last_check_text; ?>
-    </p>
-    <?php elseif ( $error_msg ) : ?>
-    <p style="margin:0 0 10px;color:#b32d2e;font-size:13px;">
-        <?php echo wp_kses( $error_msg, array( 'a' => array( 'href' => array(), 'target' => array() ) ) ); ?>
-        <br><small style="color:#999;">Letzter Check: <?php echo $last_check_text; ?></small>
-    </p>
-    <?php else : ?>
-    <p style="margin:0 0 10px;color:#666;font-size:13px;">
-        Letzter Check: <?php echo $last_check_text; ?> — Klicke auf „Jetzt prüfen".
-    </p>
-    <?php endif; ?>
-
-    <a href="<?php echo esc_url( $check_url ); ?>" class="button button-secondary">
-        ↻ Jetzt auf Updates prüfen
-    </a>
-    &nbsp;
-    <a href="<?php echo esc_url( $releases_url ); ?>" target="_blank" class="button button-secondary">
-        GitHub Releases →
-    </a>
     <?php
 }
 

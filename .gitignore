@@ -1,0 +1,12 @@
+# Lokale Konfiguration — enthält Tokens/Secrets, wird NIE gepusht
+config.local.php
+
+# macOS
+.DS_Store
+
+# Editor
+.vscode/
+.idea/
+
+# Node (falls verwendet)
+node_modules/

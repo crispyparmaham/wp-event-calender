@@ -115,11 +115,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Drag & Drop (nur editierbare Events) ──────────────────
     eventDrop: async ({ event, revert }) => {
-      const res = await post('tc_update_event', {
+      const dateIndex = event.extendedProps.dateIndex;
+      const payload   = {
         id:    event.id,
         start: event.startStr,
         end:   event.endStr || '',
-      });
+      };
+      if (dateIndex !== null && dateIndex !== undefined) payload.date_index = dateIndex;
+      const res = await post('tc_update_event', payload);
       if (!res.success) {
         revert();
         alert('Fehler beim Speichern: ' + (res.data?.message || ''));
@@ -128,11 +131,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Resize ────────────────────────────────────────────────
     eventResize: async ({ event, revert }) => {
-      const res = await post('tc_update_event', {
+      const dateIndex = event.extendedProps.dateIndex;
+      const payload   = {
         id:    event.id,
         start: event.startStr,
         end:   event.endStr || '',
-      });
+      };
+      if (dateIndex !== null && dateIndex !== undefined) payload.date_index = dateIndex;
+      const res = await post('tc_update_event', payload);
       if (!res.success) {
         revert();
         alert('Fehler beim Speichern: ' + (res.data?.message || ''));
