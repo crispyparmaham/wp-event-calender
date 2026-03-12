@@ -114,6 +114,13 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 [training_price_bar post_id="42" request_text="Termin anfragen"]
 ```
 
+**Via PHP template:**
+```php
+<?php echo do_shortcode('[training_price_bar]'); ?>
+<?php echo do_shortcode('[training_price_bar link="#contact" link_text="Jetzt buchen"]'); ?>
+<?php echo do_shortcode('[training_price_bar post_id="42" request_text="Termin anfragen"]'); ?>
+```
+
 ### Attributes
 
 | Attribute | Default | Description |
@@ -139,6 +146,13 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 [training_calendar]
 [training_calendar type="training"]
 [training_calendar type="seminar" view="listMonth"]
+```
+
+**Via PHP template:**
+```php
+<?php echo do_shortcode('[training_calendar]'); ?>
+<?php echo do_shortcode('[training_calendar type="training"]'); ?>
+<?php echo do_shortcode('[training_calendar type="seminar" view="listMonth"]'); ?>
 ```
 
 ### Attributes
