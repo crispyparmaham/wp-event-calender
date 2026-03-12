@@ -50,15 +50,19 @@ training-calendar/
 │   ├── ajax.php                   # AJAX handlers (load / create / update events)
 │   ├── admin-page.php             # Admin menu page & asset enqueue
 │   ├── shortcode-calendar.php     # Frontend calendar shortcode & asset enqueue
-│   └── shortcode-price-bar.php    # Frontend price bar shortcode & asset enqueue
+│   ├── shortcode-price-bar.php    # Frontend price bar shortcode & asset enqueue
+│   ├── registration.php           # Registration CPT, ACF fields, & AJAX handlers
+│   └── shortcode-registration.php # Registration form shortcode & asset enqueue
 └── assets/
     ├── js/
     │   ├── calendar.js            # Admin calendar logic (FullCalendar)
-    │   └── calendar-frontend.js   # Frontend calendar logic (FullCalendar)
+    │   ├── calendar-frontend.js   # Frontend calendar logic (FullCalendar)
+    │   └── registration.js        # Registration form interactivity
     └── css/
         ├── calendar.css           # Admin styles
         ├── calendar-frontend.css  # Frontend calendar styles
-        └── price-bar.css          # Frontend price bar styles
+        ├── price-bar.css          # Frontend price bar styles
+        └── registration.css       # Registration form styles
 ```
 
 ---
@@ -138,6 +142,58 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 | `price_on_request = true` | Shows `price_on_request_label` + request button |
 | Early Bird deadline not yet passed | Shows Early Bird price + deadline hint + regular price fallback |
 | Early Bird expired or not set | Shows regular price only |
+
+---
+
+## Registration Shortcode
+
+Displays a registration form for trainings and seminars. Users can select an event and submit their registration details.
+
+```
+[training_registration]
+[training_registration event_id="42"]
+[training_registration event_id="42" title="Jetzt anmelden"]
+```
+
+**Via PHP template:**
+```php
+<?php echo do_shortcode('[training_registration]'); ?>
+<?php echo do_shortcode('[training_registration event_id="42" title="Anmeldeformular"]'); ?>
+```
+
+### Attributes
+
+| Attribute | Default | Description |
+|---|---|---|
+| `event_id` | `0` | Post ID of a specific event (optional). If omitted, users can select from all events |
+| `title` | `Anmelden` | Form title heading |
+
+### Features
+
+- **Dynamic event selection** — loads all published events
+- **Event details** — displays trainer, location, and date when event is selected
+- **Form fields** — First name, last name, email (required), phone, company, notes
+- **Real-time validation** — user-friendly error messages
+- **AJAX submission** — no page reload required
+- **Confirmation email** — automatic dispatch to registrant
+- **Admin management** — new post type `training_registration` with searchable columns
+- **Custom Post Type** — organize registrations in WordPress admin under **Anmeldungen**
+
+### Admin Management
+
+Navigate to **Anmeldungen** in the WordPress admin.
+
+| Column | Description |
+|---|---|
+| Vorname | First name |
+| Nachname | Last name |
+| E-Mail | Email address |
+| Telefon | Phone number |
+| Veranstaltung | Linked event title |
+| Status | Pending or confirmed |
+| Angemeldet am | Registration date/time |
+
+Edit individual registrations to change status or add notes.
 
 ---
 
