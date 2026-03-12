@@ -1,8 +1,8 @@
 <?php
 /**
  * Plugin Name:  Drag & Drop Event Calendar
- * Description:  Kalenderübersicht für Trainings & Seminare mit Drag & Drop Funktion.
- * Version:      2.1.4
+ * Description:  Kalenderübersicht für Termine mit Drag & Drop Funktion.
+ * Version:      2.1.5
  * Requires PHP: 8.2
  * Author:       Lucas Dühr | more than ads
  * Author URI:   https://www.morethanads.de
@@ -19,23 +19,9 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'TC_PATH',        plugin_dir_path( __FILE__ ) );
 define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
-define( 'TC_VERSION',     '2.1.4' );
+define( 'TC_VERSION',     '2.1.5' );
 
-// ── GitHub Auto-Updater ────────────────────────────────────────
-if ( file_exists( TC_PATH . 'vendor/autoload.php' ) ) {
-    require_once TC_PATH . 'vendor/autoload.php';
-
-    $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
-        'https://github.com/crispyparmaham/wp-event-calender',
-        __FILE__,
-        'training-calendar'
-    );
-    // Optionaler GitHub-Token für höhere API-Rate-Limits (aus config.local.php)
-    if ( defined( 'TC_GITHUB_TOKEN' ) && TC_GITHUB_TOKEN !== '' ) {
-        $updateChecker->setAuthentication( TC_GITHUB_TOKEN );
-    }
-}
-
+require_once TC_PATH . 'includes/admin/updater.php';
 require_once TC_PATH . 'includes/admin/settings.php';
 require_once TC_PATH . 'includes/admin/dashboard.php';
 require_once TC_PATH . 'includes/admin/admin-page.php';
