@@ -15,6 +15,9 @@ function tc_create_registrations_table() {
         lastname varchar(255) NOT NULL,
         email varchar(255) NOT NULL,
         phone varchar(20),
+        address varchar(255),
+        zip varchar(20),
+        city varchar(100),
         event_id bigint(20) NOT NULL,
         event_date date DEFAULT NULL,
         status varchar(20) DEFAULT 'pending',
@@ -54,7 +57,7 @@ function tc_get_registration( $id ) {
 
 function tc_update_registration( $id, $data ) {
     global $wpdb;
-    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'event_id', 'event_date', 'status', 'notes' );
+    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'address', 'zip', 'city', 'event_id', 'event_date', 'status', 'notes' );
     $clean   = array_intersect_key( $data, array_flip( $allowed ) );
     if ( empty( $clean ) ) return false;
     return $wpdb->update( "{$wpdb->prefix}tc_registrations", $clean, array( 'id' => $id ) );
@@ -191,7 +194,11 @@ function tc_send_admin_notification( $data ) {
     $msg .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
     $msg .= tc_mail_row( 'Name',        $data['firstname'] . ' ' . $data['lastname'] );
     $msg .= tc_mail_row( 'E-Mail',      $data['email'] );
-    if ( ! empty( $data['phone'] ) )   $msg .= tc_mail_row( 'Telefon',    $data['phone'] );
+    if ( ! empty( $data['phone'] ) )   $msg .= tc_mail_row( 'Telefon',    esc_html( $data['phone'] ) );
+    if ( ! empty( $data['address'] ) ) $msg .= tc_mail_row( 'Adresse',    esc_html( $data['address'] ) );
+    if ( ! empty( $data['zip'] ) || ! empty( $data['city'] ) ) {
+        $msg .= tc_mail_row( 'PLZ / Ort', esc_html( trim( $data['zip'] . ' ' . $data['city'] ) ) );
+    }
     if ( ! empty( $data['notes'] ) )   $msg .= tc_mail_row( 'Notizen',    nl2br( esc_html( $data['notes'] ) ) );
     $msg .= '</table>';
     $msg .= '<p style="margin-top:20px;"><a href="' . esc_url( admin_url( 'admin.php?page=training-registrations' ) ) . '" '
@@ -263,6 +270,9 @@ function tc_handle_registration_submission() {
     $lastname   = sanitize_text_field(    $_POST['lastname']   ?? '' );
     $email      = sanitize_email(         $_POST['email']      ?? '' );
     $phone      = sanitize_text_field(    $_POST['phone']      ?? '' );
+    $address    = sanitize_text_field(    $_POST['address']    ?? '' );
+    $zip        = sanitize_text_field(    $_POST['zip']        ?? '' );
+    $city       = sanitize_text_field(    $_POST['city']       ?? '' );
     $event_id   = absint(                 $_POST['event_id']   ?? 0  );
     $event_date = sanitize_text_field(    $_POST['event_date'] ?? '' );
     $notes      = sanitize_textarea_field($_POST['notes']      ?? '' );
@@ -302,13 +312,16 @@ function tc_handle_registration_submission() {
             'lastname'   => $lastname,
             'email'      => $email,
             'phone'      => $phone,
+            'address'    => $address,
+            'zip'        => $zip,
+            'city'       => $city,
             'event_id'   => $event_id,
             'event_date' => $event_date ?: null,
             'status'     => 'pending',
             'notes'      => $notes,
             'created_at' => time(),
         ),
-        array( '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d' )
+        array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d' )
     );
 
     if ( $inserted === false ) {
@@ -325,6 +338,9 @@ function tc_handle_registration_submission() {
         'lastname'   => $lastname,
         'email'      => $email,
         'phone'      => $phone,
+        'address'    => $address,
+        'zip'        => $zip,
+        'city'       => $city,
         'event_id'   => $event_id,
         'event_date' => $event_date,
         'notes'      => $notes,

@@ -1,242 +1,273 @@
 /* ═════════════════════════════════════════════
-   Training Calendar - Anmeldeformular Styles
+   Training Calendar – Anmeldeformular Styles
+   Spezifität durch .tc-registration-wrap Prefix
+   für Kompatibilität mit Oxygen Builder
    ═════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────
+   Wrapper & Formular Grundstruktur
+   ───────────────────────────────────────────── */
 
 .tc-registration-wrap {
     max-width: 600px;
     margin: 2rem auto;
     padding: 0;
+    box-sizing: border-box;
+}
+
+.tc-registration-wrap .tc-registration-form {
+    background-color: #fff !important;
+    border: 1px solid #e0e0e0 !important;
+    border-radius: 8px !important;
+    padding: 2rem !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    box-sizing: border-box;
+}
+
+.tc-registration-wrap .tc-registration-form h2 {
+    margin: 0 0 1.5rem 0 !important;
+    font-size: 1.5rem !important;
+    color: #333 !important;
+    font-weight: 600 !important;
+    line-height: 1.3 !important;
 }
 
 /* ─────────────────────────────────────────────
-   Formular Grundstruktur
+   Nachrichten
    ───────────────────────────────────────────── */
 
-.tc-registration-form {
-    background-color: #fff;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    padding: 2rem;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.tc-registration-form h2 {
-    margin: 0 0 1.5rem 0;
-    font-size: 1.5rem;
-    color: #333;
-    font-weight: 600;
-}
-
-/* ─────────────────────────────────────────────
-   Formular Nachrichten
-   ───────────────────────────────────────────── */
-
-.tc-form-messages {
+.tc-registration-wrap .tc-form-messages {
     margin-bottom: 1.5rem;
     padding: 1rem;
     border-radius: 4px;
     font-size: 0.95rem;
 }
 
-.tc-form-messages.tc-success {
-    background-color: #d4edda;
-    color: #155724;
-    border: 1px solid #c3e6cb;
+.tc-registration-wrap .tc-form-messages.tc-success {
+    background-color: #d4edda !important;
+    color: #155724 !important;
+    border: 1px solid #c3e6cb !important;
 }
 
-.tc-form-messages.tc-error {
-    background-color: #f8d7da;
-    color: #721c24;
-    border: 1px solid #f5c6cb;
+.tc-registration-wrap .tc-form-messages.tc-error {
+    background-color: #f8d7da !important;
+    color: #721c24 !important;
+    border: 1px solid #f5c6cb !important;
 }
 
-.tc-form-messages.tc-warning {
-    background-color: #fff3cd;
-    color: #856404;
-    border: 1px solid #ffeaa7;
+.tc-registration-wrap .tc-form-messages.tc-warning {
+    background-color: #fff3cd !important;
+    color: #856404 !important;
+    border: 1px solid #ffeaa7 !important;
 }
 
 /* ─────────────────────────────────────────────
    Formulargruppen
    ───────────────────────────────────────────── */
 
-.tc-form-group {
-    margin-bottom: 1.5rem;
+.tc-registration-wrap .tc-form-group {
+    margin-bottom: 1.25rem !important;
 }
 
-.tc-form-group label {
-    display: block;
-    margin-bottom: 0.5rem;
-    font-weight: 500;
-    color: #333;
-    font-size: 0.95rem;
+.tc-registration-wrap .tc-form-group label {
+    display: block !important;
+    margin-bottom: 0.4rem !important;
+    font-weight: 500 !important;
+    color: #333 !important;
+    font-size: 0.95rem !important;
+    line-height: 1.4 !important;
 }
 
-.tc-required {
+.tc-registration-wrap .tc-required {
     color: #dc3545;
     font-weight: bold;
 }
 
-.tc-form-control {
-    width: 100%;
-    padding: 0.75rem;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    font-size: 1rem;
-    font-family: inherit;
+/* ─────────────────────────────────────────────
+   Inputs / Select / Textarea  (Oxygen-safe)
+   ───────────────────────────────────────────── */
+
+.tc-registration-wrap .tc-form-control {
+    display: block !important;
+    width: 100% !important;
+    padding: 0.65rem 0.75rem !important;
+    border: 1px solid #ddd !important;
+    border-radius: 4px !important;
+    font-size: 1rem !important;
+    font-family: inherit !important;
+    line-height: 1.5 !important;
+    color: #333 !important;
+    background-color: #fff !important;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
     transition: border-color 0.2s, box-shadow 0.2s;
-    box-sizing: border-box;
+    appearance: auto;
+    -webkit-appearance: auto;
+    margin: 0 !important;
+    height: auto !important;
+    min-height: unset !important;
+    max-width: 100% !important;
 }
 
-.tc-form-control:focus {
-    outline: none;
-    border-color: #0066cc;
-    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.1);
+.tc-registration-wrap .tc-form-control:focus {
+    outline: none !important;
+    border-color: #0066cc !important;
+    box-shadow: 0 0 0 3px rgba(0, 102, 204, 0.15) !important;
 }
 
-.tc-form-control::placeholder {
-    color: #999;
+.tc-registration-wrap .tc-form-control::placeholder {
+    color: #999 !important;
+    opacity: 1 !important;
 }
 
-.tc-form-control:disabled {
-    background-color: #f5f5f5;
-    color: #666;
-    cursor: not-allowed;
+.tc-registration-wrap .tc-form-control:disabled {
+    background-color: #f5f5f5 !important;
+    color: #666 !important;
+    cursor: not-allowed !important;
 }
 
-textarea.tc-form-control {
-    resize: vertical;
-    min-height: 100px;
+.tc-registration-wrap textarea.tc-form-control {
+    resize: vertical !important;
+    min-height: 100px !important;
+    height: auto !important;
 }
 
 /* ─────────────────────────────────────────────
-   Formularzeilenlayout
+   Zweispalten-Zeilen
    ───────────────────────────────────────────── */
 
-.tc-form-row {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 1rem;
+.tc-registration-wrap .tc-form-row {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
 }
 
 @media (max-width: 600px) {
-    .tc-form-row {
-        grid-template-columns: 1fr;
+    .tc-registration-wrap .tc-form-row {
+        grid-template-columns: 1fr !important;
     }
 }
 
 /* ─────────────────────────────────────────────
-   Event Details
+   Event Details Box
    ───────────────────────────────────────────── */
 
-.tc-event-details {
-    background-color: #f9f9f9;
-    border-left: 4px solid #0066cc;
-    padding: 1rem;
-    margin-bottom: 1.5rem;
-    border-radius: 4px;
+.tc-registration-wrap .tc-event-details {
+    background-color: #f9f9f9 !important;
+    border-left: 4px solid #0066cc !important;
+    padding: 1rem !important;
+    margin-bottom: 1.5rem !important;
+    border-radius: 4px !important;
 }
 
-.tc-detail-item {
-    display: flex;
-    margin-bottom: 0.75rem;
-    font-size: 0.95rem;
+.tc-registration-wrap .tc-detail-item {
+    display: flex !important;
+    margin-bottom: 0.6rem !important;
+    font-size: 0.95rem !important;
 }
 
-.tc-detail-item:last-child {
-    margin-bottom: 0;
+.tc-registration-wrap .tc-detail-item:last-child {
+    margin-bottom: 0 !important;
 }
 
-.tc-detail-label {
-    font-weight: 600;
-    color: #333;
-    min-width: 80px;
-    margin-right: 1rem;
+.tc-registration-wrap .tc-detail-label {
+    font-weight: 600 !important;
+    color: #333 !important;
+    min-width: 80px !important;
+    margin-right: 1rem !important;
 }
 
-.tc-detail-leadership,
-.tc-detail-location,
-.tc-detail-date,
-.tc-detail-capacity {
-    color: #666;
+.tc-registration-wrap .tc-detail-leadership,
+.tc-registration-wrap .tc-detail-location,
+.tc-registration-wrap .tc-detail-date,
+.tc-registration-wrap .tc-detail-capacity {
+    color: #666 !important;
 }
 
-.tc-detail-capacity.tc-available {
-    color: #27ae60;
-    font-weight: 600;
+.tc-registration-wrap .tc-detail-capacity.tc-available {
+    color: #27ae60 !important;
+    font-weight: 600 !important;
 }
 
-.tc-detail-capacity.tc-full {
-    color: #dc3545;
-    font-weight: 600;
+.tc-registration-wrap .tc-detail-capacity.tc-full {
+    color: #dc3545 !important;
+    font-weight: 600 !important;
 }
 
 /* ─────────────────────────────────────────────
-   Buttons – FIXES: Basisstyles ergänzt
+   Submit-Button  (Oxygen-safe)
    ───────────────────────────────────────────── */
 
-.tc-btn {
-    display: inline-block;
-    padding: 0.8rem 2rem;
-    font-size: 1rem;
-    font-weight: 600;
-    line-height: 1.2;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    text-align: center;
+.tc-registration-wrap .tc-btn {
+    display: inline-block !important;
+    padding: 0.8rem 2rem !important;
+    font-size: 1rem !important;
+    font-weight: 600 !important;
+    line-height: 1.2 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    text-align: center !important;
+    text-decoration: none !important;
+    font-family: inherit !important;
     transition: background-color 0.2s, opacity 0.2s;
-    font-family: inherit;
-    text-decoration: none;
+    box-shadow: none !important;
+    box-sizing: border-box !important;
 }
 
-.tc-btn-primary {
-    background-color: #0066cc;
-    color: #ffffff;
+.tc-registration-wrap .tc-btn-primary {
+    background-color: #0066cc !important;
+    color: #ffffff !important;
 }
 
-.tc-btn-primary:hover,
-.tc-btn-primary:focus {
-    background-color: #0052a3;
-    color: #ffffff;
+.tc-registration-wrap .tc-btn-primary:hover,
+.tc-registration-wrap .tc-btn-primary:focus {
+    background-color: #0052a3 !important;
+    color: #ffffff !important;
 }
 
-.tc-btn-primary:active {
-    background-color: #003d7a;
-    color: #ffffff;
+.tc-registration-wrap .tc-btn-primary:active {
+    background-color: #003d7a !important;
+    color: #ffffff !important;
 }
 
-.tc-submit-btn {
-    position: relative;
-    width: 100%;
+.tc-registration-wrap .tc-submit-btn {
+    position: relative !important;
+    width: 100% !important;
 }
 
-.tc-submit-btn.tc-btn-disabled {
+.tc-registration-wrap .tc-submit-btn.tc-btn-disabled {
     background-color: #ccc !important;
-    cursor: not-allowed;
-    opacity: 1;
+    cursor: not-allowed !important;
+    opacity: 1 !important;
 }
 
-.tc-btn-text,
-.tc-btn-loader {
-    display: inline-flex;
+.tc-registration-wrap .tc-btn-text {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 0.5rem !important;
+}
+
+.tc-registration-wrap .tc-btn-loader {
     align-items: center;
     justify-content: center;
     gap: 0.5rem;
 }
 
 /* ─────────────────────────────────────────────
-   Loader Spinner
+   Spinner
    ───────────────────────────────────────────── */
 
-.tc-spinner {
-    display: inline-block;
-    width: 1rem;
-    height: 1rem;
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    border-top-color: white;
-    border-radius: 50%;
-    animation: tc-spin 0.8s linear infinite;
+.tc-registration-wrap .tc-spinner {
+    display: inline-block !important;
+    width: 1rem !important;
+    height: 1rem !important;
+    border: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-top-color: white !important;
+    border-radius: 50% !important;
+    animation: tc-spin 0.8s linear infinite !important;
+    flex-shrink: 0;
 }
 
 @keyframes tc-spin {
@@ -247,145 +278,120 @@ textarea.tc-form-control {
    Validierungsfeedback
    ───────────────────────────────────────────── */
 
-.tc-form-group.tc-field-error .tc-form-control {
-    border-color: #dc3545;
-    background-color: #fff5f5;
+.tc-registration-wrap .tc-form-group.tc-field-error .tc-form-control {
+    border-color: #dc3545 !important;
+    background-color: #fff5f5 !important;
 }
 
-.tc-field-error-message {
-    display: block;
-    color: #dc3545;
-    font-size: 0.85rem;
-    margin-top: 0.25rem;
+.tc-registration-wrap .tc-field-error-message {
+    display: block !important;
+    color: #dc3545 !important;
+    font-size: 0.85rem !important;
+    margin-top: 0.25rem !important;
 }
 
 /* ─────────────────────────────────────────────
    Formular-Zustände
    ───────────────────────────────────────────── */
 
-.tc-registration-form.tc-form-submitting .tc-submit-btn {
+.tc-registration-wrap .tc-registration-form.tc-form-submitting .tc-submit-btn {
     opacity: 0.7;
 }
 
-.tc-registration-form.tc-form-submitted {
+.tc-registration-wrap .tc-registration-form.tc-form-submitted {
     opacity: 0.6;
     pointer-events: none;
 }
 
 /* ─────────────────────────────────────────────
-   Dark Mode Support
+   Dark Mode
    ───────────────────────────────────────────── */
 
 .tc-dark .tc-registration-form {
-    background-color: #2d2d2d;
-    border-color: #444;
-    color: #e0e0e0;
+    background-color: #2d2d2d !important;
+    border-color: #444 !important;
+    color: #e0e0e0 !important;
 }
 
 .tc-dark .tc-registration-form h2 {
-    color: #fff;
+    color: #fff !important;
 }
 
 .tc-dark .tc-form-group label {
-    color: #e0e0e0;
+    color: #e0e0e0 !important;
 }
 
 .tc-dark .tc-form-control {
-    background-color: #3a3a3a;
-    border-color: #555;
-    color: #e0e0e0;
+    background-color: #3a3a3a !important;
+    border-color: #555 !important;
+    color: #e0e0e0 !important;
 }
 
 .tc-dark .tc-form-control:focus {
-    border-color: #6699ff;
-    box-shadow: 0 0 0 3px rgba(102, 153, 255, 0.1);
+    border-color: #6699ff !important;
+    box-shadow: 0 0 0 3px rgba(102, 153, 255, 0.1) !important;
 }
 
 .tc-dark .tc-form-control::placeholder {
-    color: #999;
+    color: #999 !important;
 }
 
 .tc-dark .tc-event-details {
-    background-color: #3a3a3a;
-    border-left-color: #6699ff;
+    background-color: #3a3a3a !important;
+    border-left-color: #6699ff !important;
 }
 
 .tc-dark .tc-detail-label {
-    color: #e0e0e0;
+    color: #e0e0e0 !important;
 }
 
 .tc-dark .tc-detail-leadership,
 .tc-dark .tc-detail-location,
 .tc-dark .tc-detail-date,
 .tc-dark .tc-detail-capacity {
-    color: #bbb;
-}
-
-.tc-dark .tc-form-control:disabled {
-    background-color: #4a4a4a;
-    color: #888;
+    color: #bbb !important;
 }
 
 .tc-dark .tc-btn-primary {
-    background-color: #4f46e5;
-    color: #fff;
+    background-color: #4f46e5 !important;
+    color: #fff !important;
 }
 
 .tc-dark .tc-btn-primary:hover {
-    background-color: #4338ca;
-    color: #fff;
-}
-
-.tc-dark .tc-submit-btn.tc-btn-disabled {
-    background-color: #555 !important;
+    background-color: #4338ca !important;
+    color: #fff !important;
 }
 
 /* ─────────────────────────────────────────────
-   Responsive Design
+   Responsive
    ───────────────────────────────────────────── */
 
 @media (max-width: 768px) {
-    .tc-registration-form {
-        padding: 1.5rem;
+    .tc-registration-wrap .tc-registration-form {
+        padding: 1.5rem !important;
     }
 
-    .tc-registration-form h2 {
-        font-size: 1.25rem;
-        margin-bottom: 1rem;
-    }
-
-    .tc-form-group {
-        margin-bottom: 1rem;
-    }
-
-    .tc-btn {
-        padding: 0.65rem 1.5rem;
-        font-size: 0.95rem;
+    .tc-registration-wrap .tc-registration-form h2 {
+        font-size: 1.25rem !important;
+        margin-bottom: 1rem !important;
     }
 }
 
 @media (max-width: 480px) {
     .tc-registration-wrap {
-        margin: 1rem;
+        margin: 1rem !important;
     }
 
-    .tc-registration-form {
-        padding: 1rem;
-        border-radius: 6px;
+    .tc-registration-wrap .tc-registration-form {
+        padding: 1rem !important;
     }
 
-    .tc-registration-form h2 {
-        font-size: 1.1rem;
-        margin-bottom: 1rem;
+    .tc-registration-wrap .tc-form-control {
+        font-size: 16px !important; /* verhindert Zoom auf iOS */
     }
 
-    .tc-form-control {
-        padding: 0.65rem;
-        font-size: 16px; /* verhindert Zoom auf iOS */
-    }
-
-    .tc-btn {
-        padding: 0.6rem 1rem;
-        font-size: 0.9rem;
+    .tc-registration-wrap .tc-btn {
+        padding: 0.65rem 1rem !important;
+        font-size: 0.9rem !important;
     }
 }

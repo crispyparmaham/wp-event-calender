@@ -141,7 +141,9 @@
                 lastname: $form.find('input[name="lastname"]').val().trim(),
                 email: $form.find('input[name="email"]').val().trim(),
                 phone: $form.find('input[name="phone"]').val().trim(),
-                company: $form.find('input[name="company"]').val().trim(),
+                address: $form.find('input[name="address"]').val().trim(),
+                zip: $form.find('input[name="zip"]').val().trim(),
+                city: $form.find('input[name="city"]').val().trim(),
                 event_id: $form.find('input[name="event_id"], select[name="event_id"]').val(),
                 event_date: $form.find('select[name="event_date"]').val() || '',
                 notes: $form.find('textarea[name="notes"]').val().trim()
