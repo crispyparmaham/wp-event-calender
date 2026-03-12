@@ -211,11 +211,10 @@
   font-size: 12px;
   font-weight: 500;
   border: none !important;
-  color: #fff !important;
 }
 
 .tc-frontend-wrap .fc-event * {
-  color: #fff !important;
+  color: #000 !important;
 }
 
 /* Listenansicht */
