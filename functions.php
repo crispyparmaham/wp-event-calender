@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Drag & Drop Event Calendar
  * Description:  Kalenderübersicht für Termine mit Drag & Drop Funktion.
- * Version:      2.1.5
+ * Version:      2.1.6
  * Requires PHP: 8.2
  * Author:       Lucas Dühr | more than ads
  * Author URI:   https://www.morethanads.de
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'TC_PATH',        plugin_dir_path( __FILE__ ) );
 define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
-define( 'TC_VERSION',     '2.1.5' );
+define( 'TC_VERSION',     '2.1.6' );
 
 require_once TC_PATH . 'includes/admin/updater.php';
 require_once TC_PATH . 'includes/admin/settings.php';
