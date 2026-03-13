@@ -39,6 +39,7 @@ require_once TC_PATH . 'includes/shortcodes/ical.php';
 
 require_once TC_PATH . 'includes/registration/registration.php';
 require_once TC_PATH . 'includes/registration/registration-admin-page.php';
+require_once TC_PATH . 'includes/registration/cancel.php';
 require_once TC_PATH . 'includes/registration/export.php';
 require_once TC_PATH . 'includes/registration/waitlist.php';
 require_once TC_PATH . 'includes/registration/reminder.php';

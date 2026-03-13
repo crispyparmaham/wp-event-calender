@@ -23,11 +23,13 @@ function tc_create_registrations_table() {
         status varchar(20) DEFAULT 'pending',
         notes longtext,
         reminder_sent tinyint(1) NOT NULL DEFAULT 0,
+        cancel_token varchar(64) DEFAULT NULL,
         created_at bigint(20) NOT NULL,
         PRIMARY KEY (id),
         KEY email (email),
         KEY event_id (event_id),
-        KEY status (status)
+        KEY status (status),
+        KEY cancel_token (cancel_token)
     ) {$charset_collate};";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
@@ -58,7 +60,7 @@ function tc_get_registration( $id ) {
 
 function tc_update_registration( $id, $data ) {
     global $wpdb;
-    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'address', 'zip', 'city', 'event_id', 'event_date', 'status', 'notes', 'reminder_sent' );
+    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'address', 'zip', 'city', 'event_id', 'event_date', 'status', 'notes', 'reminder_sent', 'cancel_token' );
     $clean   = array_intersect_key( $data, array_flip( $allowed ) );
     if ( empty( $clean ) ) return false;
     return $wpdb->update( "{$wpdb->prefix}tc_registrations", $clean, array( 'id' => $id ) );
@@ -107,10 +109,13 @@ function tc_get_event_mail_info( $event_id, $event_date = '' ) {
 // Mail 1: Dankes-Mail direkt nach Anmeldung
 // ---------------------------------------------
 function tc_send_thank_you_mail( $data ) {
-    $info      = tc_get_event_mail_info( $data['event_id'], $data['event_date'] ?? '' );
-    $is_trial  = (bool) get_field( 'price_on_request', $data['event_id'] );
-    $blogname  = get_option( 'blogname' );
-    $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
+    $info        = tc_get_event_mail_info( $data['event_id'], $data['event_date'] ?? '' );
+    $is_trial    = (bool) get_field( 'price_on_request', $data['event_id'] );
+    $blogname    = get_option( 'blogname' );
+    $headers     = array( 'Content-Type: text/html; charset=UTF-8' );
+    $cancel_url  = ! empty( $data['cancel_token'] )
+        ? add_query_arg( 'tc_cancel', $data['cancel_token'], home_url( '/' ) )
+        : '';
 
     if ( $is_trial ) {
         $subject = 'Deine Probetraining-Anfrage ist eingegangen - ' . $info['title'];
@@ -121,6 +126,7 @@ function tc_send_thank_you_mail( $data ) {
         $msg .= tc_event_info_block( $info );
         $msg .= '<p>Das Probetraining ist selbstverständlich <strong>kostenlos und unverbindlich</strong>. Schnupper einfach rein und schau, ob es dir gefällt.</p>';
         $msg .= '<p>Bei Fragen kannst du dich jederzeit bei uns melden.</p>';
+        if ( $cancel_url ) $msg .= tc_mail_cancel_block( $cancel_url );
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
@@ -131,6 +137,7 @@ function tc_send_thank_you_mail( $data ) {
         $msg .= '<p>wir haben Ihre Anmeldung erhalten und melden uns zeitnah mit einer Bestätigung bei Ihnen.</p>';
         $msg .= tc_event_info_block( $info );
         $msg .= '<p>Bei Fragen stehen wir Ihnen gerne zur Verfügung.</p>';
+        if ( $cancel_url ) $msg .= tc_mail_cancel_block( $cancel_url );
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     }
@@ -145,10 +152,13 @@ function tc_send_confirmation_mail( $registration_id ) {
     $reg = tc_get_registration( $registration_id );
     if ( ! $reg ) return;
 
-    $info      = tc_get_event_mail_info( $reg['event_id'], $reg['event_date'] ?? '' );
-    $is_trial  = (bool) get_field( 'price_on_request', $reg['event_id'] );
-    $blogname  = get_option( 'blogname' );
-    $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
+    $info       = tc_get_event_mail_info( $reg['event_id'], $reg['event_date'] ?? '' );
+    $is_trial   = (bool) get_field( 'price_on_request', $reg['event_id'] );
+    $blogname   = get_option( 'blogname' );
+    $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
+    $cancel_url = ! empty( $reg['cancel_token'] )
+        ? add_query_arg( 'tc_cancel', $reg['cancel_token'], home_url( '/' ) )
+        : '';
 
     if ( $is_trial ) {
         $subject = 'Dein Probetraining ist bestätigt - ' . $info['title'];
@@ -158,6 +168,7 @@ function tc_send_confirmation_mail( $registration_id ) {
         $msg .= '<p>wir freuen uns auf dich! Dein kostenloses Probetraining ist hiermit bestätigt. Wir sehen uns beim Termin!</p>';
         $msg .= tc_event_info_block( $info );
         $msg .= '<p>Bring bequeme Sportkleidung mit und komm einfach vorbei. Bei Fragen melde dich gerne jederzeit.</p>';
+        if ( $cancel_url ) $msg .= tc_mail_cancel_block( $cancel_url );
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
@@ -168,6 +179,7 @@ function tc_send_confirmation_mail( $registration_id ) {
         $msg .= '<p>wir freuen uns, Ihre Anmeldung hiermit offiziell zu bestaetigen. Wir sehen Sie beim Termin!</p>';
         $msg .= tc_event_info_block( $info );
         $msg .= '<p>Bei Fragen vor dem Termin stehen wir Ihnen gerne zur Verfuegung.</p>';
+        if ( $cancel_url ) $msg .= tc_mail_cancel_block( $cancel_url );
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     }
@@ -288,6 +300,13 @@ function tc_event_info_block( $info ) {
          . '</table></div>';
 }
 
+function tc_mail_cancel_block( string $cancel_url ): string {
+    return '<div style="margin-top:20px;padding-top:16px;border-top:1px solid #e5e7eb;font-size:13px;color:#6b7280;">'
+         . 'Möchten Sie Ihre Anmeldung stornieren? '
+         . '<a href="' . esc_url( $cancel_url ) . '" style="color:#dc2626;text-decoration:underline;">Hier klicken</a>.'
+         . '</div>';
+}
+
 function tc_mail_row( $label, $value ) {
     return '<tr>'
          . '<td style="padding:4px 12px 4px 0;font-weight:600;white-space:nowrap;vertical-align:top;color:#374151;">'
@@ -373,23 +392,26 @@ function tc_handle_registration_submission() {
         wp_send_json_error( array( 'message' => $dup_msg ) );
     }
 
+    $cancel_token = bin2hex( random_bytes( 32 ) );
+
     $inserted = $wpdb->insert(
         $table_name,
         array(
-            'firstname'  => $firstname,
-            'lastname'   => $lastname,
-            'email'      => $email,
-            'phone'      => $phone,
-            'address'    => $address,
-            'zip'        => $zip,
-            'city'       => $city,
-            'event_id'   => $event_id,
-            'event_date' => $event_date ?: null,
-            'status'     => 'pending',
-            'notes'      => $notes,
-            'created_at' => time(),
+            'firstname'    => $firstname,
+            'lastname'     => $lastname,
+            'email'        => $email,
+            'phone'        => $phone,
+            'address'      => $address,
+            'zip'          => $zip,
+            'city'         => $city,
+            'event_id'     => $event_id,
+            'event_date'   => $event_date ?: null,
+            'status'       => 'pending',
+            'notes'        => $notes,
+            'cancel_token' => $cancel_token,
+            'created_at'   => time(),
         ),
-        array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%d' )
+        array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )
     );
 
     if ( $inserted === false ) {
@@ -402,16 +424,17 @@ function tc_handle_registration_submission() {
     $new_id = $wpdb->insert_id;
 
     do_action( 'tc_registration_submitted', $new_id, array(
-        'firstname'  => $firstname,
-        'lastname'   => $lastname,
-        'email'      => $email,
-        'phone'      => $phone,
-        'address'    => $address,
-        'zip'        => $zip,
-        'city'       => $city,
-        'event_id'   => $event_id,
-        'event_date' => $event_date,
-        'notes'      => $notes,
+        'firstname'    => $firstname,
+        'lastname'     => $lastname,
+        'email'        => $email,
+        'phone'        => $phone,
+        'address'      => $address,
+        'zip'          => $zip,
+        'city'         => $city,
+        'event_id'     => $event_id,
+        'event_date'   => $event_date,
+        'notes'        => $notes,
+        'cancel_token' => $cancel_token,
     ) );
 
     $success_msg = $is_trial
