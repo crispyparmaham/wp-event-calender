@@ -56,6 +56,11 @@ add_shortcode( 'training_calendar', function ( $atts ) {
             <?php endforeach; ?>
         </div>
 
+        <div class="tc-view-toggle">
+            <button class="tc-view-btn is-active" data-tc-view="calendar">Kalender</button>
+            <button class="tc-view-btn" data-tc-view="wochenplan">Wochenplan</button>
+        </div>
+
         <div class="tc-loader" id="<?php echo esc_attr( $uid ); ?>-loader" style="display:none;">
             <div class="tc-loader-spinner"></div>
             <span>Events werden geladen…</span>
@@ -65,6 +70,15 @@ add_shortcode( 'training_calendar', function ( $atts ) {
              id="<?php echo esc_attr( $uid ); ?>"
              data-type="<?php echo esc_attr( $active_type ); ?>"
              data-view="<?php echo esc_attr( $view ); ?>">
+        </div>
+
+        <div class="tc-wochenplan" id="<?php echo esc_attr( $uid ); ?>-wochenplan" style="display:none;">
+            <div class="tc-wochenplan-nav">
+                <button class="tc-wochenplan-prev" aria-label="Vorherige Woche">&#8592; Vorherige Woche</button>
+                <span class="tc-wochenplan-label"></span>
+                <button class="tc-wochenplan-next" aria-label="Nächste Woche">Nächste Woche &#8594;</button>
+            </div>
+            <div class="tc-wochenplan-body"></div>
         </div>
 
         <div class="tc-popover" id="<?php echo esc_attr( $uid ); ?>-popover"

@@ -412,6 +412,240 @@
   z-index: 9998;
 }
 
+/* ─── View-Toggle (Kalender / Wochenplan) ────────────────────── */
+.tc-view-toggle {
+  display: flex;
+  margin-bottom: 16px;
+  border: 1px solid var(--tc-border);
+  border-radius: 8px;
+  overflow: hidden;
+  width: fit-content;
+}
+
+.tc-view-btn {
+  padding: 7px 18px;
+  background: var(--tc-bg);
+  border: none;
+  color: var(--tc-text-muted);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background .15s, color .15s;
+}
+
+.tc-view-btn + .tc-view-btn {
+  border-left: 1px solid var(--tc-border);
+}
+
+.tc-view-btn:hover {
+  background: var(--tc-surface);
+  color: var(--tc-text);
+}
+
+.tc-view-btn.is-active {
+  background: var(--tc-btn-bg);
+  color: var(--tc-btn-text);
+}
+
+/* ─── Wochenplan Container ────────────────────────────────────── */
+.tc-wochenplan {
+  border: 1px solid var(--tc-border);
+  border-radius: 10px;
+  background: var(--tc-bg);
+  overflow: hidden;
+}
+
+/* ─── Navigation ──────────────────────────────────────────────── */
+.tc-wochenplan-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--tc-border);
+  background: var(--tc-surface);
+  gap: 12px;
+}
+
+.tc-wochenplan-prev,
+.tc-wochenplan-next {
+  background: var(--tc-bg);
+  border: 1px solid var(--tc-border);
+  border-radius: 6px;
+  padding: 5px 14px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--tc-text);
+  font-family: inherit;
+  white-space: nowrap;
+  transition: background .15s, border-color .15s;
+}
+
+.tc-wochenplan-prev:hover,
+.tc-wochenplan-next:hover {
+  background: var(--tc-btn-bg);
+  border-color: var(--tc-btn-bg);
+  color: var(--tc-btn-text);
+}
+
+.tc-wochenplan-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tc-text);
+  text-align: center;
+  flex: 1;
+}
+
+/* ─── Tabelle ─────────────────────────────────────────────────── */
+.tc-wochenplan-table-wrap {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.tc-wochenplan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  min-width: 600px;
+}
+
+.tc-wochenplan-table th,
+.tc-wochenplan-table td {
+  border: 1px solid var(--tc-border);
+  padding: 0;
+  vertical-align: top;
+}
+
+/* Kopfzeile */
+.tc-wochenplan-table thead th {
+  background: var(--tc-surface);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--tc-text-muted);
+  padding: 7px 4px 5px;
+  white-space: nowrap;
+}
+
+.tc-wp-th-time {
+  width: 60px;
+  min-width: 60px;
+}
+
+.tc-wp-th-date {
+  display: block;
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  color: var(--tc-text-muted);
+  margin-top: 2px;
+}
+
+.tc-wp-today {
+  background: var(--tc-today) !important;
+  color: var(--tc-btn-bg) !important;
+}
+
+.tc-wp-today .tc-wp-th-date {
+  color: var(--tc-btn-bg) !important;
+}
+
+/* Gruppen-Trennzeile (Vormittag / Nachmittag / Abend) */
+.tc-wp-group-row td {
+  background: var(--tc-surface);
+  padding: 5px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+  color: var(--tc-text-muted);
+  border-top: 2px solid var(--tc-border);
+}
+
+/* Zeitspalte */
+.tc-wp-time {
+  text-align: center;
+  padding: 6px 4px;
+  background: var(--tc-surface);
+  vertical-align: middle !important;
+  width: 60px;
+  min-width: 60px;
+  white-space: nowrap;
+}
+
+.tc-wp-time-start {
+  display: block;
+  font-weight: 700;
+  font-size: 12px;
+  color: var(--tc-text);
+}
+
+.tc-wp-time-end {
+  display: block;
+  font-size: 11px;
+  color: var(--tc-text-muted);
+  margin-top: 1px;
+}
+
+/* Event-Zellen */
+.tc-wp-cell {
+  padding: 4px;
+  vertical-align: top;
+}
+
+.tc-wp-cell--empty {
+  background: var(--tc-bg);
+}
+
+/* Event-Button */
+.tc-wp-event {
+  display: block;
+  width: 100%;
+  padding: 6px 8px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  text-align: left;
+  font-family: inherit;
+  transition: box-shadow .15s;
+  margin-bottom: 3px;
+}
+
+.tc-wp-event:last-child {
+  margin-bottom: 0;
+}
+
+.tc-wp-event:hover {
+  box-shadow: 0 0 0 2px currentColor;
+}
+
+.tc-wp-event-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--tc-text);
+  line-height: 1.3;
+}
+
+.tc-wp-event-sub {
+  display: block;
+  font-size: 11px;
+  color: var(--tc-text-muted);
+  margin-top: 2px;
+  font-style: italic;
+}
+
+/* Leere Woche */
+.tc-wp-empty {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--tc-text-muted);
+  font-size: 14px;
+}
+
 /* ─── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .tc-frontend-calendar {
@@ -472,5 +706,23 @@
     max-height: 80vh;
     overflow-y: auto;
     z-index: 10000;
+  }
+
+  .tc-wochenplan-nav {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .tc-wochenplan-label {
+    order: -1;
+    width: 100%;
+    text-align: center;
+  }
+
+  .tc-wochenplan-prev,
+  .tc-wochenplan-next {
+    flex: 1;
+    text-align: center;
   }
 }

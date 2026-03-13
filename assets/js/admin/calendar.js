@@ -1,6 +1,47 @@
 /* global FullCalendar, TC */
 document.addEventListener('DOMContentLoaded', () => {
 
+  // ── Zeitbereich der Wochenansicht dynamisch anpassen ──────────────
+  function updateVisibleTimeRange(calendar) {
+    if (calendar.view.type !== 'timeGridWeek') return;
+
+    const viewStart = calendar.view.activeStart;
+    const viewEnd   = calendar.view.activeEnd;
+    const toMin     = (d) => d.getHours() * 60 + d.getMinutes();
+
+    let earliest = Infinity;
+    let latest   = -Infinity;
+
+    calendar.getEvents().forEach(e => {
+      if (e.allDay) return;
+      const s   = e.start;
+      const end = e.end || s;
+      if (s >= viewEnd || end <= viewStart) return;
+
+      const sm = toMin(s);
+      const em = (end.getHours() === 0 && end.getMinutes() === 0) ? 1440 : toMin(end);
+      if (sm < earliest) earliest = sm;
+      if (em > latest)   latest   = em;
+    });
+
+    const pad = n => String(n).padStart(2, '0');
+    let minT, maxT;
+
+    if (!isFinite(earliest)) {
+      minT = '08:00:00';
+      maxT = '20:00:00';
+    } else {
+      const minMin = Math.max(0,    earliest - 60);
+      const maxMin = Math.min(1440, latest   + 60);
+      minT = `${pad(Math.floor(minMin / 60))}:${pad(minMin % 60)}:00`;
+      maxT = `${pad(Math.floor(maxMin / 60))}:${pad(maxMin % 60)}:00`;
+    }
+
+    calendar.setOption('slotMinTime', minT);
+    calendar.setOption('slotMaxTime', maxT);
+    calendar.setOption('scrollTime',  minT);
+  }
+
   const el          = document.getElementById('tc-calendar');
   const modal       = document.getElementById('tc-modal');
   const backdrop    = document.getElementById('tc-modal-backdrop');
@@ -63,8 +104,17 @@ document.addEventListener('DOMContentLoaded', () => {
       list:  'Liste',
     },
 
-    editable:  true,
-    droppable: true,
+    editable:      true,
+    droppable:     true,
+    slotDuration:  '00:30:00',
+
+    datesSet() {
+      updateVisibleTimeRange(calendar);
+    },
+
+    eventsSet() {
+      updateVisibleTimeRange(calendar);
+    },
 
     // ── Events laden ──────────────────────────────────────────
     events: async (info, success, failure) => {
