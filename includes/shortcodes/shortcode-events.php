@@ -101,16 +101,18 @@ function tc_time_events_shortcode( $atts ): string {
 	// ── Enqueue CSS (now that we know the shortcode is on this page) ───────
 	wp_enqueue_style( 'tc-events' );
 
+	$dark_class = tc_get_setting( 'calendar_mode', 'light' ) === 'dark' ? ' tc-dark' : '';
+
 	// ── Empty state ────────────────────────────────────────────────────────
 	if ( empty( $posts ) ) {
-		return '<div class="tc-events-wrap"><div class="tc-events-empty">'
+		return '<div class="tc-events-wrap' . $dark_class . '"><div class="tc-events-empty">'
 			. '<p>Aktuell sind keine Termine verfügbar.</p>'
 			. '</div></div>';
 	}
 
 	// ── Render ─────────────────────────────────────────────────────────────
 	$wrapper_class = 'tc-events-wrap tc-events-layout--' . $layout
-		. ' tc-events-cols--' . $columns;
+		. ' tc-events-cols--' . $columns . $dark_class;
 
 	ob_start();
 	echo '<div class="' . esc_attr( $wrapper_class ) . '">';

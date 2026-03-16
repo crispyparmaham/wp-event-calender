@@ -39,7 +39,8 @@
   }
 }
 
-/* Dark mode — .tc-dark parent class (matches plugin convention) */
+/* Dark mode — .tc-dark auf dem Wrapper selbst oder einem Elternelement */
+.tc-events-wrap.tc-dark,
 .tc-dark .tc-events-wrap {
   --tce-bg:          #1f2937;
   --tce-surface:     #111827;
