@@ -29,14 +29,16 @@ function tc_create_registrations_table() {
         KEY email (email),
         KEY event_id (event_id),
         KEY status (status),
-        KEY cancel_token (cancel_token)
+        KEY cancel_token (cancel_token),
+        KEY email_event (email, event_id)
     ) {$charset_collate};";
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta( $sql );
 }
 
-add_action( 'admin_init', 'tc_create_registrations_table' );
+// Nur beim Plugin-Aktivieren ausführen (register_activation_hook in functions.php),
+// nicht bei jedem admin_init.
 
 // ---------------------------------------------
 // Helpers
@@ -326,20 +328,20 @@ add_action( 'tc_registration_submitted', function ( $registration_id, $data ) {
 // ---------------------------------------------
 // AJAX: Anmeldung erstellen
 // ---------------------------------------------
-add_action( 'wp_ajax_nopriv_tc_submit_registration', 'tc_handle_registration_submission' );
-add_action( 'wp_ajax_tc_submit_registration',        'tc_handle_registration_submission' );
+add_action( 'wp_ajax_nopriv_' . TC_AJAX_SUBMIT_REGISTRATION, 'tc_handle_registration_submission' );
+add_action( 'wp_ajax_' . TC_AJAX_SUBMIT_REGISTRATION,        'tc_handle_registration_submission' );
 
 function tc_handle_registration_submission() {
     check_ajax_referer( 'tc_registration_nonce', 'nonce' );
 
-    // Rate Limiting: max. 5 Anmeldungen pro IP innerhalb von 15 Minuten
+    // Rate Limiting: max. TC_RATE_LIMIT_COUNT Anmeldungen pro IP innerhalb von TC_RATE_LIMIT_SECONDS
     $ip        = isset( $_SERVER['REMOTE_ADDR'] ) ? sanitize_text_field( wp_unslash( $_SERVER['REMOTE_ADDR'] ) ) : 'unknown';
     $rl_key    = 'tc_reg_limit_' . md5( $ip );
     $rl_count  = (int) get_transient( $rl_key );
-    if ( $rl_count >= 5 ) {
+    if ( $rl_count >= TC_RATE_LIMIT_COUNT ) {
         wp_send_json_error( array( 'message' => 'Zu viele Anfragen. Bitte versuchen Sie es später erneut.' ) );
     }
-    set_transient( $rl_key, $rl_count + 1, 15 * MINUTE_IN_SECONDS );
+    set_transient( $rl_key, $rl_count + 1, TC_RATE_LIMIT_SECONDS );
 
     global $wpdb;
     $table_name = $wpdb->prefix . 'tc_registrations';
@@ -415,10 +417,10 @@ function tc_handle_registration_submission() {
     );
 
     if ( $inserted === false ) {
-        wp_send_json_error( array(
-            'message' => 'Fehler beim Speichern der Anmeldung.'
-                         . ( defined( 'WP_DEBUG' ) && WP_DEBUG ? ' DB: ' . $wpdb->last_error : '' ),
-        ) );
+        if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+            error_log( 'TC Registration DB error: ' . $wpdb->last_error );
+        }
+        wp_send_json_error( array( 'message' => 'Fehler beim Speichern der Anmeldung.' ) );
     }
 
     $new_id = $wpdb->insert_id;
@@ -450,8 +452,8 @@ function tc_handle_registration_submission() {
 // ---------------------------------------------
 // AJAX: Event-Details laden
 // ---------------------------------------------
-add_action( 'wp_ajax_nopriv_tc_get_event_details', 'tc_get_event_details_ajax' );
-add_action( 'wp_ajax_tc_get_event_details',        'tc_get_event_details_ajax' );
+add_action( 'wp_ajax_nopriv_' . TC_AJAX_GET_EVENT_DETAILS, 'tc_get_event_details_ajax' );
+add_action( 'wp_ajax_' . TC_AJAX_GET_EVENT_DETAILS,        'tc_get_event_details_ajax' );
 
 function tc_get_event_details_ajax() {
     check_ajax_referer( 'tc_registration_nonce', 'nonce' );
@@ -461,38 +463,48 @@ function tc_get_event_details_ajax() {
         wp_send_json_error( array( 'message' => 'Event nicht gefunden.' ) );
     }
 
-    $event             = get_post( $event_id );
-    $leadership        = get_field( 'seminar_leadership', $event_id );
-    $location          = get_field( 'location',           $event_id );
-    $start_date        = get_field( 'start_date',         $event_id );
-    $start_time        = get_field( 'start_time',         $event_id );
-    $more_days         = get_field( 'more_days',          $event_id );
-    $end_date          = get_field( 'end_date',           $event_id );
-    $is_recurring      = get_field( 'is_recurring',       $event_id );
-    $recurring_weekday = get_field( 'recurring_weekday',  $event_id );
-    $recurring_until   = get_field( 'recurring_until',    $event_id );
-    $track_p           = get_field( 'track_participants', $event_id );
-    $max_p             = get_field( 'participants',       $event_id );
+    $event  = get_post( $event_id );
+    $fields = get_fields( $event_id ) ?: array();
+
+    $leadership        = $fields['seminar_leadership']  ?? null;
+    $location          = $fields['location']            ?? null;
+    $start_date        = $fields['start_date']          ?? null;
+    $start_time        = $fields['start_time']          ?? null;
+    $more_days         = $fields['more_days']           ?? null;
+    $end_date          = $fields['end_date']            ?? null;
+    $is_recurring      = $fields['is_recurring']        ?? null;
+    $recurring_weekday = $fields['recurring_weekday']   ?? null;
+    $recurring_until   = $fields['recurring_until']     ?? null;
+    $track_p           = $fields['track_participants']  ?? null;
+    $max_p             = $fields['participants']        ?? null;
 
     $dates = array(); $is_multiday = false; $is_recurring_event = false;
 
     if ( $more_days && $end_date ) {
         $is_multiday = true;
-        $cur = new DateTime( $start_date );
-        $end = new DateTime( $end_date );
-        while ( $cur <= $end ) { $dates[] = $cur->format('Y-m-d'); $cur->modify('+1 day'); }
+        try {
+            $cur = new DateTime( $start_date );
+            $end = new DateTime( $end_date );
+            while ( $cur <= $end ) { $dates[] = $cur->format('Y-m-d'); $cur->modify('+1 day'); }
+        } catch ( Exception $e ) {
+            if ( $start_date ) $dates = array( $start_date );
+        }
     } elseif ( $is_recurring && $recurring_weekday !== '' && $recurring_until ) {
         $is_recurring_event = true;
-        $target   = (int) $recurring_weekday;
-        $cur      = new DateTime( $start_date );
-        $until_dt = new DateTime( $recurring_until . ' 23:59:59' );
-        $diff     = ( $target - (int) $cur->format('w') + 7 ) % 7;
-        if ( $diff > 0 ) $cur->modify( "+{$diff} days" );
-        $limit = 0;
-        while ( $cur <= $until_dt && $limit < 260 ) {
-            $dates[] = $cur->format('Y-m-d');
-            $cur->modify('+7 days');
-            $limit++;
+        try {
+            $target   = (int) $recurring_weekday;
+            $cur      = new DateTime( $start_date );
+            $until_dt = new DateTime( $recurring_until . ' 23:59:59' );
+            $diff     = ( $target - (int) $cur->format('w') + 7 ) % 7;
+            if ( $diff > 0 ) $cur->modify( "+{$diff} days" );
+            $limit = 0;
+            while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
+                $dates[] = $cur->format('Y-m-d');
+                $cur->modify('+7 days');
+                $limit++;
+            }
+        } catch ( Exception $e ) {
+            if ( $start_date ) $dates = array( $start_date );
         }
     } else {
         $dates[] = $start_date;

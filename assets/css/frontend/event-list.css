@@ -126,6 +126,90 @@
   overflow: hidden;
 }
 
+/* ── Terminbereich (gemeinsam) ───────────────────────────────────── */
+.tc-evlist-dates {
+  margin-top: 2px;
+  padding-top: 10px;
+  border-top: 1px solid var(--tc-border);
+}
+
+/* ── Wiederkehrende Events: Wochentag-Badge ──────────────────────── */
+.tc-evlist-dates--recurring .tc-evlist-recurring-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--tc-text-muted);
+  line-height: 1.5;
+}
+
+/* ── Einmalige Events: Datumsliste ───────────────────────────────── */
+.tc-evlist-date-inner {
+  display: flex;
+  gap: 6px;
+  align-items: flex-start;
+}
+
+.tc-dates-icon {
+  flex-shrink: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.tc-dates-items {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.tc-evlist-date-row {
+  font-size: 12px;
+  color: var(--tc-text-muted);
+  line-height: 1.5;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── Versteckte Extratermine ─────────────────────────────────────── */
+.tc-date-extra {
+  display: none;
+}
+
+.tc-evlist-dates.is-expanded .tc-date-extra {
+  display: block;
+}
+
+/* ── „+ X weitere"-Button ────────────────────────────────────────── */
+.tc-dates-more {
+  display: inline-block;
+  margin-top: 5px;
+  margin-left: 19px; /* Einzug bündig unter dem 📅-Icon */
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 12px;
+  color: var(--tc-primary);
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.4;
+}
+
+.tc-dates-more:hover {
+  text-decoration: underline;
+}
+
+.tc-evlist-dates.is-expanded .tc-dates-more {
+  color: var(--tc-text-muted);
+}
+
+@media (max-width: 600px) {
+  .tc-evlist-date-row {
+    white-space: normal;
+  }
+}
+
 /* ── Meta (Ort, Trainer) ─────────────────────────────────────────── */
 .tc-evlist-card-meta {
   display: flex;

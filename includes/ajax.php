@@ -28,14 +28,22 @@ function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $we
 
     $occurrences = array();
 
-    $start_dt = new DateTime( $start_date );
-    $until_dt = new DateTime( $until . ' 23:59:59' );
+    try {
+        $start_dt = new DateTime( $start_date );
+        $until_dt = new DateTime( $until . ' 23:59:59' );
+    } catch ( Exception $e ) {
+        return $occurrences;
+    }
 
     // Dauer berechnen wenn mehrtägig
     $duration = null;
     if ( $end_date ) {
-        $end_dt   = new DateTime( $end_date );
-        $duration = $start_dt->diff( $end_dt );
+        try {
+            $end_dt   = new DateTime( $end_date );
+            $duration = $start_dt->diff( $end_dt );
+        } catch ( Exception $e ) {
+            // Enddatum ungültig – ignorieren
+        }
     }
 
     // Ersten Occurrence-Termin bestimmen:
@@ -48,7 +56,7 @@ function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $we
     $cur->modify( "+{$diff} days" );
 
     $limit = 0;
-    while ( $cur <= $until_dt && $limit < 260 ) {
+    while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
         $occ_start = $cur->format('Y-m-d');
         $occ_end   = null;
 
@@ -73,13 +81,20 @@ function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $we
 // ─────────────────────────────────────────────
 // 1. Events laden (eingeloggt + nicht eingeloggt)
 // ─────────────────────────────────────────────
-add_action( 'wp_ajax_tc_get_events',        'tc_handle_get_events' );
-add_action( 'wp_ajax_nopriv_tc_get_events', 'tc_handle_get_events' );
+add_action( 'wp_ajax_' . TC_AJAX_GET_EVENTS,        'tc_handle_get_events' );
+add_action( 'wp_ajax_nopriv_' . TC_AJAX_GET_EVENTS, 'tc_handle_get_events' );
 
 function tc_handle_get_events() {
     check_ajax_referer( 'tc_nonce', 'nonce' );
 
-    $statuses = is_user_logged_in()
+    $is_logged_in = is_user_logged_in();
+    $cache_key    = 'tc_events_' . ( $is_logged_in ? 'admin' : 'pub' );
+    $cached       = get_transient( $cache_key );
+    if ( $cached !== false ) {
+        wp_send_json_success( $cached );
+    }
+
+    $statuses = $is_logged_in
         ? array( 'publish', 'draft' )
         : array( 'publish' );
 
@@ -89,11 +104,47 @@ function tc_handle_get_events() {
         'post_status'    => $statuses,
     ) );
 
-    $events = array();
+    $events    = array();
+    $today_str = wp_date( 'Y-m-d' ); // Website-Zeitzone
 
     foreach ( $posts as $post ) {
         $type  = get_field( 'event_type', $post->ID ) ?: 'training';
         $color = tc_get_category_color( $type );
+
+        // ── Alle relevanten Felder einmal pro Post lesen ──────────
+        $intro_text      = get_field( 'intro_text',        $post->ID );
+        $start_date      = get_field( 'start_date',        $post->ID );
+        $start_time      = get_field( 'start_time',        $post->ID );
+        $end_date        = get_field( 'end_date',          $post->ID );
+        $end_time        = get_field( 'end_time',          $post->ID );
+        $is_recurring    = (bool) get_field( 'is_recurring',    $post->ID );
+        $recurring_day   = get_field( 'recurring_weekday', $post->ID );
+        $recurring_until = get_field( 'recurring_until',   $post->ID );
+        $event_dates_raw = get_field( 'event_dates',       $post->ID );
+
+        $has_repeater = ! empty( $event_dates_raw ) && is_array( $event_dates_raw );
+
+        // ── Zukünftige Termine für Event-Übersichtskarten ─────────
+        $future_dates = array();
+        if ( $has_repeater ) {
+            foreach ( $event_dates_raw as $ed ) {
+                if ( ! empty( $ed['date_start'] ) && $ed['date_start'] >= $today_str ) {
+                    $future_dates[] = array(
+                        'date_start' => $ed['date_start'],
+                        'date_end'   => $ed['date_end']   ?? '',
+                        'time_start' => $ed['time_start'] ?? '',
+                        'time_end'   => $ed['time_end']   ?? '',
+                    );
+                }
+            }
+        } elseif ( $start_date && ! $is_recurring && $start_date >= $today_str ) {
+            $future_dates[] = array(
+                'date_start' => $start_date,
+                'date_end'   => $end_date   ?: '',
+                'time_start' => $start_time ?: '',
+                'time_end'   => $end_time   ?: '',
+            );
+        }
 
         $shared_props = array(
             'id'      => $post->ID,
@@ -103,22 +154,28 @@ function tc_handle_get_events() {
             'type'    => $type,
             'status'  => $post->post_status,
             'extendedProps' => array(
-                'type'         => $type,
-                'permalink'    => get_permalink( $post->ID ),
-                'leadership'   => get_field( 'seminar_leadership', $post->ID ),
-                'location'     => wp_strip_all_tags( get_field( 'location', $post->ID ) ),
-                'participants' => get_field( 'participants',        $post->ID ),
-                'price'        => get_field( 'normal_preis',        $post->ID ),
-                'editUrl'      => get_edit_post_link( $post->ID, 'raw' ),
-                'isRecurring'  => false,
-                'dateIndex'    => null,
+                'type'             => $type,
+                'permalink'        => get_permalink( $post->ID ),
+                'intro_text'       => $intro_text,
+                'leadership'       => get_field( 'seminar_leadership', $post->ID ),
+                'location'         => wp_strip_all_tags( get_field( 'location', $post->ID ) ),
+                'participants'     => get_field( 'participants',        $post->ID ),
+                'price'            => get_field( 'normal_preis',        $post->ID ),
+                'editUrl'          => get_edit_post_link( $post->ID, 'raw' ),
+                // Repeater-Events haben explizite Termine → kein recurring-Badge
+                'isRecurring'      => ! $has_repeater && $is_recurring,
+                'recurringWeekday' => ( ! $has_repeater && $is_recurring && $recurring_day !== false )
+                                        ? (int) $recurring_day : null,
+                'startTime'        => $start_time ?: '',
+                'endTime'          => $end_time   ?: '',
+                'eventDates'       => $future_dates,
+                'dateIndex'        => null,
             ),
         );
 
-        // ── Mehrere Termine (Repeater) ─────────────
-        $event_dates = get_field( 'event_dates', $post->ID );
-        if ( ! empty( $event_dates ) && is_array( $event_dates ) ) {
-            foreach ( $event_dates as $idx => $ed ) {
+        // ── Mehrere Termine (Repeater) ─────────────────────────────
+        if ( $has_repeater ) {
+            foreach ( $event_dates_raw as $idx => $ed ) {
                 if ( empty( $ed['date_start'] ) ) continue;
                 $ev_start = tc_build_iso( $ed['date_start'], $ed['time_start'] ?? '' );
                 $ev_end   = ! empty( $ed['date_end'] )
@@ -129,37 +186,25 @@ function tc_handle_get_events() {
                 $ep['dateIndex'] = $idx;
 
                 $events[] = array_merge( $shared_props, array(
-                    'start'    => $ev_start,
-                    'end'      => $ev_end,
-                    'editable' => true,
+                    'start'         => $ev_start,
+                    'end'           => $ev_end,
+                    'editable'      => true,
                     'extendedProps' => $ep,
                 ) );
             }
             continue; // Repeater-Modus: Legacy-Felder ignorieren
         }
 
-        // ── Legacy: Einzeldatum + optionale Wiederholung ──
-        $start_date = get_field( 'start_date',      $post->ID );
-        $start_time = get_field( 'start_time',      $post->ID );
-        $end_date   = get_field( 'end_date',        $post->ID );
-        $end_time   = get_field( 'end_time',        $post->ID );
-
+        // ── Legacy: Einzeldatum + optionale Wiederholung ──────────
         if ( ! $start_date ) continue;
-
-        $is_recurring    = (bool) get_field( 'is_recurring',   $post->ID );
-        $recurring_until = get_field( 'recurring_until',       $post->ID );
-        $recurring_day   = get_field( 'recurring_weekday',     $post->ID );
 
         $main_start = tc_build_iso( $start_date, $start_time );
         $main_end   = $end_date
             ? tc_build_iso( $end_date, $end_time )
             : ( $end_time ? tc_build_iso( $start_date, $end_time ) : null );
 
-        $shared = $shared_props;
-        $shared['extendedProps']['isRecurring'] = $is_recurring;
-
         if ( $is_recurring && $recurring_day !== false && $recurring_until ) {
-            $events[] = array_merge( $shared, array(
+            $events[] = array_merge( $shared_props, array(
                 'start'    => $main_start,
                 'end'      => $main_end,
                 'title'    => '🔁 ' . $post->post_title,
@@ -172,7 +217,7 @@ function tc_handle_get_events() {
             );
 
             foreach ( $occurrences as $occ ) {
-                $events[] = array_merge( $shared, array(
+                $events[] = array_merge( $shared_props, array(
                     'start'    => $occ['start'],
                     'end'      => $occ['end'],
                     'title'    => '🔁 ' . $post->post_title,
@@ -181,7 +226,7 @@ function tc_handle_get_events() {
                 ) );
             }
         } else {
-            $events[] = array_merge( $shared, array(
+            $events[] = array_merge( $shared_props, array(
                 'start'    => $main_start,
                 'end'      => $main_end,
                 'editable' => true,
@@ -189,13 +234,25 @@ function tc_handle_get_events() {
         }
     }
 
+    set_transient( $cache_key, $events, TC_EVENTS_CACHE_TTL );
     wp_send_json_success( $events );
+}
+
+// ─────────────────────────────────────────────
+// Cache-Invalidierung bei Post-Änderungen
+// ─────────────────────────────────────────────
+add_action( 'save_post_training_event', 'tc_clear_events_cache' );
+add_action( 'deleted_post',             'tc_clear_events_cache' );
+
+function tc_clear_events_cache() {
+    delete_transient( 'tc_events_admin' );
+    delete_transient( 'tc_events_pub' );
 }
 
 // ─────────────────────────────────────────────
 // 2. Event direkt im Kalender anlegen
 // ─────────────────────────────────────────────
-add_action( 'wp_ajax_tc_create_event', function () {
+add_action( 'wp_ajax_' . TC_AJAX_CREATE_EVENT, function () {
     check_ajax_referer( 'tc_nonce', 'nonce' );
 
     if ( ! current_user_can( 'manage_options' ) ) {
@@ -262,7 +319,7 @@ add_action( 'wp_ajax_tc_create_event', function () {
 // ─────────────────────────────────────────────
 // 3. Event per Drag & Drop / Resize updaten
 // ─────────────────────────────────────────────
-add_action( 'wp_ajax_tc_update_event', function () {
+add_action( 'wp_ajax_' . TC_AJAX_UPDATE_EVENT, function () {
     check_ajax_referer( 'tc_nonce', 'nonce' );
 
     $post_id = intval( $_POST['id'] ?? 0 );

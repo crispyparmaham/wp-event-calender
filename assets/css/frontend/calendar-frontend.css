@@ -412,7 +412,7 @@
   z-index: 9998;
 }
 
-/* ─── View-Toggle (Kalender / Wochenplan) ────────────────────── */
+/* ─── View-Toggle (Kalender / Week Plan) ─────────────────────── */
 .tc-view-toggle {
   display: flex;
   margin-bottom: 16px;
@@ -448,8 +448,8 @@
   color: var(--tc-btn-text);
 }
 
-/* ─── Wochenplan Container ────────────────────────────────────── */
-.tc-wochenplan {
+/* ─── Week Plan Container ────────────────────────────────────── */
+.tc-week-plan {
   border: 1px solid var(--tc-border);
   border-radius: 10px;
   background: var(--tc-bg);
@@ -457,7 +457,7 @@
 }
 
 /* ─── Navigation ──────────────────────────────────────────────── */
-.tc-wochenplan-nav {
+.tc-week-plan-nav {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -467,8 +467,8 @@
   gap: 12px;
 }
 
-.tc-wochenplan-prev,
-.tc-wochenplan-next {
+.tc-week-plan-prev,
+.tc-week-plan-next {
   background: var(--tc-bg);
   border: 1px solid var(--tc-border);
   border-radius: 6px;
@@ -482,14 +482,14 @@
   transition: background .15s, border-color .15s;
 }
 
-.tc-wochenplan-prev:hover,
-.tc-wochenplan-next:hover {
+.tc-week-plan-prev:hover,
+.tc-week-plan-next:hover {
   background: var(--tc-btn-bg);
   border-color: var(--tc-btn-bg);
   color: var(--tc-btn-text);
 }
 
-.tc-wochenplan-label {
+.tc-week-plan-label {
   font-size: 14px;
   font-weight: 600;
   color: var(--tc-text);
@@ -498,12 +498,12 @@
 }
 
 /* ─── Tabelle ─────────────────────────────────────────────────── */
-.tc-wochenplan-table-wrap {
+.tc-week-plan-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
 }
 
-.tc-wochenplan-table {
+.tc-week-plan-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
@@ -511,15 +511,15 @@
   min-width: 600px;
 }
 
-.tc-wochenplan-table th,
-.tc-wochenplan-table td {
+.tc-week-plan-table th,
+.tc-week-plan-table td {
   border: 1px solid var(--tc-border);
   padding: 0;
   vertical-align: top;
 }
 
 /* Kopfzeile */
-.tc-wochenplan-table thead th {
+.tc-week-plan-table thead th {
   background: var(--tc-surface);
   text-align: center;
   font-size: 11px;
@@ -663,20 +663,20 @@
   background: var(--tc-primary-light);
 }
 
-/* ─── Wochenplan Mobile-Layout ────────────────────────────────── */
-.tc-wochenplan-mobile {
+/* ─── Week Plan Mobile Layout ────────────────────────────────── */
+.tc-week-plan-mobile {
   display: none;
 }
 
-.tc-wpm-day {
+.tc-wp-mobile-day {
   border-bottom: 1px solid var(--tc-border);
 }
 
-.tc-wpm-day:last-child {
+.tc-wp-mobile-day:last-child {
   border-bottom: none;
 }
 
-.tc-wpm-day-header {
+.tc-wp-mobile-day-header {
   padding: 10px 16px 8px;
   font-size: 13px;
   font-weight: 700;
@@ -687,19 +687,19 @@
   border-bottom: 1px solid var(--tc-border);
 }
 
-.tc-wpm-day--today .tc-wpm-day-header {
+.tc-wp-mobile-day--today .tc-wp-mobile-day-header {
   color: var(--tc-primary);
   background: var(--tc-today);
 }
 
-.tc-wpm-events {
+.tc-wp-mobile-events {
   padding: 8px 12px;
   display: flex;
   flex-direction: column;
   gap: 6px;
 }
 
-.tc-wpm-time {
+.tc-wp-mobile-time {
   display: block;
   font-size: 11px;
   font-weight: 700;
@@ -769,28 +769,28 @@
     z-index: 10000;
   }
 
-  .tc-wochenplan-table-wrap {
+  .tc-week-plan-table-wrap {
     display: none;
   }
 
-  .tc-wochenplan-mobile {
+  .tc-week-plan-mobile {
     display: block;
   }
 
-  .tc-wochenplan-nav {
+  .tc-week-plan-nav {
     flex-wrap: wrap;
     justify-content: center;
     gap: 8px;
   }
 
-  .tc-wochenplan-label {
+  .tc-week-plan-label {
     order: -1;
     width: 100%;
     text-align: center;
   }
 
-  .tc-wochenplan-prev,
-  .tc-wochenplan-next {
+  .tc-week-plan-prev,
+  .tc-week-plan-next {
     flex: 1;
     text-align: center;
   }

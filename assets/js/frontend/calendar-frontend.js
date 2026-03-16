@@ -1,5 +1,18 @@
 /* global FullCalendar, TC_Frontend */
+;(function () {
+'use strict';
+
 document.addEventListener('DOMContentLoaded', () => {
+
+  // ── Time slot boundaries for the week plan (minutes from midnight) ──
+  const SLOT_VORMITTAG_START  =     0; //  0:00
+  const SLOT_NACHMITTAG_START = 12 * 60; // 12:00
+  const SLOT_ABEND_START      = 17 * 60; // 17:00
+  const SLOT_MAX              = 24 * 60; // 24:00
+
+  // Standardzeit wenn keine Events vorhanden
+  const DEFAULT_SLOT_MIN = '08:00:00';
+  const DEFAULT_SLOT_MAX = '20:00:00';
 
   const ajaxUrl = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.ajaxUrl : null)
                   || '/wp-admin/admin-ajax.php';
@@ -18,6 +31,70 @@ document.addEventListener('DOMContentLoaded', () => {
     const g = parseInt(h.slice(2, 4), 16) || 70;
     const b = parseInt(h.slice(4, 6), 16) || 229;
     return `rgba(${r},${g},${b},${alpha})`;
+  };
+
+  // ── Hilfsfunktionen für Terminanzeige ──────────────────────────
+  const WEEKDAY_LABELS = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
+  const DAY_SHORT      = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+  const MONTH_LONG     = ['Januar','Februar','März','April','Mai','Juni',
+                          'Juli','August','September','Oktober','November','Dezember'];
+
+  const getWeekdayLabel = (dayInt) => WEEKDAY_LABELS[+dayInt] || '';
+
+  const formatDateLine = (dateStr, timeStart, timeEnd) => {
+    if (!dateStr) return '';
+    const d     = new Date(dateStr + 'T00:00:00'); // local time
+    const dow   = DAY_SHORT[d.getDay()];
+    const day   = d.getDate();
+    const month = MONTH_LONG[d.getMonth()];
+    let str = `${dow}, ${day}. ${month}`;
+    if (timeStart) {
+      str += ` · ${timeStart}`;
+      str += timeEnd ? ` – ${timeEnd} Uhr` : ' Uhr';
+    }
+    return str;
+  };
+
+  // Baut den Datums-HTML-Block für eine Übersichtskarte
+  const buildDatesHtml = (p, cardIdx) => {
+    // Wiederkehrend: Wochentag-Badge
+    if (p.isRecurring && p.recurringWeekday !== null && p.recurringWeekday !== undefined) {
+      const dayName = getWeekdayLabel(p.recurringWeekday);
+      let timeStr = '';
+      if (p.startTime) {
+        timeStr = ` · ${escHtml(p.startTime)}`;
+        timeStr += p.endTime ? ` – ${escHtml(p.endTime)} Uhr` : ' Uhr';
+      }
+      return `<div class="tc-evlist-dates tc-evlist-dates--recurring">
+        <span class="tc-evlist-recurring-badge">🔁 Jeden ${escHtml(dayName)}${timeStr}</span>
+      </div>`;
+    }
+
+    // Einmalig / Repeater: Terminliste
+    const dates = (p.eventDates || []).slice(); // zukünftige Termine (von PHP vorgefiltert)
+    if (dates.length === 0) return '';
+
+    const MAX_VISIBLE = 3;
+    const extraCount  = Math.max(0, dates.length - MAX_VISIBLE);
+
+    let itemsHtml = '';
+    dates.forEach((d, i) => {
+      const line    = formatDateLine(d.date_start, d.time_start, d.time_end);
+      const isExtra = i >= MAX_VISIBLE;
+      itemsHtml += `<span class="tc-evlist-date-row${isExtra ? ' tc-date-extra' : ''}">${escHtml(line)}</span>`;
+    });
+
+    const moreBtn = extraCount > 0
+      ? `<button type="button" class="tc-dates-more" data-more="${extraCount}">+ ${extraCount} weitere</button>`
+      : '';
+
+    return `<div class="tc-evlist-dates" data-card-idx="${cardIdx}">
+      <div class="tc-evlist-date-inner">
+        <span class="tc-dates-icon">📅</span>
+        <div class="tc-dates-items">${itemsHtml}</div>
+      </div>
+      ${moreBtn}
+    </div>`;
   };
 
   // ── Event-Übersicht rendern ─────────────────────────────────────
@@ -48,7 +125,7 @@ document.addEventListener('DOMContentLoaded', () => {
       <div class="tc-evlist-grid">
     `;
 
-    unique.forEach(ev => {
+    unique.forEach((ev, idx) => {
       const p          = ev.extendedProps || {};
       const color      = ev.color || '#4f46e5';
       const rawTitle   = (ev.title || '').replace('🔁 ', '').trim();
@@ -58,6 +135,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const location   = p.location    ? escHtml(p.location)    : '';
       const leadership = p.leadership  ? escHtml(p.leadership)  : '';
       const bgColor    = hexToRgba(color, 0.12);
+      const datesHtml  = buildDatesHtml(p, idx);
 
       html += `
         <a class="tc-evlist-card" href="${permalink}">
@@ -65,7 +143,7 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="tc-evlist-card-body">
             <span class="tc-evlist-badge" style="color:${color};background:${bgColor}">${typeLabel}</span>
             <h3 class="tc-evlist-card-title">${escHtml(rawTitle)}</h3>
-            ${intro ? `<p class="tc-evlist-card-desc">${intro}</p>` : ''}
+            ${datesHtml}
             <div class="tc-evlist-card-meta">
               ${location   ? `<span>📍 ${location}</span>`   : ''}
               ${leadership ? `<span>👤 ${leadership}</span>` : ''}
@@ -77,6 +155,19 @@ document.addEventListener('DOMContentLoaded', () => {
 
     html += '</div>';
     container.innerHTML = html;
+
+    // ── "Mehr"-Buttons verdrahten ─────────────────────────────
+    container.querySelectorAll('.tc-dates-more').forEach(btn => {
+      btn.addEventListener('click', e => {
+        e.preventDefault();
+        e.stopPropagation(); // verhindert Navigation der übergeordneten <a>-Karte
+        const datesEl  = btn.closest('.tc-evlist-dates');
+        const expanded = datesEl.classList.toggle('is-expanded');
+        btn.textContent = expanded
+          ? 'Weniger anzeigen'
+          : `+ ${btn.dataset.more} weitere`;
+      });
+    });
   };
 
   // ── Pro Kalender-Instanz ────────────────────────────────────────
@@ -194,8 +285,8 @@ document.addEventListener('DOMContentLoaded', () => {
       let minT, maxT;
 
       if (!isFinite(earliest)) {
-        minT = '08:00:00';
-        maxT = '20:00:00';
+        minT = DEFAULT_SLOT_MIN;
+        maxT = DEFAULT_SLOT_MAX;
       } else {
         const minMin = Math.max(0,    earliest - 60);
         const maxMin = Math.min(1440, latest   + 60);
@@ -208,12 +299,12 @@ document.addEventListener('DOMContentLoaded', () => {
       calendar.setOption('scrollTime',  minT);
     };
 
-    // ── Wochenplan: State & Hilfsfunktionen ──────────────────
-    const weekPlanWrap  = document.getElementById(uid + '-wochenplan');
-    const weekPlanBody  = weekPlanWrap ? weekPlanWrap.querySelector('.tc-wochenplan-body')  : null;
-    const weekPlanLabel = weekPlanWrap ? weekPlanWrap.querySelector('.tc-wochenplan-label') : null;
-    const weekPlanPrev  = weekPlanWrap ? weekPlanWrap.querySelector('.tc-wochenplan-prev')  : null;
-    const weekPlanNext  = weekPlanWrap ? weekPlanWrap.querySelector('.tc-wochenplan-next')  : null;
+    // ── Week Plan: State & Helper Functions ──────────────────
+    const weekPlanWrap  = document.getElementById(uid + '-week-plan');
+    const weekPlanBody  = weekPlanWrap ? weekPlanWrap.querySelector('.tc-week-plan-body')  : null;
+    const weekPlanLabel = weekPlanWrap ? weekPlanWrap.querySelector('.tc-week-plan-label') : null;
+    const weekPlanPrev  = weekPlanWrap ? weekPlanWrap.querySelector('.tc-week-plan-prev')  : null;
+    const weekPlanNext  = weekPlanWrap ? weekPlanWrap.querySelector('.tc-week-plan-next')  : null;
     let weekPlanOffset  = 0;
     let weekPlanRefs    = [];
 
@@ -282,9 +373,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const slots  = [...slotMap.values()].sort((a, b) => a.startMins - b.startMins);
       const groups = [
-        { label: 'Vormittag',  min:     0, max: 12 * 60, slots: [] },
-        { label: 'Nachmittag', min: 12 * 60, max: 17 * 60, slots: [] },
-        { label: 'Abend',      min: 17 * 60, max: 24 * 60, slots: [] },
+        { label: 'Vormittag',  min: SLOT_VORMITTAG_START,  max: SLOT_NACHMITTAG_START, slots: [] },
+        { label: 'Nachmittag', min: SLOT_NACHMITTAG_START, max: SLOT_ABEND_START,      slots: [] },
+        { label: 'Abend',      min: SLOT_ABEND_START,      max: SLOT_MAX,              slots: [] },
       ];
       slots.forEach(slot => {
         const g = groups.find(g => slot.startMins >= g.min && slot.startMins < g.max);
@@ -301,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      let html = '<div class="tc-wochenplan-table-wrap"><table class="tc-wochenplan-table"><thead><tr>';
+      let html = '<div class="tc-week-plan-table-wrap"><table class="tc-week-plan-table"><thead><tr>';
       html += '<th class="tc-wp-th-time"></th>';
       days.forEach((d, i) => {
         const isToday = d.getTime() === today.getTime();
@@ -352,7 +443,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // ── Mobile-Layout: Events nach Tag gruppiert ──────────────
       const dayFullNames = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
       const monthNames   = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
-      let mobileHtml     = '<div class="tc-wochenplan-mobile">';
+      let mobileHtml     = '<div class="tc-week-plan-mobile">';
       let mobileHasEvs   = false;
 
       days.forEach((d, i) => {
@@ -368,9 +459,9 @@ document.addEventListener('DOMContentLoaded', () => {
         mobileHasEvs = true;
 
         const isToday = d.getTime() === today.getTime();
-        mobileHtml += `<div class="tc-wpm-day${isToday ? ' tc-wpm-day--today' : ''}">`;
-        mobileHtml += `<div class="tc-wpm-day-header">${dayFullNames[i]}, ${d.getDate()}. ${monthNames[d.getMonth()]}</div>`;
-        mobileHtml += '<div class="tc-wpm-events">';
+        mobileHtml += `<div class="tc-wp-mobile-day${isToday ? ' tc-wp-mobile-day--today' : ''}">`;
+        mobileHtml += `<div class="tc-wp-mobile-day-header">${dayFullNames[i]}, ${d.getDate()}. ${monthNames[d.getMonth()]}</div>`;
+        mobileHtml += '<div class="tc-wp-mobile-events">';
 
         dayEvs.forEach(ev => {
           const refIdx  = weekPlanRefs.indexOf(ev);
@@ -387,7 +478,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           mobileHtml += `<button class="tc-wp-event" data-ev-idx="${idx}" type="button"`;
           mobileHtml += ` style="background:${bg};border-left:3px solid ${color}">`;
-          mobileHtml += `<span class="tc-wpm-time">${timeStr}</span>`;
+          mobileHtml += `<span class="tc-wp-mobile-time">${timeStr}</span>`;
           mobileHtml += `<strong class="tc-wp-event-title">${title}</strong>`;
           if (sub) mobileHtml += `<span class="tc-wp-event-sub">${sub}</span>`;
           mobileHtml += '</button>';
@@ -464,7 +555,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     calendar.render();
 
-    // ── Week-Only: Wochenplan-Modus ───────────────────────────
+    // ── Week-Only Mode ────────────────────────────────────────
     if (weekOnly) {
       el.style.display = 'none';
       const viewToggle = wrap.querySelector('.tc-view-toggle');
@@ -528,14 +619,14 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     });
 
-    // ── View-Toggle (Kalender ↔ Wochenplan) ──────────────────
+    // ── View-Toggle (Kalender ↔ Week Plan) ───────────────────
     wrap.querySelectorAll('.tc-view-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         if (btn.classList.contains('is-active')) return;
         wrap.querySelectorAll('.tc-view-btn').forEach(b => b.classList.remove('is-active'));
         btn.classList.add('is-active');
 
-        if (btn.dataset.tcView === 'wochenplan') {
+        if (btn.dataset.tcView === 'week-plan') {
           const calDate = calendar.getDate();
           const calDay  = calDate.getDay();
           const calMon  = new Date(calDate);
@@ -559,4 +650,6 @@ document.addEventListener('DOMContentLoaded', () => {
     popBack.addEventListener('click', closePopover);
     document.addEventListener('keydown', e => { if (e.key === 'Escape') closePopover(); });
   });
-});
+
+}); // DOMContentLoaded
+}()); // IIFE

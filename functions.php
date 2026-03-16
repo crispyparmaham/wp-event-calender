@@ -21,6 +21,21 @@ define( 'TC_PATH',        plugin_dir_path( __FILE__ ) );
 define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
 define( 'TC_VERSION',     '2.1.7' );
 
+// ── Wiederholungs- & Rate-Limit-Grenzen ───────────────────────
+define( 'TC_RECURRING_LIMIT',    260 ); // Max. ~5 Jahre wöchentlich
+define( 'TC_RATE_LIMIT_COUNT',   5   ); // Anmeldungen pro Zeitfenster
+define( 'TC_RATE_LIMIT_SECONDS', 900 ); // Zeitfenster: 15 Minuten (in Sek.)
+define( 'TC_EVENTS_CACHE_TTL',   300 ); // Events-Cache: 5 Minuten (in Sek.)
+
+// ── AJAX-Action-Namen ─────────────────────────────────────────
+define( 'TC_AJAX_GET_EVENTS',          'tc_get_events' );
+define( 'TC_AJAX_CREATE_EVENT',        'tc_create_event' );
+define( 'TC_AJAX_UPDATE_EVENT',        'tc_update_event' );
+define( 'TC_AJAX_SUBMIT_REGISTRATION', 'tc_submit_registration' );
+define( 'TC_AJAX_GET_EVENT_DETAILS',   'tc_get_event_details' );
+define( 'TC_AJAX_CANCEL_REGISTRATION', 'tc_cancel_registration' );
+define( 'TC_HOOK_REGISTRATION_SUBMITTED', 'tc_registration_submitted' );
+
 require_once TC_PATH . 'includes/admin/updater.php';
 require_once TC_PATH . 'includes/admin/settings.php';
 require_once TC_PATH . 'includes/admin/dashboard.php';

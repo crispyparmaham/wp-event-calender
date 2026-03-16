@@ -74,7 +74,7 @@ add_shortcode( 'training_calendar', function ( $atts ) {
 
         <div class="tc-view-toggle">
             <button class="tc-view-btn is-active" data-tc-view="calendar">Kalender</button>
-            <button class="tc-view-btn" data-tc-view="wochenplan">Wochenplan</button>
+            <button class="tc-view-btn" data-tc-view="week-plan">Wochenplan</button>
         </div>
 
         <div class="tc-loader" id="<?php echo esc_attr( $uid ); ?>-loader" style="display:none;">
@@ -91,13 +91,13 @@ add_shortcode( 'training_calendar', function ( $atts ) {
              data-event-list-title="<?php echo esc_attr( $event_list_title ); ?>">
         </div>
 
-        <div class="tc-wochenplan" id="<?php echo esc_attr( $uid ); ?>-wochenplan" style="display:none;">
-            <div class="tc-wochenplan-nav">
-                <button class="tc-wochenplan-prev" aria-label="Vorherige Woche">&#8592; Vorherige Woche</button>
-                <span class="tc-wochenplan-label"></span>
-                <button class="tc-wochenplan-next" aria-label="Nächste Woche">Nächste Woche &#8594;</button>
+        <div class="tc-week-plan" id="<?php echo esc_attr( $uid ); ?>-week-plan" style="display:none;">
+            <div class="tc-week-plan-nav">
+                <button class="tc-week-plan-prev" aria-label="Vorherige Woche">&#8592; Vorherige Woche</button>
+                <span class="tc-week-plan-label"></span>
+                <button class="tc-week-plan-next" aria-label="Nächste Woche">Nächste Woche &#8594;</button>
             </div>
-            <div class="tc-wochenplan-body"></div>
+            <div class="tc-week-plan-body"></div>
         </div>
 
         <?php if ( $show_event_list ) : ?>
