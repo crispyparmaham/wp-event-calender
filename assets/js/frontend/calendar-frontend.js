@@ -351,12 +351,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
     calendar.render();
 
-    // ── Week-Only: Label-Badge einblenden ─────────────────────
+    // ── Week-Only: Wochenplan-Modus ───────────────────────────
     if (weekOnly) {
+      // FullCalendar verstecken, View-Toggle ausblenden
+      el.style.display = 'none';
+      const viewToggle = wrap.querySelector('.tc-view-toggle');
+      if (viewToggle) viewToggle.style.display = 'none';
+
+      // Wochenplan anzeigen, Navigations-Buttons ausblenden
+      if (weekPlanWrap) {
+        weekPlanWrap.style.display = '';
+        if (weekPlanPrev) weekPlanPrev.style.display = 'none';
+        if (weekPlanNext) weekPlanNext.style.display = 'none';
+      }
+
+      // Label-Badge direkt vor dem Wochenplan einfügen
       const label = document.createElement('div');
       label.className = 'tc-week-label';
       label.textContent = 'Aktuelle Woche';
-      el.parentNode.insertBefore(label, el.nextSibling);
+      const anchor = weekPlanWrap || el;
+      anchor.parentNode.insertBefore(label, anchor);
     }
 
     // ── Events einmalig per AJAX laden, dann statisch setzen ──
@@ -372,8 +386,12 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       hideLoader();
 
-      calendar.addEventSource(getFiltered());
-      updateVisibleTimeRange();
+      if (weekOnly) {
+        buildWeekPlan();
+      } else {
+        calendar.addEventSource(getFiltered());
+        updateVisibleTimeRange();
+      }
     })();
 
     // ── Filter-Tabs: nur Cache umsortieren, kein AJAX ─────────
@@ -385,10 +403,14 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.add('is-active');
         activeType = btn.dataset.type;
 
-        calendar.getEventSources().forEach(s => s.remove());
-        calendar.addEventSource(getFiltered());
-        updateVisibleTimeRange();
-        if (weekPlanWrap && weekPlanWrap.style.display !== 'none') buildWeekPlan();
+        if (weekOnly) {
+          buildWeekPlan();
+        } else {
+          calendar.getEventSources().forEach(s => s.remove());
+          calendar.addEventSource(getFiltered());
+          updateVisibleTimeRange();
+          if (weekPlanWrap && weekPlanWrap.style.display !== 'none') buildWeekPlan();
+        }
       });
     });
 
