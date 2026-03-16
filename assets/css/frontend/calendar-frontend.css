@@ -557,7 +557,7 @@
 
 /* Event-Zellen */
 .tc-wp-cell {
-  min-height: 100px;
+  height: 100px;
   padding: 4px;
   vertical-align: top;
 }
