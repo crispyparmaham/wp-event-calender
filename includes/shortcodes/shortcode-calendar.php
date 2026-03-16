@@ -63,6 +63,7 @@ add_shortcode( 'time_calendar', function ( $atts ) {
     ob_start(); ?>
     <div class="tc-frontend-wrap<?php echo $dark ? ' tc-dark' : ''; ?>" id="<?php echo esc_attr( $uid ); ?>-wrap">
 
+        <?php if ( ! $locked_type ) : ?>
         <div class="tc-filter-bar" role="tablist" aria-label="Event-Typ filtern">
             <button class="tc-filter-btn <?php echo $active_type === 'all' ? 'is-active' : ''; ?>"
                     data-type="all" role="tab">Alle</button>
@@ -74,6 +75,7 @@ add_shortcode( 'time_calendar', function ( $atts ) {
             </button>
             <?php endforeach; ?>
         </div>
+        <?php endif; ?>
 
         <div class="tc-view-toggle">
             <button class="tc-view-btn is-active" data-tc-view="calendar">Kalender</button>
@@ -88,6 +90,7 @@ add_shortcode( 'time_calendar', function ( $atts ) {
         <div class="tc-frontend-calendar"
              id="<?php echo esc_attr( $uid ); ?>"
              data-type="<?php echo esc_attr( $active_type ); ?>"
+             data-locked-type="<?php echo esc_attr( $locked_type ); ?>"
              data-view="<?php echo esc_attr( $view ); ?>"
              data-week-only="<?php echo $week_only ? '1' : '0'; ?>"
              data-show-event-list="<?php echo $show_event_list ? '1' : '0'; ?>"

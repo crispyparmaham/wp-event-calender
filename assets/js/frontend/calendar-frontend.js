@@ -182,6 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const weekOnly       = el.dataset.weekOnly       === '1';
     const showEventList  = el.dataset.showEventList  === '1';
     const eventListTitle = el.dataset.eventListTitle || 'Unsere Events';
+    const lockedType     = el.dataset.lockedType     || '';   // gesetzt wenn type="training" etc.
     const overviewEl     = wrap.querySelector('.tc-event-overview');
 
     let activeType   = el.dataset.type || 'all';
@@ -195,9 +196,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getFiltered = () => {
       if (!cachedEvents) return [];
-      return activeType === 'all'
-        ? cachedEvents
-        : cachedEvents.filter(e => e.type === activeType);
+      // lockedType hat immer Vorrang – ignoriert activeType komplett
+      const filterBy = lockedType || (activeType !== 'all' ? activeType : '');
+      return filterBy
+        ? cachedEvents.filter(e => e.type === filterBy)
+        : cachedEvents;
     };
 
     const closePopover = () => {
