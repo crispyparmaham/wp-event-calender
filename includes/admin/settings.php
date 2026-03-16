@@ -6,11 +6,11 @@ defined( 'ABSPATH' ) || exit;
 // ─────────────────────────────────────────────
 add_action( 'admin_menu', function () {
     add_submenu_page(
-        'edit.php?post_type=training_event',
+        'edit.php?post_type=time_event',
         'Einstellungen',
         'Einstellungen',
         'administrator',
-        'training-calendar-settings',
+        'time-calendar-settings',
         'tc_render_settings_page'
     );
 } );
@@ -158,7 +158,7 @@ function tc_render_settings_page() {
         <div class="tc-stg-header">
             <span class="dashicons dashicons-calendar-alt tc-stg-header-icon"></span>
             <div>
-                <h1>Training Calendar</h1>
+                <h1>Time Calendar</h1>
                 <p>Version <strong><?php echo esc_html( TC_VERSION ); ?></strong> &nbsp;·&nbsp; Plugin-Einstellungen</p>
             </div>
         </div>
@@ -203,7 +203,7 @@ function tc_render_settings_page() {
                     <div class="tc-stg-row">
                         <div class="tc-stg-row-left">
                             <strong>Farbmodus</strong>
-                            <span>Gilt für alle <code>[training_calendar]</code> Shortcodes im Frontend.</span>
+                            <span>Gilt für alle <code>[time_calendar]</code> Shortcodes im Frontend.</span>
                         </div>
                         <div class="tc-stg-row-right">
                             <label class="tc-toggle">
@@ -475,7 +475,7 @@ function tc_field_reminder_enabled() {
 // Settings-CSS laden
 // ─────────────────────────────────────────────
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
-    if ( $hook !== 'training_event_page_training-calendar-settings' ) return;
+    if ( $hook !== 'time_event_page_time-calendar-settings' ) return;
     wp_enqueue_style(
         'tc-settings',
         TC_URL . 'assets/css/admin/settings.css',

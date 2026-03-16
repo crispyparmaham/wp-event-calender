@@ -6,7 +6,7 @@
  * Requires PHP: 8.2
  * Author:       Lucas Dühr | more than ads
  * Author URI:   https://www.morethanads.de
- * Text Domain:  training-calendar
+ * Text Domain:  time-calendar
  * Update URI:   https://github.com/crispyparmaham/wp-event-calender
  *
  * 
@@ -42,12 +42,14 @@ require_once TC_PATH . 'includes/admin/dashboard.php';
 require_once TC_PATH . 'includes/admin/admin-page.php';
 require_once TC_PATH . 'includes/admin/events-overview.php';
 require_once TC_PATH . 'includes/admin/categories.php';
+require_once TC_PATH . 'includes/admin/migration.php';
 
 require_once TC_PATH . 'includes/post-type/cpt.php';
 
 require_once TC_PATH . 'includes/ajax.php';
 
 require_once TC_PATH . 'includes/shortcodes/shortcode-calendar.php';
+require_once TC_PATH . 'includes/shortcodes/shortcode-events.php';
 require_once TC_PATH . 'includes/shortcodes/shortcode-registration.php';
 require_once TC_PATH . 'includes/shortcodes/shortcode-price-bar.php';
 require_once TC_PATH . 'includes/shortcodes/ical.php';

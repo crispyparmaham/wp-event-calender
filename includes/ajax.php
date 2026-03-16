@@ -99,7 +99,7 @@ function tc_handle_get_events() {
         : array( 'publish' );
 
     $posts = get_posts( array(
-        'post_type'      => 'training_event',
+        'post_type'      => 'time_event',
         'posts_per_page' => -1,
         'post_status'    => $statuses,
     ) );
@@ -241,7 +241,7 @@ function tc_handle_get_events() {
 // ─────────────────────────────────────────────
 // Cache-Invalidierung bei Post-Änderungen
 // ─────────────────────────────────────────────
-add_action( 'save_post_training_event', 'tc_clear_events_cache' );
+add_action( 'save_post_time_event', 'tc_clear_events_cache' );
 add_action( 'deleted_post',             'tc_clear_events_cache' );
 
 function tc_clear_events_cache() {
@@ -286,7 +286,7 @@ add_action( 'wp_ajax_' . TC_AJAX_CREATE_EVENT, function () {
 
     $post_id = wp_insert_post( array(
         'post_title'  => $title,
-        'post_type'   => 'training_event',
+        'post_type'   => 'time_event',
         'post_status' => 'publish',
     ), true );
 

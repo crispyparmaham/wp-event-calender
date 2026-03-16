@@ -1,4 +1,4 @@
-# Training Calendar
+# Time Calendar
 
 A WordPress plugin for managing and displaying trainings and seminars in an interactive calendar with drag & drop support.
 
@@ -12,16 +12,17 @@ A WordPress plugin for managing and displaying trainings and seminars in an inte
 - **ACF field group** with tabs for general info, details, date & time, and pricing
 - **Admin calendar** with FullCalendar v6 — drag & drop, resize, and inline event creation
 - **Recurring events** — weekly recurrence with a configurable end date
-- **Frontend calendar shortcode** `[training_calendar]` with filter tabs, calendar/week-plan views, and event popovers
+- **Calendar shortcode** `[time_calendar]` with filter tabs, calendar/week-plan views, and event popovers
 - **Week-only mode** — lock the frontend calendar to the current week, hiding all navigation and view switchers
 - **Wochenplan view** — alternative week grid view with time slots, grouped by Vormittag / Nachmittag / Abend; responsive card layout on mobile
 - **Event overview list** — optional card grid displayed below the calendar, showing all events filtered by the active category tab; deduplicated and sorted alphabetically
+- **Universal listing shortcode** `[time_events]` — fully server-side rendered event listing with grid, list, and cards layouts; 14 shortcode attributes for layout, filtering, and content control; no JavaScript required
 - **Category system** — custom event categories with individual colors, managed under Events → Kategorien
 - **Custom primary color** — pick any brand color; all frontend elements update automatically via CSS Custom Properties
 - **Light / Dark Mode** — set globally via the settings page, applies to all shortcode instances
 - **Redesigned settings page** — tab-based admin UI (Design · Kalender · E-Mails · Updates) with toast notifications
-- **Price bar shortcode** `[training_price_bar]` — fixed bottom bar with Early Bird and on-request logic
-- **Registration shortcode** `[training_registration]` — full registration form with AJAX submission, confirmation emails, and admin notifications
+- **Price bar shortcode** `[time_price_bar]` — fixed bottom bar with Early Bird and on-request logic
+- **Registration shortcode** `[time_registration]` — full registration form with AJAX submission, confirmation emails, and admin notifications
 - **URL parameter filtering** for menu links (e.g. `?tc_type=training`)
 - **Client-side caching** — events are fetched once via AJAX and filtered locally for instant UI response
 - **GitHub auto-updater** — updates delivered via WordPress update mechanism from GitHub releases
@@ -41,7 +42,7 @@ A WordPress plugin for managing and displaying trainings and seminars in an inte
 1. Clone or download this repository into your plugins directory:
    ```bash
    cd wp-content/plugins
-   git clone https://github.com/crispyparmaham/wp-event-calender.git training-calendar
+   git clone https://github.com/crispyparmaham/wp-event-calender.git time-calendar
    ```
 2. Run `composer install` inside the plugin directory (required for the GitHub auto-updater)
 3. Activate the plugin in **WordPress Admin → Plugins**
@@ -53,7 +54,7 @@ A WordPress plugin for managing and displaying trainings and seminars in an inte
 ## File Structure
 
 ```
-training-calendar/
+time-calendar/
 ├── functions.php
 ├── includes/
 │   ├── admin/
@@ -68,6 +69,7 @@ training-calendar/
 │   ├── ajax.php                       # AJAX handlers (load / create / update events)
 │   ├── shortcodes/
 │   │   ├── shortcode-calendar.php     # Frontend calendar shortcode & asset enqueue
+│   │   ├── shortcode-events.php       # Universal event listing shortcode [time_events]
 │   │   ├── shortcode-registration.php # Registration form shortcode
 │   │   ├── shortcode-price-bar.php    # Price bar shortcode
 │   │   └── ical.php                   # iCal feed endpoint
@@ -89,7 +91,8 @@ training-calendar/
         │   └── settings.css           # Admin settings page styles (tab UI)
         └── frontend/
             ├── calendar-frontend.css  # Frontend calendar + wochenplan styles
-            └── event-list.css         # Event overview card grid styles
+            ├── event-list.css         # Event overview card grid styles
+            └── events.css             # [time_events] shortcode styles (self-contained)
 ```
 
 ---
@@ -105,7 +108,7 @@ The active tab is persisted in `localStorage` and reflected in the URL hash (e.g
 | Setting | Description |
 |---|---|
 | **Primärfarbe** | Brand color for all interactive elements (buttons, badges, focus rings). Applied as `--tc-primary` CSS Custom Property. Default: `#4f46e5` |
-| **Farbmodus** | Toggle between Light Mode and Dark Mode for all `[training_calendar]` shortcode instances |
+| **Farbmodus** | Toggle between Light Mode and Dark Mode for all `[time_calendar]` shortcode instances |
 
 ### 📅 Tab: Kalender
 
@@ -128,21 +131,21 @@ Shows the current plugin version and a link to check for new releases via the Wo
 
 ---
 
-## Frontend Calendar Shortcode
+## Calendar Shortcode
 
 ```
-[training_calendar]
-[training_calendar type="training"]
-[training_calendar type="seminar" view="listMonth"]
-[training_calendar week_only="true"]
-[training_calendar week_only="false"]
+[time_calendar]
+[time_calendar type="training"]
+[time_calendar type="seminar" view="listMonth"]
+[time_calendar week_only="true"]
+[time_calendar week_only="false"]
 ```
 
 **Via PHP template:**
 ```php
-<?php echo do_shortcode('[training_calendar]'); ?>
-<?php echo do_shortcode('[training_calendar type="training" view="timeGridWeek"]'); ?>
-<?php echo do_shortcode('[training_calendar week_only="true"]'); ?>
+<?php echo do_shortcode('[time_calendar]'); ?>
+<?php echo do_shortcode('[time_calendar type="training" view="timeGridWeek"]'); ?>
+<?php echo do_shortcode('[time_calendar week_only="true"]'); ?>
 ```
 
 ### Attributes
@@ -172,7 +175,6 @@ When `week_only` is active (via shortcode attribute or global setting):
 - The calendar is replaced by the **Wochenplan** view, locked to the current week
 - All navigation buttons (prev / next / today) are hidden
 - The Kalender / Wochenplan view toggle is hidden
-- An "Aktuelle Woche" badge is displayed above the plan
 - On mobile, the responsive card layout is shown instead of the table
 
 ### Event Overview List
@@ -185,6 +187,84 @@ When **Event-Übersicht anzeigen** is enabled in the settings, a card grid appea
 - Each card links directly to the event's permalink
 - Cards display: category color stripe, category badge, title, intro text (max 2 lines), location, trainer
 - Dark Mode is applied automatically via CSS Custom Properties
+
+---
+
+## Training Events Shortcode
+
+Universal event listing shortcode with multiple layouts. Purely server-side rendered — no JavaScript or AJAX required.
+
+```
+[time_events]
+[time_events category="seminar" layout="list" group_by="month" columns="1"]
+[time_events category="training" layout="grid" columns="3" show_price="false" show_excerpt="false"]
+[time_events layout="grid" show_image="false" columns="2"]
+[time_events limit="5" layout="cards" group_by="none"]
+```
+
+**Via PHP template:**
+```php
+<?php echo do_shortcode('[time_events layout="cards" columns="3"]'); ?>
+<?php echo do_shortcode('[time_events category="seminar" group_by="month" layout="list"]'); ?>
+```
+
+### Attributes
+
+#### Filtering
+
+| Attribute | Values | Default | Description |
+|---|---|---|---|
+| `category` | Any `event_type` slug | _(all)_ | Filter by category, e.g. `"seminar"` or `"training"` |
+| `show_past` | `true`, `false` | `false` | Include events whose `start_date` is in the past |
+| `limit` | Integer | `-1` | Maximum number of events to display; `-1` shows all |
+
+#### Layout
+
+| Attribute | Values | Default | Description |
+|---|---|---|---|
+| `layout` | `grid`, `list`, `cards` | `grid` | Display mode (see below) |
+| `columns` | `1`, `2`, `3` | `3` | Number of columns in grid/cards mode; ignored for list |
+| `group_by` | `month`, `none` | `none` | Group events under a month heading ("März 2026") |
+
+#### Content
+
+| Attribute | Default | Description |
+|---|---|---|
+| `show_image` | `true` | Featured image (16:9). Falls back to a colored placeholder using the category color |
+| `show_date` | `true` | Start date in German long format, e.g. "Mo, 24. März 2026" |
+| `show_time` | `true` | Start/end time next to the date, e.g. "· 09:00–17:00 Uhr" |
+| `show_location` | `true` | Location (stripped of HTML) |
+| `show_trainer` | `true` | Seminar/training leadership (`seminar_leadership` field) |
+| `show_price` | `true` | Price in German format, e.g. "199,00 €". Shows "Preis auf Anfrage" when `price_on_request` is set |
+| `show_excerpt` | `true` | Post excerpt or trimmed content (max 18 words) |
+| `show_badge` | `true` | Category badge with the category's brand color |
+
+### Layouts
+
+#### `grid` (default)
+CSS Grid with `columns` columns. Image on top (16:9), content below. Responsive: 3 → 2 → 1 columns at 900px / 600px breakpoints. Hover: `translateY(-3px)` + raised shadow.
+
+#### `list`
+One card per row. Image on the left (200px fixed, full width on mobile), content on the right. Compact, suited for long event lists.
+
+#### `cards`
+Like `grid`, but with a 4px accent stripe at the top of each card in the category color. Larger spacing and a more prominent title.
+
+### Sold-Out State
+
+When an event's capacity is tracked (`track_participants = true`) and the registration count in `wp_tc_registrations` reaches the `participants` limit:
+
+- A red **Ausgebucht** badge overlays the image (or appears in the card body when `show_image="false"`)
+- The card is rendered at reduced opacity
+- The hover lift effect is disabled
+
+### Month Grouping
+
+When `group_by="month"`, events are grouped under a centered month/year heading with a horizontal rule. Months with no events are skipped. The selected `layout` applies within each group.
+
+### Dark Mode
+
+The shortcode's CSS is self-contained — it does not depend on `calendar-frontend.css`. Dark mode is applied automatically via `@media (prefers-color-scheme: dark)` and also responds to the `.tc-dark` parent class (set by the global Farbmodus setting).
 
 ---
 
@@ -243,9 +323,9 @@ Trainings are displayed in **indigo**, seminars in **green**. Recurring event oc
 Displays a fixed bar at the bottom of the screen with pricing info and a CTA button. Reads ACF fields from the current post automatically.
 
 ```
-[training_price_bar]
-[training_price_bar link="#contact" link_text="Jetzt buchen"]
-[training_price_bar post_id="42" request_text="Termin anfragen"]
+[time_price_bar]
+[time_price_bar link="#contact" link_text="Jetzt buchen"]
+[time_price_bar post_id="42" request_text="Termin anfragen"]
 ```
 
 ### Attributes
@@ -270,9 +350,9 @@ Displays a fixed bar at the bottom of the screen with pricing info and a CTA but
 ## Registration Shortcode
 
 ```
-[training_registration]
-[training_registration event_id="42"]
-[training_registration event_id="42" title="Jetzt anmelden"]
+[time_registration]
+[time_registration event_id="42"]
+[time_registration event_id="42" title="Jetzt anmelden"]
 ```
 
 ### Attributes

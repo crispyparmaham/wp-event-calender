@@ -74,7 +74,7 @@ function tc_get_category_color( $slug ) {
 // ─────────────────────────────────────────────
 add_action( 'admin_menu', function () {
     add_submenu_page(
-        'edit.php?post_type=training_event',
+        'edit.php?post_type=time_event',
         'Kategorien',
         'Kategorien',
         'administrator',
@@ -105,7 +105,7 @@ add_action( 'admin_init', function () {
                 array( 'name' => $name, 'slug' => $slug, 'color' => $color, 'sort_order' => 99 )
             );
         }
-        wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'saved' => '1' ), admin_url( 'edit.php?post_type=training_event' ) ) );
+        wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'saved' => '1' ), admin_url( 'edit.php?post_type=time_event' ) ) );
         exit;
     }
 
@@ -125,7 +125,7 @@ add_action( 'admin_init', function () {
                 array( 'id'   => $id )
             );
         }
-        wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'saved' => '1' ), admin_url( 'edit.php?post_type=training_event' ) ) );
+        wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'saved' => '1' ), admin_url( 'edit.php?post_type=time_event' ) ) );
         exit;
     }
 
@@ -137,7 +137,7 @@ add_action( 'admin_init', function () {
             $wpdb->prefix . 'tc_event_categories',
             array( 'id' => absint( $_GET['tc_cat_delete'] ) )
         );
-        wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'deleted' => '1' ), admin_url( 'edit.php?post_type=training_event' ) ) );
+        wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'deleted' => '1' ), admin_url( 'edit.php?post_type=time_event' ) ) );
         exit;
     }
 } );
@@ -202,11 +202,11 @@ function tc_render_categories_page() {
                                 </span>
                             </td>
                             <td style="white-space:nowrap;">
-                                <a href="<?php echo esc_url( add_query_arg( array( 'page' => 'tc-event-categories', 'edit' => $cat['id'] ), admin_url( 'edit.php?post_type=training_event' ) ) ); ?>"
+                                <a href="<?php echo esc_url( add_query_arg( array( 'page' => 'tc-event-categories', 'edit' => $cat['id'] ), admin_url( 'edit.php?post_type=time_event' ) ) ); ?>"
                                    class="button button-small">Bearbeiten</a>
                                 <?php
                                 $del_url = wp_nonce_url(
-                                    add_query_arg( array( 'page' => 'tc-event-categories', 'tc_cat_delete' => $cat['id'] ), admin_url( 'edit.php?post_type=training_event' ) ),
+                                    add_query_arg( array( 'page' => 'tc-event-categories', 'tc_cat_delete' => $cat['id'] ), admin_url( 'edit.php?post_type=time_event' ) ),
                                     'tc_cat_delete_' . $cat['id']
                                 );
                                 ?>
@@ -267,7 +267,7 @@ function tc_render_categories_page() {
 
                     <div style="margin-top:16px;display:flex;gap:8px;">
                         <?php submit_button( 'Speichern', 'primary', 'submit', false ); ?>
-                        <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=training_event&page=tc-event-categories' ) ); ?>"
+                        <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=time_event&page=tc-event-categories' ) ); ?>"
                            class="button">Abbrechen</a>
                     </div>
                 </form>

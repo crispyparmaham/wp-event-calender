@@ -5,7 +5,7 @@ defined( 'ABSPATH' ) || exit;
 // 1. Custom Post Type registrieren
 // ─────────────────────────────────────────────
 add_action( 'init', function () {
-    register_post_type( 'training_event', array(
+    register_post_type( 'time_event', array(
         'labels' => array(
             'name'          => 'Kalender',
             'singular_name' => 'Kalender',
@@ -33,7 +33,7 @@ add_action( 'acf/include_fields', function () {
     if ( ! function_exists( 'acf_add_local_field_group' ) ) return;
 
     acf_add_local_field_group( array(
-        'key'    => 'group_training_event',
+        'key'    => 'group_time_event',
         'title'  => 'Event Details',
         'fields' => array(
 
@@ -373,7 +373,7 @@ add_action( 'acf/include_fields', function () {
         'location' => array( array( array(
             'param'    => 'post_type',
             'operator' => '==',
-            'value'    => 'training_event',
+            'value'    => 'time_event',
         ) ) ),
         'menu_order'            => 0,
         'position'              => 'normal',
@@ -401,8 +401,12 @@ add_filter( 'acf/load_field/key=field_tc_event_type', function ( $field ) {
 // 4. Single-Post-Template
 // ─────────────────────────────────────────────
 add_filter( 'single_template', function ( $template ) {
-    if ( is_singular( 'training_event' ) ) {
-        $plugin_tpl = TC_PATH . 'templates/single-training_event.php';
+    if ( is_singular( 'time_event' ) ) {
+        $plugin_tpl  = TC_PATH . 'templates/single-time_event.php';
+        $legacy_tpl  = TC_PATH . 'templates/single-training_event.php';
+        if ( ! file_exists( $plugin_tpl ) && file_exists( $legacy_tpl ) ) {
+            $plugin_tpl = $legacy_tpl;
+        }
         if ( file_exists( $plugin_tpl ) ) {
             return $plugin_tpl;
         }

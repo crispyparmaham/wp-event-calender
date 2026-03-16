@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // ─────────────────────────────────────────────
-// Shortcode: [training_price_bar]
+// Shortcode: [time_price_bar]
 //
 // Zeigt eine fixe Preisleiste am unteren Bildschirmrand.
 // Liest ACF-Felder des aktuellen Posts aus.
@@ -15,13 +15,13 @@ defined( 'ABSPATH' ) || exit;
 // Bei aktiviertem Probetraining-Modus (price_on_request) wird ein
 // fester Teaser und der Button "Probetraining anfragen" angezeigt.
 // ─────────────────────────────────────────────
-add_shortcode( 'training_price_bar', function ( $atts ) {
+add_shortcode( 'time_price_bar', function ( $atts ) {
 
     $atts = shortcode_atts( array(
         'post_id'   => get_the_ID(),
         'link'      => '#anmelden',
         'link_text' => 'Jetzt anmelden',
-    ), $atts, 'training_price_bar' );
+    ), $atts, 'time_price_bar' );
 
     $post_id   = intval( $atts['post_id'] );
     $link      = esc_url( $atts['link'] );

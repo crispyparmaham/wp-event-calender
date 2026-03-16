@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 // ─────────────────────────────────────────────
 add_action( 'admin_menu', function () {
     add_submenu_page(
-        'edit.php?post_type=training_event',
+        'edit.php?post_type=time_event',
         'Event-Übersicht',
         'Übersicht',
         'administrator',
@@ -26,7 +26,7 @@ function tc_render_events_overview_page() {
 
     // Alle Events laden — aufsteigend nach Startdatum
     $posts = get_posts( array(
-        'post_type'      => 'training_event',
+        'post_type'      => 'time_event',
         'posts_per_page' => -1,
         'post_status'    => array( 'publish', 'draft' ),
         'meta_key'       => 'start_date',

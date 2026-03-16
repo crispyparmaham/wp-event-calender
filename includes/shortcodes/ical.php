@@ -20,7 +20,7 @@ add_action( 'template_redirect', function () {
     $slug = get_query_var( 'tc_ical_slug' );
     if ( ! $slug ) return;
 
-    $post = get_page_by_path( $slug, OBJECT, 'training_event' );
+    $post = get_page_by_path( $slug, OBJECT, 'time_event' );
     if ( ! $post ) {
         wp_die( 'Veranstaltung nicht gefunden.', 'Nicht gefunden', [ 'response' => 404 ] );
     }
@@ -105,7 +105,7 @@ function tc_build_ics( WP_Post $post ) {
 
     $cal  = "BEGIN:VCALENDAR\r\n";
     $cal .= "VERSION:2.0\r\n";
-    $cal .= "PRODID:-//Training Calendar//DE\r\n";
+    $cal .= "PRODID:-//Time Calendar//DE\r\n";
     $cal .= "CALSCALE:GREGORIAN\r\n";
     $cal .= "METHOD:PUBLISH\r\n";
     $cal .= "X-WR-CALNAME:" . tc_ical_escape( $title ) . "\r\n";
@@ -179,11 +179,11 @@ add_shortcode( 'training_ical_button', function ( $atts ) {
 
     $event_id = absint( $atts['event_id'] );
 
-    if ( ! $event_id && is_singular( 'training_event' ) ) {
+    if ( ! $event_id && is_singular( 'time_event' ) ) {
         $event_id = get_the_ID();
     }
 
-    if ( ! $event_id || get_post_type( $event_id ) !== 'training_event' ) {
+    if ( ! $event_id || get_post_type( $event_id ) !== 'time_event' ) {
         return '';
     }
 
@@ -216,7 +216,7 @@ add_action( 'wp_head', function () { ?>
 
 // ─────────────────────────────────────────────────────────────────
 // Rewrite-Regeln beim Aktivieren des Plugins flushen
-// (wird in training-calendar.php über register_activation_hook erledigt)
+// (wird in functions.php über register_activation_hook erledigt)
 // ─────────────────────────────────────────────────────────────────
 function tc_flush_rewrite_rules_for_ical() {
     add_rewrite_tag( '%tc_ical_slug%', '([^/]+)' );

@@ -1,7 +1,7 @@
 /*
- * Training Calendar – Event-Übersicht (Kartenansicht)
+ * Time Calendar – Event-Übersicht (Kartenansicht)
  * ─────────────────────────────────────────────────────────────────
- * Erscheint unterhalb des [training_calendar] Shortcodes wenn
+ * Erscheint unterhalb des [time_calendar] Shortcodes wenn
  * "Event-Übersicht anzeigen" in den Plugin-Einstellungen aktiv ist.
  *
  * Alle Farben über CSS Custom Properties – Dark Mode automatisch.

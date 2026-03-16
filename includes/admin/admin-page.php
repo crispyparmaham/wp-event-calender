@@ -6,11 +6,11 @@ defined( 'ABSPATH' ) || exit;
 // ─────────────────────────────────────────────
 add_action( 'admin_menu', function () {
     add_submenu_page(
-        'edit.php?post_type=training_event',
+        'edit.php?post_type=time_event',
         'Kalenderübersicht',
         'Kalender',
         'administrator',
-        'training-calendar',
+        'time-calendar',
         'tc_render_calendar_page'
     );
 } );
@@ -94,7 +94,7 @@ function tc_render_calendar_page() { ?>
 // Assets nur auf Kalenderseite laden
 // ─────────────────────────────────────────────
 add_action( 'admin_enqueue_scripts', function ( $hook ) {
-    if ( $hook !== 'training_event_page_training-calendar' ) return;
+    if ( $hook !== 'time_event_page_time-calendar' ) return;
 
     wp_enqueue_script(
         'fullcalendar',

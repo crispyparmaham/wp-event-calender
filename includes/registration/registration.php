@@ -365,7 +365,7 @@ function tc_handle_registration_submission() {
         wp_send_json_error( array( 'message' => 'Bitte fuellen Sie alle erforderlichen Felder aus.' ) );
     }
 
-    if ( get_post_type( $event_id ) !== 'training_event' ) {
+    if ( get_post_type( $event_id ) !== 'time_event' ) {
         wp_send_json_error( array( 'message' => 'Diese Veranstaltung existiert nicht.' ) );
     }
 
@@ -459,7 +459,7 @@ function tc_get_event_details_ajax() {
     check_ajax_referer( 'tc_registration_nonce', 'nonce' );
 
     $event_id = absint( $_POST['event_id'] ?? 0 );
-    if ( ! $event_id || get_post_type( $event_id ) !== 'training_event' ) {
+    if ( ! $event_id || get_post_type( $event_id ) !== 'time_event' ) {
         wp_send_json_error( array( 'message' => 'Event nicht gefunden.' ) );
     }
 

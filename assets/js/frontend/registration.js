@@ -1,5 +1,5 @@
 /**
- * Training Calendar - Anmeldeformular JavaScript
+ * Time Calendar - Anmeldeformular JavaScript
  */
 
 (function($) {

@@ -15,7 +15,7 @@ require_once TC_PATH . 'vendor/autoload.php';
 $updateChecker = YahnisElsts\PluginUpdateChecker\v5\PucFactory::buildUpdateChecker(
     'https://github.com/crispyparmaham/wp-event-calender',
     TC_PATH . 'functions.php',
-    'training-calendar'
+    'time-calendar'
 );
 
 // Optionaler GitHub-Token für höhere API-Rate-Limits (aus config.local.php)

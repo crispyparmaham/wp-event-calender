@@ -74,26 +74,26 @@ function tc_get_upcoming_occurrences( $event_id ) {
 }
 
 // ─────────────────────────────────────────────
-// Shortcode: [training_registration]
+// Shortcode: [time_registration]
 //
 // Attribute:
 //   event_id = Post-ID der Veranstaltung (optional)
 //   title    = Formulartitel (optional)
 // ─────────────────────────────────────────────
-add_shortcode( 'training_registration', function ( $atts ) {
+add_shortcode( 'time_registration', function ( $atts ) {
 
     $atts = shortcode_atts( array(
         'event_id' => 0,
         'title'    => 'Anmelden',
-    ), $atts, 'training_registration' );
+    ), $atts, 'time_registration' );
 
     $event_id = absint( $atts['event_id'] );
 
-    if ( ! $event_id && is_singular( 'training_event' ) ) {
+    if ( ! $event_id && is_singular( 'time_event' ) ) {
         $event_id = get_the_ID();
     }
 
-    if ( $event_id && get_post_type( $event_id ) !== 'training_event' ) {
+    if ( $event_id && get_post_type( $event_id ) !== 'time_event' ) {
         return '<p class="tc-error">Veranstaltung nicht gefunden.</p>';
     }
 
@@ -254,12 +254,12 @@ add_shortcode( 'training_registration', function ( $atts ) {
                         <option value="">&#8211; Bitte w&auml;hlen &#8211;</option>
                         <?php
                         foreach ( get_posts( array(
-                            'post_type'      => 'training_event',
+                            'post_type'      => 'time_event',
                             'posts_per_page' => -1,
                             'orderby'        => 'title',
                             'order'          => 'ASC',
                         ) ) as $ev ) :
-                            $sel = ( is_singular( 'training_event' ) && $ev->ID === get_the_ID() ) ? 'selected' : '';
+                            $sel = ( is_singular( 'time_event' ) && $ev->ID === get_the_ID() ) ? 'selected' : '';
                             echo '<option value="' . esc_attr( $ev->ID ) . '" ' . $sel . '>'
                                . esc_html( $ev->post_title ) . '</option>';
                         endforeach;

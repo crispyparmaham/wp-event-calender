@@ -6,7 +6,7 @@ defined( 'ABSPATH' ) || exit;
 // ─────────────────────────────────────────────
 add_action( 'admin_menu', function () {
     add_submenu_page(
-        'edit.php?post_type=training_event',
+        'edit.php?post_type=time_event',
         'Anmeldungen',
         'Anmeldungen',
         'administrator',
@@ -310,7 +310,7 @@ function tc_render_registration_form( $registration_id ) {
                     <td>
                         <select id="event_id" name="event_id" required>
                             <option value="">– Wählen –</option>
-                            <?php foreach ( get_posts( array( 'post_type' => 'training_event', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ) ) as $ev ) : ?>
+                            <?php foreach ( get_posts( array( 'post_type' => 'time_event', 'posts_per_page' => -1, 'orderby' => 'title', 'order' => 'ASC' ) ) as $ev ) : ?>
                                 <option value="<?php echo esc_attr( $ev->ID ); ?>" <?php selected( $reg['event_id'], $ev->ID ); ?>><?php echo esc_html( $ev->post_title ); ?></option>
                             <?php endforeach; ?>
                         </select>

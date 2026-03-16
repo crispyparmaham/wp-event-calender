@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // ─────────────────────────────────────────────
-// Shortcode: [training_calendar]
+// Shortcode: [time_calendar]
 //
 // Attribute:
 //   type      = "all" | "training" | "seminar"
@@ -14,13 +14,13 @@ defined( 'ABSPATH' ) || exit;
 //   ?tc_type=seminar   → Seminare vorausgewählt
 //   ?tc_type=all       → Alle (default)
 // ─────────────────────────────────────────────
-add_shortcode( 'training_calendar', function ( $atts ) {
+add_shortcode( 'time_calendar', function ( $atts ) {
 
     $atts = shortcode_atts( array(
         'type'      => 'all',
         'view'      => 'dayGridMonth',
         'week_only' => '',
-    ), $atts, 'training_calendar' );
+    ), $atts, 'time_calendar' );
 
     $categories    = tc_get_all_categories();
     $allowed_types = array_merge( array( 'all' ), array_column( $categories, 'slug' ) );

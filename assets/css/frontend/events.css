@@ -1,0 +1,361 @@
+/**
+ * Time Events Shortcode — [time_events]
+ *
+ * Self-contained stylesheet. CSS variables are scoped to .tc-events-wrap
+ * so this file works independently of calendar-frontend.css.
+ *
+ * Layouts:  .tc-events-layout--grid | --list | --cards
+ * Columns:  .tc-events-cols--1 | --2 | --3
+ */
+
+/* ── Variables ──────────────────────────────────────────────────────────── */
+.tc-events-wrap {
+  --tce-bg:          #ffffff;
+  --tce-surface:     #f9fafb;
+  --tce-border:      #e5e7eb;
+  --tce-text:        #111827;
+  --tce-muted:       #6b7280;
+  --tce-radius:      10px;
+  --tce-gap:         24px;
+  --tce-shadow:      0 1px 3px rgba(0, 0, 0, .07), 0 1px 2px rgba(0, 0, 0, .04);
+  --tce-shadow-hover:0 8px 24px rgba(0, 0, 0, .11), 0 2px 6px rgba(0, 0, 0, .06);
+  --tce-transition:  0.2s ease;
+
+  box-sizing: border-box;
+  color: var(--tce-text);
+  font-family: inherit;
+}
+
+/* Dark mode — media query */
+@media (prefers-color-scheme: dark) {
+  .tc-events-wrap {
+    --tce-bg:          #1f2937;
+    --tce-surface:     #111827;
+    --tce-border:      #374151;
+    --tce-text:        #f9fafb;
+    --tce-muted:       #9ca3af;
+    --tce-shadow:      0 1px 3px rgba(0, 0, 0, .3);
+    --tce-shadow-hover:0 8px 24px rgba(0, 0, 0, .4);
+  }
+}
+
+/* Dark mode — .tc-dark parent class (matches plugin convention) */
+.tc-dark .tc-events-wrap {
+  --tce-bg:          #1f2937;
+  --tce-surface:     #111827;
+  --tce-border:      #374151;
+  --tce-text:        #f9fafb;
+  --tce-muted:       #9ca3af;
+  --tce-shadow:      0 1px 3px rgba(0, 0, 0, .3);
+  --tce-shadow-hover:0 8px 24px rgba(0, 0, 0, .4);
+}
+
+/* ── Grid ───────────────────────────────────────────────────────────────── */
+.tc-events-grid {
+  display: grid;
+  gap: var(--tce-gap);
+  grid-template-columns: repeat(3, 1fr); /* default */
+}
+
+/* Column overrides */
+.tc-events-cols--1 .tc-events-grid { grid-template-columns: 1fr; }
+.tc-events-cols--2 .tc-events-grid { grid-template-columns: repeat(2, 1fr); }
+.tc-events-cols--3 .tc-events-grid { grid-template-columns: repeat(3, 1fr); }
+
+/* List layout overrides the grid */
+.tc-events-layout--list .tc-events-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Month grouping ─────────────────────────────────────────────────────── */
+.tc-events-group + .tc-events-group {
+  margin-top: 40px;
+}
+
+.tc-events-month-heading {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin: 0 0 20px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--tce-muted);
+  letter-spacing: .03em;
+  text-transform: uppercase;
+}
+
+.tc-events-month-heading::before,
+.tc-events-month-heading::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--tce-border);
+}
+
+/* ── Card (base — all layouts) ──────────────────────────────────────────── */
+.tc-events-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: var(--tce-bg);
+  border: 1px solid var(--tce-border);
+  border-radius: var(--tce-radius);
+  overflow: hidden;
+  box-shadow: var(--tce-shadow);
+  transition: transform var(--tce-transition), box-shadow var(--tce-transition);
+  cursor: pointer;
+}
+
+.tc-events-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--tce-shadow-hover);
+}
+
+.tc-events-card--full {
+  opacity: 0.72;
+}
+
+.tc-events-card--full:hover {
+  transform: none;
+  box-shadow: var(--tce-shadow);
+}
+
+/* Full-card clickable overlay */
+.tc-events-card-link {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+/* Keep inner links above the overlay */
+.tc-events-card-title a,
+.tc-events-meta a {
+  position: relative;
+  z-index: 2;
+}
+
+/* ── Accent stripe (cards layout) ───────────────────────────────────────── */
+.tc-events-stripe {
+  height: 4px;
+  flex-shrink: 0;
+}
+
+/* ── Image section ──────────────────────────────────────────────────────── */
+.tc-events-card-img {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  overflow: hidden;
+  background: var(--tce-surface);
+  flex-shrink: 0;
+}
+
+.tc-events-thumb {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tc-events-img-placeholder {
+  width: 100%;
+  height: 100%;
+  opacity: 0.18;
+}
+
+/* Sold-out badge (overlays image) */
+.tc-events-sold-out {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #dc2626;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  line-height: 1.4;
+  z-index: 2;
+}
+
+/* Inline sold-out (when image is hidden) */
+.tc-events-sold-out--inline {
+  position: static;
+  display: inline-block;
+  margin-bottom: 8px;
+}
+
+/* ── Card body ──────────────────────────────────────────────────────────── */
+.tc-events-card-body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 16px;
+  gap: 6px;
+}
+
+.tc-events-layout--cards .tc-events-card-body {
+  padding: 20px;
+  gap: 8px;
+}
+
+/* ── Badge ──────────────────────────────────────────────────────────────── */
+.tc-events-badge {
+  display: inline-flex;
+  align-items: center;
+  align-self: flex-start;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--badge-color, #4f46e5) 12%, transparent);
+  color: var(--badge-color, #4f46e5);
+  position: relative;
+  z-index: 2;
+}
+
+/* Fallback for browsers without color-mix */
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .tc-events-badge {
+    background: rgba(79, 70, 229, .12);
+  }
+}
+
+/* ── Title ──────────────────────────────────────────────────────────────── */
+.tc-events-card-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.35;
+  color: var(--tce-text);
+}
+
+.tc-events-layout--cards .tc-events-card-title {
+  font-size: 17px;
+}
+
+.tc-events-card-title a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.tc-events-card-title a:hover {
+  text-decoration: underline;
+}
+
+/* ── Excerpt ────────────────────────────────────────────────────────────── */
+.tc-events-card-excerpt {
+  margin: 0;
+  font-size: 13px;
+  color: var(--tce-muted);
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Meta list ──────────────────────────────────────────────────────────── */
+.tc-events-meta {
+  list-style: none;
+  margin: 6px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tc-events-meta-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--tce-muted);
+  line-height: 1.45;
+}
+
+.tc-events-meta-item svg {
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  fill: currentColor;
+}
+
+/* ── List layout ────────────────────────────────────────────────────────── */
+.tc-events-layout--list .tc-events-card {
+  flex-direction: row;
+  min-height: 130px;
+}
+
+.tc-events-layout--list .tc-events-card-img {
+  width: 200px;
+  min-width: 200px;
+  aspect-ratio: unset;
+  height: auto;
+  align-self: stretch;
+  flex-shrink: 0;
+  border-radius: 0;
+}
+
+/* Stripe at the left edge in list layout */
+.tc-events-layout--list .tc-events-stripe {
+  width: 4px;
+  height: auto;
+  align-self: stretch;
+  flex-shrink: 0;
+}
+
+/* ── Empty state ────────────────────────────────────────────────────────── */
+.tc-events-empty {
+  padding: 40px 24px;
+  text-align: center;
+  color: var(--tce-muted);
+  font-size: 15px;
+  border: 1px dashed var(--tce-border);
+  border-radius: var(--tce-radius);
+}
+
+.tc-events-empty p {
+  margin: 0;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+  .tc-events-cols--3 .tc-events-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .tc-events-cols--2 .tc-events-grid,
+  .tc-events-cols--3 .tc-events-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .tc-events-layout--list .tc-events-card {
+    flex-direction: column;
+    min-height: unset;
+  }
+
+  .tc-events-layout--list .tc-events-card-img {
+    width: 100%;
+    min-width: unset;
+    aspect-ratio: 16 / 9;
+    height: auto;
+  }
+
+  .tc-events-layout--list .tc-events-stripe {
+    width: 100%;
+    height: 4px;
+  }
+
+  .tc-events-month-heading {
+    font-size: 13px;
+  }
+}

@@ -1,11 +1,11 @@
 /*
- * Training Calendar – Frontend Styles
+ * Time Calendar – Frontend Styles
  * ─────────────────────────────────────────────────────────────────
  * Theme-unabhängig: Alle Farben explizit gesetzt.
  *
  * Farbmodus per Shortcode-Attribut:
- *   [training_calendar]              → Light (default)
- *   [training_calendar mode="dark"]  → Dark
+ *   [time_calendar]              → Light (default)
+ *   [time_calendar mode="dark"]  → Dark
  *
  * CSS Custom Properties zum Anpassen:
  *   --tc-bg            Kalender-Hintergrund

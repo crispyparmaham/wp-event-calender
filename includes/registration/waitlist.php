@@ -22,7 +22,7 @@ function tc_handle_waitlist_submission() {
         wp_send_json_error( [ 'message' => 'Bitte füllen Sie alle erforderlichen Felder aus.' ] );
     }
 
-    if ( get_post_type( $event_id ) !== 'training_event' ) {
+    if ( get_post_type( $event_id ) !== 'time_event' ) {
         wp_send_json_error( [ 'message' => 'Diese Veranstaltung existiert nicht.' ] );
     }
 

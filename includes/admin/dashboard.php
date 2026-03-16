@@ -7,11 +7,11 @@ defined( 'ABSPATH' ) || exit;
 // ─────────────────────────────────────────────────────────────────
 add_action( 'admin_menu', function () {
     add_submenu_page(
-        'edit.php?post_type=training_event',
+        'edit.php?post_type=time_event',
         'Dashboard',
         'Dashboard',
         'administrator',
-        'training-calendar-dashboard',
+        'time-calendar-dashboard',
         'tc_render_dashboard_page'
     );
 }, 5 );
@@ -20,7 +20,7 @@ add_action( 'admin_menu', function () {
 // CSS: nur auf der Dashboard-Seite laden
 // ─────────────────────────────────────────────────────────────────
 add_action( 'admin_head', function () {
-    if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'training-calendar-dashboard' ) return;
+    if ( ! isset( $_GET['page'] ) || $_GET['page'] !== 'time-calendar-dashboard' ) return;
     ?>
     <style>
     /* ── Wrapper ──────────────────────────────────────────── */
@@ -194,7 +194,7 @@ function tc_dashboard_get_kpis() {
     $table = $wpdb->prefix . 'tc_registrations';
 
     // Gesamte Events (publish + draft)
-    $counts       = wp_count_posts( 'training_event' );
+    $counts       = wp_count_posts( 'time_event' );
     $events_total = ( (int) ( $counts->publish ?? 0 ) ) + ( (int) ( $counts->draft ?? 0 ) );
 
     // Events diesen Monat (per start_date ACF-Feld)
@@ -204,7 +204,7 @@ function tc_dashboard_get_kpis() {
         "SELECT COUNT(DISTINCT p.ID)
          FROM {$wpdb->posts} p
          JOIN {$wpdb->postmeta} pm ON p.ID = pm.post_id
-         WHERE p.post_type    = 'training_event'
+         WHERE p.post_type    = 'time_event'
            AND p.post_status  IN ('publish','draft')
            AND pm.meta_key    = 'start_date'
            AND pm.meta_value BETWEEN %s AND %s",
@@ -225,7 +225,7 @@ function tc_dashboard_get_kpis() {
 
     // Auslastung: Events mit track_participants ermitteln
     $tracked_ids = get_posts( [
-        'post_type'      => 'training_event',
+        'post_type'      => 'time_event',
         'post_status'    => 'publish',
         'posts_per_page' => -1,
         'fields'         => 'ids',
@@ -271,7 +271,7 @@ function tc_dashboard_get_next_events() {
     $today = date( 'Y-m-d' );
 
     $events = get_posts( [
-        'post_type'      => 'training_event',
+        'post_type'      => 'time_event',
         'post_status'    => 'publish',
         'posts_per_page' => 5,
         'meta_key'       => 'start_date',
@@ -498,7 +498,7 @@ function tc_render_dashboard_page() {
             'value' => $kpis['events_total'],
             'color' => '#4f46e5',
             'icon'  => 'dashicons-calendar-alt',
-            'link'  => admin_url( 'edit.php?post_type=training_event' ),
+            'link'  => admin_url( 'edit.php?post_type=time_event' ),
         ],
         [
             'label' => 'Events diesen Monat',
@@ -543,12 +543,12 @@ function tc_render_dashboard_page() {
                 <h2>Schnellzugriff</h2>
             </div>
             <div class="tc-quick-btns">
-                <a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=training_event' ) ); ?>"
+                <a href="<?php echo esc_url( admin_url( 'post-new.php?post_type=time_event' ) ); ?>"
                    class="tc-quick-btn tc-quick-btn-primary">
                     <span class="dashicons dashicons-plus-alt"></span>
                     Neues Event anlegen
                 </a>
-                <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=training_event&page=training-calendar' ) ); ?>"
+                <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=time_event&page=time-calendar' ) ); ?>"
                    class="tc-quick-btn">
                     <span class="dashicons dashicons-calendar-alt"></span>
                     Kalender &ouml;ffnen
@@ -565,7 +565,7 @@ function tc_render_dashboard_page() {
                     <span class="dashicons dashicons-download"></span>
                     CSV exportieren
                 </a>
-                <a href="<?php echo esc_url( admin_url( 'admin.php?page=training-calendar-settings' ) ); ?>"
+                <a href="<?php echo esc_url( admin_url( 'admin.php?page=time-calendar-settings' ) ); ?>"
                    class="tc-quick-btn">
                     <span class="dashicons dashicons-admin-settings"></span>
                     Einstellungen
@@ -606,7 +606,7 @@ function tc_render_dashboard_page() {
             <div class="tc-dash-card">
                 <div class="tc-dash-card-header">
                     <h2>N&auml;chste Events</h2>
-                    <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=training_event' ) ); ?>"
+                    <a href="<?php echo esc_url( admin_url( 'edit.php?post_type=time_event' ) ); ?>"
                        class="tc-dash-card-link">Alle anzeigen &rarr;</a>
                 </div>
                 <?php if ( empty( $next_events ) ) : ?>
