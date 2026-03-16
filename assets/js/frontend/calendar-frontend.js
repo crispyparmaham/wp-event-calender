@@ -566,12 +566,6 @@ document.addEventListener('DOMContentLoaded', () => {
         if (weekPlanPrev) weekPlanPrev.style.display = 'none';
         if (weekPlanNext) weekPlanNext.style.display = 'none';
       }
-
-      const weekLabel = document.createElement('div');
-      weekLabel.className = 'tc-week-label';
-      weekLabel.textContent = 'Aktuelle Woche';
-      const anchor = weekPlanWrap || el;
-      anchor.parentNode.insertBefore(weekLabel, anchor);
     }
 
     // ── Events einmalig per AJAX laden, dann statisch setzen ──
