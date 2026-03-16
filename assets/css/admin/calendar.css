@@ -1,3 +1,11 @@
+/*
+ * Time Calendar – Admin Calendar Styles
+ * ─────────────────────────────────────────────────────────────────
+ * Admin-Kalender: läuft im WP-Admin-Kontext.
+ * Verwendet wo möglich var(--tc-primary) für Konsistenz.
+ * ─────────────────────────────────────────────────────────────────
+ */
+
 /* ─── Wrapper ─────────────────────────────────────────────────── */
 .tc-wrap {
   max-width: 1200px;
@@ -26,16 +34,16 @@
   border-radius: 3px;
 }
 
-.tc-legend-item.tc-training::before  { background: #4f46e5; }
+.tc-legend-item.tc-training::before  { background: var(--tc-primary, #4f46e5); }
 .tc-legend-item.tc-seminar::before   { background: #059669; }
-.tc-legend-item.tc-recurring::before { background: #4f46e5; opacity: .65; }
+.tc-legend-item.tc-recurring::before { background: var(--tc-primary, #4f46e5); opacity: .65; }
 
 /* ─── Kalender ────────────────────────────────────────────────── */
 #tc-calendar {
   background: #fff;
   border-radius: 8px;
   padding: 20px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.1);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, .1);
 }
 
 .fc .fc-toolbar-title {
@@ -43,19 +51,19 @@
 }
 
 .fc .fc-button-primary {
-  background-color: #4f46e5;
-  border-color: #4338ca;
+  background-color: var(--tc-primary, #4f46e5);
+  border-color: var(--tc-primary-dark, #4338ca);
 }
 
 .fc .fc-button-primary:hover,
 .fc .fc-button-primary:focus {
-  background-color: #4338ca;
-  border-color: #3730a3;
+  background-color: var(--tc-primary-dark, #4338ca);
+  border-color: var(--tc-primary-dark, #3730a3);
 }
 
 .fc .fc-button-primary:not(:disabled).fc-button-active {
-  background-color: #3730a3;
-  border-color: #312e81;
+  background-color: var(--tc-primary-dark, #3730a3);
+  border-color: var(--tc-primary-dark, #312e81);
 }
 
 .fc-event {
@@ -85,7 +93,7 @@
   padding: 32px;
   width: 100%;
   max-width: 480px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, .2);
   position: relative;
   z-index: 100101;
   display: flex;
@@ -188,6 +196,6 @@ hr.tc-divider {
 #tc-modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,.45);
+  background: rgba(0, 0, 0, .45);
   z-index: 100099;
 }

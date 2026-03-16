@@ -1,52 +1,16 @@
 /*
  * Time Calendar – Frontend Styles
  * ─────────────────────────────────────────────────────────────────
- * Theme-unabhängig: Alle Farben explizit gesetzt.
- *
- * Farbmodus per Shortcode-Attribut:
- *   [time_calendar]              → Light (default)
- *   [time_calendar mode="dark"]  → Dark
- *
- * CSS Custom Properties zum Anpassen:
- *   --tc-bg            Kalender-Hintergrund
- *   --tc-surface       Zellen-Hintergrund
- *   --tc-border        Rahmenfarbe
- *   --tc-text          Haupttextfarbe
- *   --tc-text-muted    Dezente Textfarbe (Wochentage, etc.)
- *   --tc-today         Hintergrund des heutigen Tages
- *   --tc-btn-bg        Toolbar-Button Hintergrund
- *   --tc-btn-text      Toolbar-Button Text
- *   --tc-btn-active    Aktiver Button Hintergrund
+ * Alle Farben über var(--tc-*) aus design-system.css.
+ * Dark Mode wird automatisch über .tc-dark aktiviert.
  * ─────────────────────────────────────────────────────────────────
-*/
+ */
 
-/* ─── Light Mode (default) ────────────────────────────────────── */
+/* ─── Wrapper ────────────────────────────────────────────────────── */
 .tc-frontend-wrap {
-  --tc-bg:          #ffffff;
-  --tc-surface:     #f9fafb;
-  --tc-border:      #e5e7eb;
-  --tc-text:        #111827;
-  --tc-text-muted:  #6b7280;
-  --tc-today:       var(--tc-primary-light);
-  --tc-btn-bg:      var(--tc-primary);
-  --tc-btn-text:    #ffffff;
-  --tc-btn-active:  var(--tc-primary-dark);
   position: static;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   color: var(--tc-text);
-}
-
-/* ─── Dark Mode ───────────────────────────────────────────────── */
-.tc-frontend-wrap.tc-dark {
-  --tc-bg:          #1f2937;
-  --tc-surface:     #111827;
-  --tc-border:      #374151;
-  --tc-text:        #f9fafb;
-  --tc-text-muted:  #9ca3af;
-  --tc-today:       var(--tc-primary-light);
-  --tc-btn-bg:      var(--tc-primary);
-  --tc-btn-text:    #ffffff;
-  --tc-btn-active:  var(--tc-primary-dark);
 }
 
 /* ─── Filter-Leiste ───────────────────────────────────────────── */
@@ -69,19 +33,19 @@
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
-  transition: border-color .15s, background .15s, color .15s;
+  transition: border-color var(--tc-transition), background var(--tc-transition), color var(--tc-transition);
   font-family: inherit;
 }
 
 .tc-filter-btn:hover {
-  border-color: var(--tc-btn-bg);
-  color: var(--tc-btn-bg);
+  border-color: var(--tc-primary);
+  color: var(--tc-primary);
 }
 
 .tc-filter-btn.is-active {
-  background: var(--tc-btn-bg);
-  border-color: var(--tc-btn-bg);
-  color: var(--tc-btn-text);
+  background: var(--tc-primary);
+  border-color: var(--tc-primary);
+  color: #fff;
 }
 
 .tc-dot {
@@ -100,12 +64,12 @@
 .tc-frontend-calendar {
   background: var(--tc-bg);
   border: 1px solid var(--tc-border);
-  border-radius: 10px;
+  border-radius: var(--tc-radius);
   padding: 20px;
   color: var(--tc-text);
 }
 
-/* ─── FullCalendar Overrides (theme-unabhängig) ───────────────── */
+/* ─── FullCalendar Overrides ──────────────────────────────────── */
 
 /* Toolbar */
 .tc-frontend-wrap .fc {
@@ -124,27 +88,27 @@
 }
 
 .tc-frontend-wrap .fc .fc-button-primary {
-  background-color: var(--tc-btn-bg) !important;
-  border-color: var(--tc-btn-bg) !important;
-  color: var(--tc-btn-text) !important;
+  background-color: var(--tc-primary) !important;
+  border-color: var(--tc-primary) !important;
+  color: #fff !important;
   font-size: 13px;
   box-shadow: none !important;
 }
 
 .tc-frontend-wrap .fc .fc-button-primary:hover {
-  background-color: var(--tc-btn-active) !important;
-  border-color: var(--tc-btn-active) !important;
+  background-color: var(--tc-primary-dark) !important;
+  border-color: var(--tc-primary-dark) !important;
 }
 
 .tc-frontend-wrap .fc .fc-button-primary:not(:disabled).fc-button-active,
 .tc-frontend-wrap .fc .fc-button-primary:not(:disabled):active {
-  background-color: var(--tc-btn-active) !important;
-  border-color: var(--tc-btn-active) !important;
+  background-color: var(--tc-primary-dark) !important;
+  border-color: var(--tc-primary-dark) !important;
 }
 
 .tc-frontend-wrap .fc .fc-button-primary:disabled {
-  background-color: var(--tc-btn-bg) !important;
-  border-color: var(--tc-btn-bg) !important;
+  background-color: var(--tc-primary) !important;
+  border-color: var(--tc-primary) !important;
   opacity: .6;
 }
 
@@ -184,18 +148,18 @@
 
 /* Heutiger Tag */
 .tc-frontend-wrap .fc .fc-day-today {
-  background: var(--tc-today) !important;
+  background: var(--tc-primary-light) !important;
 }
 
 .tc-frontend-wrap .fc .fc-day-today .fc-daygrid-day-number {
   font-weight: 700;
-  color: var(--tc-btn-bg) !important;
+  color: var(--tc-primary) !important;
 }
 
 /* Andere Monate leicht ausgrauen */
 .tc-frontend-wrap .fc .fc-day-other .fc-daygrid-day-number {
-  color: var(--tc-text-muted) !important;
-  opacity: .5;
+  color: var(--tc-text-subtle) !important;
+  opacity: .6;
 }
 
 /* Events */
@@ -281,7 +245,7 @@
   width: 22px;
   height: 22px;
   border: 3px solid var(--tc-border);
-  border-top-color: var(--tc-btn-bg);
+  border-top-color: var(--tc-primary);
   border-radius: 50%;
   animation: tc-spin .7s linear infinite;
   flex-shrink: 0;
@@ -297,8 +261,8 @@
   z-index: 9999;
   background: var(--tc-bg);
   border: 1px solid var(--tc-border);
-  border-radius: 10px;
-  box-shadow: 0 8px 30px rgba(0,0,0,.2);
+  border-radius: var(--tc-radius);
+  box-shadow: var(--tc-shadow-lg);
   width: 280px;
   padding: 18px 18px 20px;
   color: var(--tc-text);
@@ -336,8 +300,8 @@
 }
 
 .tc-popover-type--seminar {
-  background: #d1fae5;
-  color: #059669;
+  background: var(--tc-success-bg);
+  color: var(--tc-success);
 }
 
 .tc-popover-title {
@@ -391,18 +355,18 @@
   display: inline-block;
   margin-top: 14px;
   padding: 8px 16px;
-  background: var(--tc-btn-bg);
-  color: var(--tc-btn-text) !important;
-  border-radius: 6px;
+  background: var(--tc-primary);
+  color: #fff !important;
+  border-radius: var(--tc-radius-sm);
   font-size: 13px;
   font-weight: 600;
   text-decoration: none;
-  transition: background .15s;
+  transition: background var(--tc-transition);
 }
 
 .tc-popover-link:hover {
-  background: var(--tc-btn-active);
-  color: var(--tc-btn-text) !important;
+  background: var(--tc-primary-dark);
+  color: #fff !important;
 }
 
 /* ─── Popover-Backdrop ────────────────────────────────────────── */
@@ -431,7 +395,7 @@
   font-weight: 500;
   cursor: pointer;
   font-family: inherit;
-  transition: background .15s, color .15s;
+  transition: background var(--tc-transition), color var(--tc-transition);
 }
 
 .tc-view-btn + .tc-view-btn {
@@ -444,14 +408,14 @@
 }
 
 .tc-view-btn.is-active {
-  background: var(--tc-btn-bg);
-  color: var(--tc-btn-text);
+  background: var(--tc-primary);
+  color: #fff;
 }
 
 /* ─── Week Plan Container ────────────────────────────────────── */
 .tc-week-plan {
   border: 1px solid var(--tc-border);
-  border-radius: 10px;
+  border-radius: var(--tc-radius);
   background: var(--tc-bg);
   overflow: hidden;
 }
@@ -471,7 +435,7 @@
 .tc-week-plan-next {
   background: var(--tc-bg);
   border: 1px solid var(--tc-border);
-  border-radius: 6px;
+  border-radius: var(--tc-radius-sm);
   padding: 5px 14px;
   cursor: pointer;
   font-size: 13px;
@@ -479,14 +443,14 @@
   color: var(--tc-text);
   font-family: inherit;
   white-space: nowrap;
-  transition: background .15s, border-color .15s;
+  transition: background var(--tc-transition), border-color var(--tc-transition), color var(--tc-transition);
 }
 
 .tc-week-plan-prev:hover,
 .tc-week-plan-next:hover {
-  background: var(--tc-btn-bg);
-  border-color: var(--tc-btn-bg);
-  color: var(--tc-btn-text);
+  background: var(--tc-primary);
+  border-color: var(--tc-primary);
+  color: #fff;
 }
 
 .tc-week-plan-label {
@@ -546,12 +510,12 @@
 }
 
 .tc-wp-today {
-  background: var(--tc-today) !important;
-  color: var(--tc-btn-bg) !important;
+  background: var(--tc-primary-light) !important;
+  color: var(--tc-primary) !important;
 }
 
 .tc-wp-today .tc-wp-th-date {
-  color: var(--tc-btn-bg) !important;
+  color: var(--tc-primary) !important;
 }
 
 /* Gruppen-Trennzeile (Vormittag / Nachmittag / Abend) */
@@ -611,7 +575,7 @@
   cursor: pointer;
   text-align: left;
   font-family: inherit;
-  transition: box-shadow .15s;
+  transition: box-shadow var(--tc-transition);
   margin-bottom: 3px;
 }
 
@@ -689,7 +653,7 @@
 
 .tc-wp-mobile-day--today .tc-wp-mobile-day-header {
   color: var(--tc-primary);
-  background: var(--tc-today);
+  background: var(--tc-primary-light);
 }
 
 .tc-wp-mobile-events {

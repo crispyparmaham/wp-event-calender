@@ -4,7 +4,7 @@
  * Erscheint unterhalb des [time_calendar] Shortcodes wenn
  * "Event-Übersicht anzeigen" in den Plugin-Einstellungen aktiv ist.
  *
- * Alle Farben über CSS Custom Properties – Dark Mode automatisch.
+ * Alle Farben über var(--tc-*) aus design-system.css.
  * ─────────────────────────────────────────────────────────────────
  */
 
@@ -56,7 +56,7 @@
   flex-direction: column;
   background: var(--tc-bg);
   border: 1px solid var(--tc-border);
-  border-radius: 10px;
+  border-radius: var(--tc-radius);
   overflow: hidden;
   text-decoration: none;
   color: var(--tc-text);
@@ -67,13 +67,9 @@
 
 .tc-evlist-card:hover {
   transform: translateY(-3px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .1);
+  box-shadow: var(--tc-shadow-lg);
   text-decoration: none;
   color: var(--tc-text);
-}
-
-.tc-dark .tc-evlist-card:hover {
-  box-shadow: 0 8px 24px rgba(0, 0, 0, .35);
 }
 
 /* ── Farbstreifen oben ───────────────────────────────────────────── */
@@ -119,7 +115,6 @@
   color: var(--tc-text-muted);
   margin: 0;
   line-height: 1.5;
-  /* Max. 2 Zeilen, dann "..." */
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
@@ -185,7 +180,7 @@
 .tc-dates-more {
   display: inline-block;
   margin-top: 5px;
-  margin-left: 19px; /* Einzug bündig unter dem 📅-Icon */
+  margin-left: 19px;
   background: none;
   border: none;
   padding: 0;

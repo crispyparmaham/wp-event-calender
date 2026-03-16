@@ -61,6 +61,21 @@ require_once TC_PATH . 'includes/registration/export.php';
 require_once TC_PATH . 'includes/registration/waitlist.php';
 require_once TC_PATH . 'includes/registration/reminder.php';
 
+// ── Helper: Dark-Mode-Klasse ────────────────────────────────────
+function tc_dark_class() {
+    return tc_get_setting( 'calendar_mode', 'light' ) === 'dark' ? 'tc-dark' : '';
+}
+
+// ── Design System CSS global laden ──────────────────────────────
+add_action( 'wp_enqueue_scripts', function () {
+    wp_enqueue_style(
+        'tc-design-system',
+        TC_URL . 'assets/css/design-system.css',
+        [],
+        TC_VERSION
+    );
+}, 5 ); // Priorität 5 = vor allen anderen Plugin-Styles
+
 // ── Tabelle beim Aktivieren des Plugins anlegen ────────────────
 register_activation_hook( __FILE__, 'tc_run_db_setup' );
 

@@ -1,3 +1,8 @@
+/*
+ * Time Calendar – Price Bar
+ * Alle Farben über var(--tc-*) aus design-system.css.
+ */
+
 /* ─── Price Bar ───────────────────────────────────────────────── */
 .tc-price-bar {
   position: fixed;
@@ -5,10 +10,14 @@
   left: 0;
   right: 0;
   z-index: 999;
-  background: #fff;
-  border-top: 1px solid #e5e7eb;
+  background: var(--tc-bg);
+  border-top: 1px solid var(--tc-border);
   box-shadow: 0 -4px 24px rgba(0, 0, 0, .10);
   padding: 14px 24px;
+}
+
+.tc-dark .tc-price-bar {
+  box-shadow: 0 -4px 24px rgba(0, 0, 0, .35);
 }
 
 .tc-price-bar-inner {
@@ -33,10 +42,10 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .06em;
-  color: #6b7280;
+  color: var(--tc-text-muted);
 }
 
-/* Early Bird Badge */
+/* Early Bird Badge — Grün bleibt immer */
 .tc-price-bar-badge {
   display: inline-block;
   background: #a4d61f;
@@ -54,7 +63,7 @@
 .tc-price-bar-amount {
   font-size: 2.2rem;
   font-weight: 800;
-  color: #111827;
+  color: var(--tc-text);
   line-height: 1;
   white-space: nowrap;
 }
@@ -66,25 +75,24 @@
 .tc-price-bar-amount--request {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #374151;
+  color: var(--tc-text-muted);
 }
 
 .tc-price-bar-label--full {
-  color: #dc3545;
+  color: var(--tc-danger);
   font-size: 16px;
 }
 
 .tc-price-bar-amount--full {
   font-size: 1.1rem;
   font-weight: 700;
-  color: #dc3545 !important;
-  font-weight: 700;
+  color: var(--tc-danger) !important;
 }
 
 /* Kein Preis – Teaser-Text */
 .tc-price-bar-teaser {
   font-size: 16px;
-  color: #6b7280;
+  color: var(--tc-text-muted);
   max-width: 420px;
   line-height: 1.5;
 }
@@ -100,19 +108,19 @@
 .tc-price-bar-amount span {
   font-size: 14px;
   font-weight: 400;
-  color: #9ca3af;
+  color: var(--tc-text-subtle);
   margin-left: 4px;
 }
 
 /* Deadline-Hinweis */
 .tc-price-bar-deadline {
   font-size: 14px;
-  color: #6b7280;
+  color: var(--tc-text-muted);
   white-space: nowrap;
 }
 
 .tc-price-bar-deadline strong {
-  color: #374151;
+  color: var(--tc-text);
 }
 
 /* ─── CTA-Button ──────────────────────────────────────────────── */
@@ -120,7 +128,7 @@
   display: inline-block;
   flex-shrink: 0;
   padding: 13px 28px;
-  background: var(--tc-primary, #4f46e5);
+  background: var(--tc-primary);
   color: #fff;
   font-size: 15px;
   font-weight: 700;
@@ -131,7 +139,7 @@
 }
 
 .tc-price-bar-btn:hover {
-  background: var(--tc-primary-dark, #3730a3);
+  background: var(--tc-primary-dark);
   color: #fff;
 }
 
@@ -166,45 +174,4 @@
   .tc-price-bar-deadline {
     white-space: normal;
   }
-}
-
-/* ─── Dark Mode Support ───────────────────────────────────────── */
-.tc-dark .tc-price-bar {
-  background: #2d2d2d;
-  border-top-color: #444;
-  color: #e0e0e0;
-}
-
-.tc-dark .tc-price-bar-label {
-  color: #bbb;
-}
-
-.tc-dark .tc-price-bar-deadline {
-  color: #bbb;
-}
-
-.tc-dark .tc-price-bar-deadline strong {
-  color: #e0e0e0;
-}
-
-.tc-dark .tc-price-bar-amount {
-  color: #e0e0e0;
-}
-
-.tc-dark .tc-price-bar-amount span {
-  color: #aaa;
-}
-
-.tc-dark .tc-price-bar-teaser {
-  color: #bbb;
-}
-
-.tc-dark .tc-price-bar-btn:not(.tc-price-bar-btn--early) {
-  background: var(--tc-primary, #4f46e5);
-  color: #fff;
-}
-
-.tc-dark .tc-price-bar-btn:not(.tc-price-bar-btn--early):hover {
-  background: var(--tc-primary-dark, #3730a3);
-  color: #fff;
 }

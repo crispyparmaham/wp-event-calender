@@ -8,7 +8,7 @@ add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-registration',
         TC_URL . 'assets/css/frontend/registration.css',
-        array(),
+        array( 'tc-design-system' ),
         TC_VERSION
     );
 } );
@@ -133,7 +133,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
 
     tc_enqueue_registration_assets();
 
-    $dark_class = tc_get_setting( 'calendar_mode', 'light' ) === 'dark' ? 'tc-dark' : '';
+    $dark_class = tc_dark_class();
 
     // ── Wartelisten-Formular (Event ausgebucht, festes event_id) ──
     if ( $is_full && $event_id ) {
@@ -142,7 +142,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
         <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
             <form id="<?php echo esc_attr( $wl_form_id ); ?>" class="tc-registration-form tc-waitlist-form" method="POST">
                 <h2>Warteliste – <?php echo esc_html( get_the_title( $event_id ) ); ?></h2>
-                <div class="tc-waitlist-notice" style="background:#ffff;border-left:4px solid #ce0000;padding:12px 16px;border-radius:4px;margin-bottom:16px;font-size:14px;color: #000;">
+                <div class="tc-waitlist-notice">
                     <strong>Diese Veranstaltung ist leider ausgebucht.</strong><br>
                     Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.
                 </div>

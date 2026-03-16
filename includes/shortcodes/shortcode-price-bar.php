@@ -56,8 +56,7 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
     $has_price  = ! $price_on_request && $normal_price;
 
     // Dark/Light Mode Klasse
-    $calendar_mode = tc_get_setting( 'calendar_mode', 'light' );
-    $dark_class    = ( $calendar_mode === 'dark' ) ? 'tc-dark' : '';
+    $dark_class = tc_dark_class();
 
     tc_enqueue_price_bar_assets();
 
@@ -129,7 +128,7 @@ add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-price-bar',
         TC_URL . 'assets/css/frontend/price-bar.css',
-        array(),
+        array( 'tc-design-system' ),
         TC_VERSION
     );
 } );

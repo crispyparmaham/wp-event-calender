@@ -1,5 +1,6 @@
 /* ═════════════════════════════════════════════
    Time Calendar – Anmeldeformular Styles
+   Alle Farben über var(--tc-*) aus design-system.css.
    Spezifität durch .tc-registration-wrap Prefix
    für Kompatibilität mit Oxygen Builder
    ═════════════════════════════════════════════ */
@@ -16,18 +17,19 @@
 }
 
 .tc-registration-wrap .tc-registration-form {
-    background-color: #fff !important;
-    border: 1px solid #e0e0e0 !important;
+    background-color: var(--tc-bg) !important;
+    border: 1px solid var(--tc-border) !important;
     border-radius: 8px !important;
     padding: 2rem !important;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05) !important;
+    box-shadow: var(--tc-shadow-sm) !important;
     box-sizing: border-box;
+    color: var(--tc-text);
 }
 
 .tc-registration-wrap .tc-registration-form h2 {
     margin: 0 0 1rem 0 !important;
     font-size: 1.5rem !important;
-    color: #333 !important;
+    color: var(--tc-text) !important;
     font-weight: 600 !important;
     line-height: 1.3 !important;
 }
@@ -45,25 +47,25 @@
 
 .tc-trial-notice {
     margin-bottom: 1.5rem;
-    color: darkgrey;
+    color: var(--tc-text-muted);
 }
 
 .tc-registration-wrap .tc-form-messages.tc-success {
-    background-color: #d4edda !important;
-    color: #155724 !important;
-    border: 1px solid #c3e6cb !important;
+    background-color: var(--tc-success-bg) !important;
+    color: var(--tc-success) !important;
+    border: 1px solid var(--tc-success) !important;
 }
 
 .tc-registration-wrap .tc-form-messages.tc-error {
-    background-color: #f8d7da !important;
-    color: #721c24 !important;
-    border: 1px solid #f5c6cb !important;
+    background-color: var(--tc-danger-bg) !important;
+    color: var(--tc-danger) !important;
+    border: 1px solid var(--tc-danger) !important;
 }
 
 .tc-registration-wrap .tc-form-messages.tc-warning {
-    background-color: #fff3cd !important;
-    color: #856404 !important;
-    border: 1px solid #ffeaa7 !important;
+    background-color: var(--tc-warning-bg) !important;
+    color: var(--tc-warning) !important;
+    border: 1px solid var(--tc-warning) !important;
 }
 
 /* ─────────────────────────────────────────────
@@ -78,13 +80,13 @@
     display: block !important;
     margin-bottom: 0.4rem !important;
     font-weight: 500 !important;
-    color: #333 !important;
+    color: var(--tc-text) !important;
     font-size: 0.95rem !important;
     line-height: 1.4 !important;
 }
 
 .tc-registration-wrap .tc-required {
-    color: #dc3545;
+    color: var(--tc-danger);
     font-weight: bold;
 }
 
@@ -96,13 +98,13 @@
     display: block !important;
     width: 100% !important;
     padding: 0.65rem 0.75rem !important;
-    border: 1px solid #ddd !important;
+    border: 1px solid var(--tc-border) !important;
     border-radius: 4px !important;
     font-size: 1rem !important;
     font-family: inherit !important;
     line-height: 1.5 !important;
-    color: #333 !important;
-    background-color: #fff !important;
+    color: var(--tc-text) !important;
+    background-color: var(--tc-bg) !important;
     box-shadow: none !important;
     box-sizing: border-box !important;
     transition: border-color 0.2s, box-shadow 0.2s;
@@ -116,18 +118,18 @@
 
 .tc-registration-wrap .tc-form-control:focus {
     outline: none !important;
-    border-color: var(--tc-primary, #4f46e5) !important;
-    box-shadow: 0 0 0 3px var(--tc-primary-light, rgba(79,70,229,0.15)) !important;
+    border-color: var(--tc-primary) !important;
+    box-shadow: 0 0 0 3px var(--tc-primary-light) !important;
 }
 
 .tc-registration-wrap .tc-form-control::placeholder {
-    color: #999 !important;
+    color: var(--tc-text-subtle) !important;
     opacity: 1 !important;
 }
 
 .tc-registration-wrap .tc-form-control:disabled {
-    background-color: #f5f5f5 !important;
-    color: #666 !important;
+    background-color: var(--tc-surface) !important;
+    color: var(--tc-text-muted) !important;
     cursor: not-allowed !important;
 }
 
@@ -158,8 +160,8 @@
    ───────────────────────────────────────────── */
 
 .tc-registration-wrap .tc-event-details {
-    background-color: #f9f9f9 !important;
-    border-left: 4px solid var(--tc-primary, #4f46e5) !important;
+    background-color: var(--tc-surface) !important;
+    border-left: 4px solid var(--tc-primary) !important;
     padding: 1rem !important;
     margin-bottom: 1.5rem !important;
     border-radius: 4px !important;
@@ -177,7 +179,7 @@
 
 .tc-registration-wrap .tc-detail-label {
     font-weight: 600 !important;
-    color: #333 !important;
+    color: var(--tc-text) !important;
     min-width: 80px !important;
     margin-right: 1rem !important;
 }
@@ -186,16 +188,16 @@
 .tc-registration-wrap .tc-detail-location,
 .tc-registration-wrap .tc-detail-date,
 .tc-registration-wrap .tc-detail-capacity {
-    color: #666 !important;
+    color: var(--tc-text-muted) !important;
 }
 
 .tc-registration-wrap .tc-detail-capacity.tc-available {
-    color: #27ae60 !important;
+    color: var(--tc-success) !important;
     font-weight: 600 !important;
 }
 
 .tc-registration-wrap .tc-detail-capacity.tc-full {
-    color: #dc3545 !important;
+    color: var(--tc-danger) !important;
     font-weight: 600 !important;
 }
 
@@ -221,19 +223,19 @@
 }
 
 .tc-registration-wrap .tc-btn-primary {
-    background-color: var(--tc-primary, #4f46e5) !important;
-    color: #ffffff !important;
+    background-color: var(--tc-primary) !important;
+    color: #fff !important;
 }
 
 .tc-registration-wrap .tc-btn-primary:hover,
 .tc-registration-wrap .tc-btn-primary:focus {
-    background-color: var(--tc-primary-dark, #3730a3) !important;
-    color: #ffffff !important;
+    background-color: var(--tc-primary-dark) !important;
+    color: #fff !important;
 }
 
 .tc-registration-wrap .tc-btn-primary:active {
-    background-color: var(--tc-primary-dark, #3730a3) !important;
-    color: #ffffff !important;
+    background-color: var(--tc-primary-dark) !important;
+    color: #fff !important;
 }
 
 .tc-registration-wrap .tc-submit-btn {
@@ -242,7 +244,7 @@
 }
 
 .tc-registration-wrap .tc-submit-btn.tc-btn-disabled {
-    background-color: #ccc !important;
+    background-color: var(--tc-border-strong) !important;
     cursor: not-allowed !important;
     opacity: 1 !important;
 }
@@ -284,13 +286,13 @@
    ───────────────────────────────────────────── */
 
 .tc-registration-wrap .tc-form-group.tc-field-error .tc-form-control {
-    border-color: #dc3545 !important;
-    background-color: #fff5f5 !important;
+    border-color: var(--tc-danger) !important;
+    background-color: var(--tc-danger-bg) !important;
 }
 
 .tc-registration-wrap .tc-field-error-message {
     display: block !important;
-    color: #dc3545 !important;
+    color: var(--tc-danger) !important;
     font-size: 0.85rem !important;
     margin-top: 0.25rem !important;
 }
@@ -309,62 +311,17 @@
 }
 
 /* ─────────────────────────────────────────────
-   Dark Mode
+   Waitlist Notice
    ───────────────────────────────────────────── */
 
-.tc-dark .tc-registration-form {
-    background-color: #2d2d2d !important;
-    border-color: #444 !important;
-    color: #e0e0e0 !important;
-}
-
-.tc-dark .tc-registration-form h2 {
-    color: #fff !important;
-}
-
-.tc-dark .tc-form-group label {
-    color: #e0e0e0 !important;
-}
-
-.tc-dark .tc-form-control {
-    background-color: #3a3a3a !important;
-    border-color: #555 !important;
-    color: #e0e0e0 !important;
-}
-
-.tc-dark .tc-form-control:focus {
-    border-color: var(--tc-primary, #4f46e5) !important;
-    box-shadow: 0 0 0 3px var(--tc-primary-light, rgba(79,70,229,0.25)) !important;
-}
-
-.tc-dark .tc-form-control::placeholder {
-    color: #999 !important;
-}
-
-.tc-dark .tc-event-details {
-    background-color: #3a3a3a !important;
-    border-left-color: var(--tc-primary, #4f46e5) !important;
-}
-
-.tc-dark .tc-detail-label {
-    color: #e0e0e0 !important;
-}
-
-.tc-dark .tc-detail-leadership,
-.tc-dark .tc-detail-location,
-.tc-dark .tc-detail-date,
-.tc-dark .tc-detail-capacity {
-    color: #bbb !important;
-}
-
-.tc-dark .tc-btn-primary {
-    background-color: var(--tc-primary, #4f46e5) !important;
-    color: #fff !important;
-}
-
-.tc-dark .tc-btn-primary:hover {
-    background-color: var(--tc-primary-dark, #3730a3) !important;
-    color: #fff !important;
+.tc-waitlist-notice {
+    background: var(--tc-danger-bg) !important;
+    border-left: 4px solid var(--tc-danger) !important;
+    padding: 12px 16px;
+    border-radius: 4px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    color: var(--tc-text) !important;
 }
 
 /* ─────────────────────────────────────────────

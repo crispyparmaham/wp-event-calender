@@ -38,7 +38,7 @@ add_shortcode( 'time_calendar', function ( $atts ) {
     $view        = in_array( $atts['view'], $valid_views, true ) ? $atts['view'] : 'dayGridMonth';
 
     // Farbmodus aus Plugin-Einstellungen
-    $dark = tc_get_setting( 'calendar_mode', 'light' ) === 'dark';
+    $dark_class = tc_dark_class();
 
     // "Nur aktuelle Woche" – Shortcode-Attribut hat Vorrang vor globaler Einstellung
     $global_week_only = tc_get_setting( 'frontend_week_only', '0' ) === '1';
@@ -61,7 +61,7 @@ add_shortcode( 'time_calendar', function ( $atts ) {
     tc_enqueue_calendar_assets();
 
     ob_start(); ?>
-    <div class="tc-frontend-wrap<?php echo $dark ? ' tc-dark' : ''; ?>" id="<?php echo esc_attr( $uid ); ?>-wrap">
+    <div class="tc-frontend-wrap <?php echo esc_attr( $dark_class ); ?>" id="<?php echo esc_attr( $uid ); ?>-wrap">
 
         <?php if ( ! $locked_type ) : ?>
         <div class="tc-filter-bar" role="tablist" aria-label="Event-Typ filtern">
@@ -131,13 +131,13 @@ add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-calendar-frontend',
         TC_URL . 'assets/css/frontend/calendar-frontend.css',
-        array(),
+        array( 'tc-design-system' ),
         TC_VERSION
     );
     wp_enqueue_style(
         'tc-event-list',
         TC_URL . 'assets/css/frontend/event-list.css',
-        array(),
+        array( 'tc-design-system' ),
         TC_VERSION
     );
 } );

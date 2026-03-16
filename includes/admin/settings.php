@@ -115,7 +115,7 @@ function tc_primary_darken( $percent ) {
 add_action( 'wp_head', function () {
     $primary            = tc_get_primary_color();
     $primary_dark       = tc_primary_darken( 15 );
-    $primary_light      = tc_primary_rgba( 0.15 );
+    $primary_light      = tc_primary_rgba( 0.12 );
     $primary_light_dark = tc_primary_rgba( 0.25 );
     ?>
 <style id="tc-primary-color">

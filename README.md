@@ -101,6 +101,7 @@ time-calendar/
     │       ├── calendar-frontend.js   # Frontend calendar + wochenplan + event overview
     │       └── registration.js        # Registration form AJAX handling
     └── css/
+        ├── design-system.css          # Central CSS Custom Properties (light/dark)
         ├── admin/
         │   ├── calendar.css           # Admin calendar styles
         │   └── settings.css           # Admin settings page styles (tab UI)
@@ -108,6 +109,7 @@ time-calendar/
             ├── calendar-frontend.css  # Frontend calendar + wochenplan styles
             ├── event-list.css         # Event overview card grid styles
             ├── events.css             # [time_events] shortcode styles
+            ├── price-bar.css          # Price bar styles
             └── registration.css       # Registration form styles
 ```
 
@@ -294,23 +296,41 @@ All endpoints require a valid `tc_nonce` nonce.
 
 ---
 
-## CSS Custom Properties
+## CSS Design System
 
-All frontend colors are defined as CSS Custom Properties on `.tc-frontend-wrap`.
+All colors are defined as CSS Custom Properties in `assets/css/design-system.css`. This file is loaded first and provides the single source of truth for both light and dark mode.
 
-| Property | Default (Light) | Description |
+### Core Variables
+
+| Property | Light | Dark | Description |
+|---|---|---|---|
+| `--tc-primary` | Set via settings | _(same)_ | Primary action color |
+| `--tc-primary-dark` | Auto-computed | _(same)_ | Darkened primary for hover states |
+| `--tc-primary-light` | Auto-computed | _(same)_ | Translucent primary for backgrounds |
+| `--tc-bg` | `#ffffff` | `#0f172a` | Main background |
+| `--tc-bg-secondary` | `#f8fafc` | `#1e293b` | Secondary background |
+| `--tc-surface` | `#f1f5f9` | `#1e293b` | Surface / header cells |
+| `--tc-surface-raised` | `#ffffff` | `#334155` | Raised surface (cards) |
+| `--tc-border` | `#e2e8f0` | `#334155` | All borders and dividers |
+| `--tc-border-strong` | `#cbd5e1` | `#475569` | Strong borders |
+| `--tc-text` | `#0f172a` | `#f1f5f9` | Primary text color |
+| `--tc-text-muted` | `#64748b` | `#94a3b8` | Secondary / hint text |
+| `--tc-text-subtle` | `#94a3b8` | `#64748b` | Subtle / placeholder text |
+
+### Status Colors
+
+| Property | Value | Description |
 |---|---|---|
-| `--tc-primary` | Set via settings | Primary action color |
-| `--tc-primary-dark` | Auto-computed | Darkened primary for hover states |
-| `--tc-primary-light` | Auto-computed | Translucent primary for backgrounds |
-| `--tc-bg` | `#ffffff` | Calendar and card background |
-| `--tc-surface` | `#f9fafb` | Header cells, table backgrounds |
-| `--tc-border` | `#e5e7eb` | All borders and dividers |
-| `--tc-text` | `#111827` | Primary text color |
-| `--tc-text-muted` | `#6b7280` | Secondary / hint text |
-| `--tc-today` | `--tc-primary-light` | Today highlight background |
+| `--tc-success` | `#059669` | Success states |
+| `--tc-warning` | `#d97706` | Warning states |
+| `--tc-danger` | `#dc2626` | Error / danger states |
+| `--tc-info` | `#0ea5e9` | Info states |
 
-Dark Mode values are set on `.tc-dark` and activated by the global Farbmodus setting.
+### Dark Mode
+
+Dark mode is activated by adding the `.tc-dark` class to the outermost wrapper element of each shortcode. The class is set server-side via `tc_dark_class()` based on the global Farbmodus setting. No JavaScript is required for the theme switch — all colors cascade via CSS Custom Properties.
+
+Individual CSS files contain **no** dark mode overrides — all theming is handled exclusively by `design-system.css`.
 
 ---
 

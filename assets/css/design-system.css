@@ -1,0 +1,101 @@
+/*
+ * Time Calendar – Design System
+ * ─────────────────────────────────────────────────────────────────
+ * Zentrale CSS Custom Properties für alle Komponenten.
+ * Wird als erstes geladen — alle anderen Dateien referenzieren
+ * ausschließlich var(--tc-*) Variablen.
+ *
+ * Light Mode:  Standard (kein Modifier nötig)
+ * Dark Mode:   .tc-dark auf dem äußersten Wrapper-Element
+ *
+ * Die Primärfarbe (--tc-primary, --tc-primary-dark, --tc-primary-light)
+ * wird serverseitig im <head> überschrieben via tc_settings['primary_color'].
+ * ─────────────────────────────────────────────────────────────────
+ */
+
+/* ── Light Mode (default) ──────────────────────────────────────── */
+:root {
+  /* Primärfarbe (Fallback — wird per wp_head überschrieben) */
+  --tc-primary:         #4f46e5;
+  --tc-primary-dark:    #3730a3;
+  --tc-primary-light:   rgba(79, 70, 229, 0.12);
+
+  /* Hintergründe */
+  --tc-bg:              #ffffff;
+  --tc-bg-secondary:    #f8fafc;
+  --tc-surface:         #f1f5f9;
+  --tc-surface-raised:  #ffffff;
+
+  /* Rahmen */
+  --tc-border:          #e2e8f0;
+  --tc-border-strong:   #cbd5e1;
+
+  /* Text */
+  --tc-text:            #0f172a;
+  --tc-text-muted:      #64748b;
+  --tc-text-subtle:     #94a3b8;
+
+  /* Status-Farben (unverändert in beiden Modi) */
+  --tc-success:         #059669;
+  --tc-success-bg:      #d1fae5;
+  --tc-warning:         #d97706;
+  --tc-warning-bg:      #fef3c7;
+  --tc-danger:          #dc2626;
+  --tc-danger-bg:       #fee2e2;
+  --tc-info:            #0ea5e9;
+  --tc-info-bg:         #e0f2fe;
+
+  /* Schatten */
+  --tc-shadow-sm:       0 1px 3px rgba(0, 0, 0, .06);
+  --tc-shadow:          0 4px 12px rgba(0, 0, 0, .08);
+  --tc-shadow-lg:       0 8px 30px rgba(0, 0, 0, .12);
+
+  /* Radien */
+  --tc-radius-sm:       6px;
+  --tc-radius:          10px;
+  --tc-radius-lg:       16px;
+
+  /* Übergänge */
+  --tc-transition:      150ms ease;
+}
+
+/* ── Dark Mode ─────────────────────────────────────────────────── */
+.tc-dark {
+  --tc-bg:              #0f172a;
+  --tc-bg-secondary:    #1e293b;
+  --tc-surface:         #1e293b;
+  --tc-surface-raised:  #334155;
+
+  --tc-border:          #334155;
+  --tc-border-strong:   #475569;
+
+  --tc-text:            #f1f5f9;
+  --tc-text-muted:      #94a3b8;
+  --tc-text-subtle:     #64748b;
+
+  --tc-success-bg:      rgba(5, 150, 105, .18);
+  --tc-warning-bg:      rgba(217, 119, 6, .18);
+  --tc-danger-bg:       rgba(220, 38, 38, .18);
+  --tc-info-bg:         rgba(14, 165, 233, .18);
+
+  --tc-shadow-sm:       0 1px 3px rgba(0, 0, 0, .3);
+  --tc-shadow:          0 4px 12px rgba(0, 0, 0, .4);
+  --tc-shadow-lg:       0 8px 30px rgba(0, 0, 0, .5);
+}
+
+/* ── Smooth transitions on theme switch ────────────────────────── */
+.tc-dark,
+.tc-dark *,
+[class*="tc-frontend-wrap"],
+[class*="tc-frontend-wrap"] *,
+[class*="tc-events-wrap"],
+[class*="tc-events-wrap"] *,
+[class*="tc-registration-wrap"],
+[class*="tc-registration-wrap"] *,
+[class*="tc-price-bar"],
+[class*="tc-price-bar"] * {
+  transition: background-color var(--tc-transition),
+              color var(--tc-transition),
+              border-color var(--tc-transition),
+              box-shadow var(--tc-transition);
+}

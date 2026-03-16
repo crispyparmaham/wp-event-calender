@@ -29,7 +29,7 @@ add_action( 'wp_enqueue_scripts', function () {
 	wp_register_style(
 		'tc-events',
 		TC_URL . 'assets/css/frontend/events.css',
-		[],
+		[ 'tc-design-system' ],
 		TC_VERSION
 	);
 } );
@@ -101,7 +101,8 @@ function tc_time_events_shortcode( $atts ): string {
 	// ── Enqueue CSS (now that we know the shortcode is on this page) ───────
 	wp_enqueue_style( 'tc-events' );
 
-	$dark_class = tc_get_setting( 'calendar_mode', 'light' ) === 'dark' ? ' tc-dark' : '';
+	$dark_class = tc_dark_class();
+	$dark_class = $dark_class ? ' ' . $dark_class : '';
 
 	// ── Empty state ────────────────────────────────────────────────────────
 	if ( empty( $posts ) ) {
