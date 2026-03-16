@@ -26,7 +26,7 @@
 .tc-evlist-title {
   font-size: 1.35rem;
   font-weight: 700;
-  color: var(--tc-text);
+  color: var(--tc-primary);
   margin: 0;
   line-height: 1.25;
 }

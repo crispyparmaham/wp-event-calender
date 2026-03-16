@@ -31,6 +31,9 @@ add_shortcode( 'time_calendar', function ( $atts ) {
         ? $url_type
         : $atts['type'];
 
+    // Harter Filter: wenn type != 'all' (und kein URL-Override), nur diese Kategorie anzeigen
+    $locked_type = ( $active_type !== 'all' ) ? $active_type : '';
+
     $valid_views = array( 'dayGridMonth', 'timeGridWeek', 'listMonth' );
     $view        = in_array( $atts['view'], $valid_views, true ) ? $atts['view'] : 'dayGridMonth';
 
