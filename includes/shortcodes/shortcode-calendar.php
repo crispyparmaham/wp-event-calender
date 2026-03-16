@@ -16,8 +16,9 @@ defined( 'ABSPATH' ) || exit;
 add_shortcode( 'training_calendar', function ( $atts ) {
 
     $atts = shortcode_atts( array(
-        'type' => 'all',
-        'view' => 'dayGridMonth',
+        'type'      => 'all',
+        'view'      => 'dayGridMonth',
+        'week_only' => '',
     ), $atts, 'training_calendar' );
 
     $categories    = tc_get_all_categories();
@@ -34,6 +35,16 @@ add_shortcode( 'training_calendar', function ( $atts ) {
 
     // Farbmodus aus Plugin-Einstellungen
     $dark = tc_get_setting( 'calendar_mode', 'light' ) === 'dark';
+
+    // "Nur aktuelle Woche" – Shortcode-Attribut hat Vorrang vor globaler Einstellung
+    $global_week_only = tc_get_setting( 'frontend_week_only', '0' ) === '1';
+    if ( $atts['week_only'] === 'true' ) {
+        $week_only = true;
+    } elseif ( $atts['week_only'] === 'false' ) {
+        $week_only = false;
+    } else {
+        $week_only = $global_week_only;
+    }
 
     static $instance = 0;
     $instance++;
@@ -69,7 +80,8 @@ add_shortcode( 'training_calendar', function ( $atts ) {
         <div class="tc-frontend-calendar"
              id="<?php echo esc_attr( $uid ); ?>"
              data-type="<?php echo esc_attr( $active_type ); ?>"
-             data-view="<?php echo esc_attr( $view ); ?>">
+             data-view="<?php echo esc_attr( $view ); ?>"
+             data-week-only="<?php echo $week_only ? '1' : '0'; ?>">
         </div>
 
         <div class="tc-wochenplan" id="<?php echo esc_attr( $uid ); ?>-wochenplan" style="display:none;">

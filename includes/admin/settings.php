@@ -47,6 +47,14 @@ add_action( 'admin_init', function () {
         'tc_section_frontend'
     );
 
+    add_settings_field(
+        'tc_week_only',
+        'Nur aktuelle Woche anzeigen',
+        'tc_field_week_only',
+        'training-calendar-settings',
+        'tc_section_frontend'
+    );
+
     // ── Sektion: Design ─────────────────────
     add_settings_section(
         'tc_section_design',
@@ -109,7 +117,8 @@ function tc_sanitize_settings( $input ) {
         $clean['registration_email'] = get_option( 'admin_email' );
     }
 
-    $clean['reminder_enabled'] = ! empty( $input['reminder_enabled'] ) ? '1' : '0';
+    $clean['reminder_enabled']   = ! empty( $input['reminder_enabled'] ) ? '1' : '0';
+    $clean['frontend_week_only'] = ! empty( $input['frontend_week_only'] ) ? '1' : '0';
 
     $color = isset( $input['primary_color'] ) ? sanitize_hex_color( $input['primary_color'] ) : '';
     $clean['primary_color'] = $color ?: '#4f46e5';
@@ -310,6 +319,32 @@ function tc_render_settings_page() { ?>
         </a>
     </div>
 <?php }
+
+// ─────────────────────────────────────────────
+// Feld: Nur aktuelle Woche
+// ─────────────────────────────────────────────
+function tc_field_week_only() {
+    $enabled = tc_get_setting( 'frontend_week_only', '0' );
+    ?>
+    <div class="tc-settings-toggle-wrap">
+        <label class="tc-settings-toggle">
+            <input
+                type="checkbox"
+                name="tc_settings[frontend_week_only]"
+                value="1"
+                <?php checked( $enabled, '1' ); ?>
+            />
+            <span class="tc-settings-toggle-slider"></span>
+        </label>
+        <div class="tc-settings-toggle-labels">
+            <span class="tc-settings-toggle-hint">
+                Blendet Navigation und Ansichtswechsel im Frontend-Kalender aus.
+                Der Nutzer sieht immer nur die aktuelle Woche.
+            </span>
+        </div>
+    </div>
+    <?php
+}
 
 // ─────────────────────────────────────────────
 // Feld: Erinnerungsmail-Toggle

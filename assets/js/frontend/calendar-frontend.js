@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const popBack = document.getElementById(uid + '-backdrop');
     const loader  = document.getElementById(uid + '-loader');
 
+    const weekOnly   = el.dataset.weekOnly === '1';
     let activeType   = el.dataset.type || 'all';
     let cachedEvents = null; // alle Events aus AJAX, einmalig geladen
 
@@ -292,19 +293,27 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ── Responsive View-Logik ─────────────────────────────────
-    const getResponsiveView = () => isMobile() ? 'listMonth' : (el.dataset.view || 'dayGridMonth');
+    const getResponsiveView = () => {
+      if (weekOnly) return 'timeGridWeek';
+      return isMobile() ? 'listMonth' : (el.dataset.view || 'dayGridMonth');
+    };
 
-    const getResponsiveToolbar = () => isMobile()
-      ? { left: 'prev,next', center: 'title', right: 'listMonth,dayGridMonth' }
-      : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
+    const getResponsiveToolbar = () => {
+      if (weekOnly) return { left: '', center: 'title', right: '' };
+      return isMobile()
+        ? { left: 'prev,next', center: 'title', right: 'listMonth,dayGridMonth' }
+        : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
+    };
 
     // ── FullCalendar initialisieren (noch ohne Events) ────────
     const calendar = new FullCalendar.Calendar(el, {
       initialView:  getResponsiveView(),
+      initialDate:  weekOnly ? new Date() : undefined,
       locale:       'de',
       height:       'auto',
       firstDay:     1,
       editable:     false,
+      navLinks:     !weekOnly,
       headerToolbar: getResponsiveToolbar(),
       buttonText: {
         today: 'Heute',
@@ -324,6 +333,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
 
       windowResize() {
+        if (weekOnly) return;
         calendar.setOption('headerToolbar', getResponsiveToolbar());
         const targetView = getResponsiveView();
         if (calendar.view.type !== targetView) calendar.changeView(targetView);
@@ -340,6 +350,14 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     calendar.render();
+
+    // ── Week-Only: Label-Badge einblenden ─────────────────────
+    if (weekOnly) {
+      const label = document.createElement('div');
+      label.className = 'tc-week-label';
+      label.textContent = 'Aktuelle Woche';
+      el.parentNode.insertBefore(label, el.nextSibling);
+    }
 
     // ── Events einmalig per AJAX laden, dann statisch setzen ──
     (async () => {
