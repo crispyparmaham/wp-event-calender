@@ -6,6 +6,80 @@ document.addEventListener('DOMContentLoaded', () => {
   const nonce   = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.nonce  : null)
                   || '';
 
+  // ── Modul-weite Hilfsfunktionen ────────────────────────────────
+  const escHtml = (s) => String(s).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+
+  const hexToRgba = (hex, alpha) => {
+    let h = (hex || '#4f46e5').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    const r = parseInt(h.slice(0, 2), 16) || 79;
+    const g = parseInt(h.slice(2, 4), 16) || 70;
+    const b = parseInt(h.slice(4, 6), 16) || 229;
+    return `rgba(${r},${g},${b},${alpha})`;
+  };
+
+  // ── Event-Übersicht rendern ─────────────────────────────────────
+  const tcRenderEventOverview = (container, events, title) => {
+    if (!container) return;
+
+    const seen   = new Set();
+    const unique = events
+      .filter(ev => {
+        const key = (ev.title || '').replace('🔁 ', '').trim().toLowerCase();
+        if (seen.has(key)) return false;
+        seen.add(key);
+        return true;
+      })
+      .sort((a, b) => {
+        const ta = (a.title || '').replace('🔁 ', '').trim();
+        const tb = (b.title || '').replace('🔁 ', '').trim();
+        return ta.localeCompare(tb, 'de');
+      });
+
+    if (unique.length === 0) { container.innerHTML = ''; return; }
+
+    let html = `
+      <div class="tc-evlist-header">
+        <hr class="tc-evlist-divider">
+        <h2 class="tc-evlist-title">${escHtml(title || 'Unsere Events')}</h2>
+      </div>
+      <div class="tc-evlist-grid">
+    `;
+
+    unique.forEach(ev => {
+      const p          = ev.extendedProps || {};
+      const color      = ev.color || '#4f46e5';
+      const rawTitle   = (ev.title || '').replace('🔁 ', '').trim();
+      const typeLabel  = p.type === 'seminar' ? 'Seminar' : 'Gruppentraining';
+      const permalink  = p.permalink ? escHtml(p.permalink) : '#';
+      const intro      = p.intro_text  ? escHtml(p.intro_text)  : '';
+      const location   = p.location    ? escHtml(p.location)    : '';
+      const leadership = p.leadership  ? escHtml(p.leadership)  : '';
+      const bgColor    = hexToRgba(color, 0.12);
+
+      html += `
+        <a class="tc-evlist-card" href="${permalink}">
+          <div class="tc-evlist-stripe" style="background:${color}"></div>
+          <div class="tc-evlist-card-body">
+            <span class="tc-evlist-badge" style="color:${color};background:${bgColor}">${typeLabel}</span>
+            <h3 class="tc-evlist-card-title">${escHtml(rawTitle)}</h3>
+            ${intro ? `<p class="tc-evlist-card-desc">${intro}</p>` : ''}
+            <div class="tc-evlist-card-meta">
+              ${location   ? `<span>📍 ${location}</span>`   : ''}
+              ${leadership ? `<span>👤 ${leadership}</span>` : ''}
+            </div>
+          </div>
+        </a>
+      `;
+    });
+
+    html += '</div>';
+    container.innerHTML = html;
+  };
+
+  // ── Pro Kalender-Instanz ────────────────────────────────────────
   document.querySelectorAll('.tc-frontend-calendar').forEach(el => {
     const wrap    = el.closest('.tc-frontend-wrap');
     const uid     = el.id;
@@ -14,9 +88,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const popBack = document.getElementById(uid + '-backdrop');
     const loader  = document.getElementById(uid + '-loader');
 
-    const weekOnly   = el.dataset.weekOnly === '1';
+    const weekOnly       = el.dataset.weekOnly       === '1';
+    const showEventList  = el.dataset.showEventList  === '1';
+    const eventListTitle = el.dataset.eventListTitle || 'Unsere Events';
+    const overviewEl     = wrap.querySelector('.tc-event-overview');
+
     let activeType   = el.dataset.type || 'all';
-    let cachedEvents = null; // alle Events aus AJAX, einmalig geladen
+    let cachedEvents = null;
 
     // ── Hilfsfunktionen ──────────────────────────────────────
     const isMobile = () => window.innerWidth < 768;
@@ -40,10 +118,6 @@ document.addEventListener('DOMContentLoaded', () => {
       day: '2-digit', month: '2-digit', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
-
-    const escHtml = (s) => String(s).replace(/[&<>"']/g, c => ({
-      '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
-    }[c]));
 
     const openPopover = (event, jsEvent) => {
       const p     = event.extendedProps;
@@ -156,15 +230,6 @@ document.addEventListener('DOMContentLoaded', () => {
       tmp.setUTCDate(tmp.getUTCDate() + 4 - (tmp.getUTCDay() || 7));
       const yr  = new Date(Date.UTC(tmp.getUTCFullYear(), 0, 1));
       return Math.ceil(((tmp - yr) / 86400000 + 1) / 7);
-    };
-
-    const hexToRgba = (hex, alpha) => {
-      let h = hex.replace('#', '');
-      if (h.length === 3) h = h.split('').map(c => c + c).join('');
-      const r = parseInt(h.slice(0, 2), 16);
-      const g = parseInt(h.slice(2, 4), 16);
-      const b = parseInt(h.slice(4, 6), 16);
-      return `rgba(${r},${g},${b},${alpha})`;
     };
 
     const openPopoverRaw = (rawEv, jsEvent) => openPopover({
@@ -283,7 +348,60 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       html += '</tbody></table></div>';
-      weekPlanBody.innerHTML = html;
+
+      // ── Mobile-Layout: Events nach Tag gruppiert ──────────────
+      const dayFullNames = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+      const monthNames   = ['Jan','Feb','Mär','Apr','Mai','Jun','Jul','Aug','Sep','Okt','Nov','Dez'];
+      let mobileHtml     = '<div class="tc-wochenplan-mobile">';
+      let mobileHasEvs   = false;
+
+      days.forEach((d, i) => {
+        const dayStart = new Date(d);
+        const dayEnd   = new Date(d);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+
+        const dayEvs = weekEvents
+          .filter(e => { const s = new Date(e.start); return s >= dayStart && s < dayEnd; })
+          .sort((a, b) => new Date(a.start) - new Date(b.start));
+
+        if (dayEvs.length === 0) return;
+        mobileHasEvs = true;
+
+        const isToday = d.getTime() === today.getTime();
+        mobileHtml += `<div class="tc-wpm-day${isToday ? ' tc-wpm-day--today' : ''}">`;
+        mobileHtml += `<div class="tc-wpm-day-header">${dayFullNames[i]}, ${d.getDate()}. ${monthNames[d.getMonth()]}</div>`;
+        mobileHtml += '<div class="tc-wpm-events">';
+
+        dayEvs.forEach(ev => {
+          const refIdx  = weekPlanRefs.indexOf(ev);
+          const idx     = refIdx !== -1 ? refIdx : weekPlanRefs.push(ev) - 1;
+          const color   = ev.color || '#4f46e5';
+          const bg      = hexToRgba(color, 0.13);
+          const title   = escHtml((ev.title || '').replace('🔁 ', ''));
+          const p       = ev.extendedProps || {};
+          const sub     = p.leadership ? escHtml(p.leadership) : '';
+          const s       = new Date(ev.start);
+          const endD    = ev.end ? new Date(ev.end) : null;
+          const timeStr = fmtT(s.getHours(), s.getMinutes())
+                        + (endD ? ' – ' + fmtT(endD.getHours(), endD.getMinutes()) : '');
+
+          mobileHtml += `<button class="tc-wp-event" data-ev-idx="${idx}" type="button"`;
+          mobileHtml += ` style="background:${bg};border-left:3px solid ${color}">`;
+          mobileHtml += `<span class="tc-wpm-time">${timeStr}</span>`;
+          mobileHtml += `<strong class="tc-wp-event-title">${title}</strong>`;
+          if (sub) mobileHtml += `<span class="tc-wp-event-sub">${sub}</span>`;
+          mobileHtml += '</button>';
+        });
+
+        mobileHtml += '</div></div>';
+      });
+
+      if (!mobileHasEvs) {
+        mobileHtml += '<p class="tc-wp-empty" style="padding:24px 16px;">Keine Events in dieser Woche.</p>';
+      }
+      mobileHtml += '</div>';
+
+      weekPlanBody.innerHTML = html + mobileHtml;
 
       weekPlanBody.querySelectorAll('.tc-wp-event').forEach(btn => {
         btn.addEventListener('click', jsEvent => {
@@ -307,13 +425,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── FullCalendar initialisieren (noch ohne Events) ────────
     const calendar = new FullCalendar.Calendar(el, {
-      initialView:  getResponsiveView(),
-      initialDate:  weekOnly ? new Date() : undefined,
-      locale:       'de',
-      height:       'auto',
-      firstDay:     1,
-      editable:     false,
-      navLinks:     !weekOnly,
+      initialView:   getResponsiveView(),
+      initialDate:   weekOnly ? new Date() : undefined,
+      locale:        'de',
+      height:        'auto',
+      firstDay:      1,
+      editable:      false,
+      navLinks:      !weekOnly,
       headerToolbar: getResponsiveToolbar(),
       buttonText: {
         today: 'Heute',
@@ -324,13 +442,8 @@ document.addEventListener('DOMContentLoaded', () => {
       noEventsText:  'Keine Events in diesem Zeitraum.',
       slotDuration:  '00:30:00',
 
-      datesSet() {
-        updateVisibleTimeRange();
-      },
-
-      eventsSet() {
-        updateVisibleTimeRange();
-      },
+      datesSet() { updateVisibleTimeRange(); },
+      eventsSet()  { updateVisibleTimeRange(); },
 
       windowResize() {
         if (weekOnly) return;
@@ -353,24 +466,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Week-Only: Wochenplan-Modus ───────────────────────────
     if (weekOnly) {
-      // FullCalendar verstecken, View-Toggle ausblenden
       el.style.display = 'none';
       const viewToggle = wrap.querySelector('.tc-view-toggle');
       if (viewToggle) viewToggle.style.display = 'none';
 
-      // Wochenplan anzeigen, Navigations-Buttons ausblenden
       if (weekPlanWrap) {
         weekPlanWrap.style.display = '';
         if (weekPlanPrev) weekPlanPrev.style.display = 'none';
         if (weekPlanNext) weekPlanNext.style.display = 'none';
       }
 
-      // Label-Badge direkt vor dem Wochenplan einfügen
-      const label = document.createElement('div');
-      label.className = 'tc-week-label';
-      label.textContent = 'Aktuelle Woche';
+      const weekLabel = document.createElement('div');
+      weekLabel.className = 'tc-week-label';
+      weekLabel.textContent = 'Aktuelle Woche';
       const anchor = weekPlanWrap || el;
-      anchor.parentNode.insertBefore(label, anchor);
+      anchor.parentNode.insertBefore(weekLabel, anchor);
     }
 
     // ── Events einmalig per AJAX laden, dann statisch setzen ──
@@ -392,6 +502,8 @@ document.addEventListener('DOMContentLoaded', () => {
         calendar.addEventSource(getFiltered());
         updateVisibleTimeRange();
       }
+
+      if (showEventList) tcRenderEventOverview(overviewEl, getFiltered(), eventListTitle);
     })();
 
     // ── Filter-Tabs: nur Cache umsortieren, kein AJAX ─────────
@@ -411,6 +523,8 @@ document.addEventListener('DOMContentLoaded', () => {
           updateVisibleTimeRange();
           if (weekPlanWrap && weekPlanWrap.style.display !== 'none') buildWeekPlan();
         }
+
+        if (showEventList) tcRenderEventOverview(overviewEl, getFiltered(), eventListTitle);
       });
     });
 
@@ -422,7 +536,6 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.classList.add('is-active');
 
         if (btn.dataset.tcView === 'wochenplan') {
-          // Aktuelle Kalenderwoche als Startpunkt übernehmen
           const calDate = calendar.getDate();
           const calDay  = calDate.getDay();
           const calMon  = new Date(calDate);

@@ -663,6 +663,50 @@
   background: var(--tc-primary-light);
 }
 
+/* ─── Wochenplan Mobile-Layout ────────────────────────────────── */
+.tc-wochenplan-mobile {
+  display: none;
+}
+
+.tc-wpm-day {
+  border-bottom: 1px solid var(--tc-border);
+}
+
+.tc-wpm-day:last-child {
+  border-bottom: none;
+}
+
+.tc-wpm-day-header {
+  padding: 10px 16px 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--tc-text-muted);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  background: var(--tc-surface);
+  border-bottom: 1px solid var(--tc-border);
+}
+
+.tc-wpm-day--today .tc-wpm-day-header {
+  color: var(--tc-primary);
+  background: var(--tc-today);
+}
+
+.tc-wpm-events {
+  padding: 8px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tc-wpm-time {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--tc-text-muted);
+  margin-bottom: 2px;
+}
+
 /* ─── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 767px) {
   .tc-frontend-calendar {
@@ -723,6 +767,14 @@
     max-height: 80vh;
     overflow-y: auto;
     z-index: 10000;
+  }
+
+  .tc-wochenplan-table-wrap {
+    display: none;
+  }
+
+  .tc-wochenplan-mobile {
+    display: block;
   }
 
   .tc-wochenplan-nav {

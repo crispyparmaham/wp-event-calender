@@ -5,8 +5,9 @@ defined( 'ABSPATH' ) || exit;
 // Shortcode: [training_calendar]
 //
 // Attribute:
-//   type = "all" | "training" | "seminar"
-//   view = "dayGridMonth" | "timeGridWeek" | "listMonth"
+//   type      = "all" | "training" | "seminar"
+//   view      = "dayGridMonth" | "timeGridWeek" | "listMonth"
+//   week_only = "true" | "false"
 //
 // URL-Parameter für Menü-Links:
 //   ?tc_type=training  → Gruppentraining vorausgewählt
@@ -46,6 +47,10 @@ add_shortcode( 'training_calendar', function ( $atts ) {
         $week_only = $global_week_only;
     }
 
+    // Event-Übersicht
+    $show_event_list  = tc_get_setting( 'show_event_list', '0' ) === '1';
+    $event_list_title = tc_get_setting( 'event_list_title', 'Unsere Events' ) ?: 'Unsere Events';
+
     static $instance = 0;
     $instance++;
     $uid = 'tc-frontend-' . $instance;
@@ -81,7 +86,9 @@ add_shortcode( 'training_calendar', function ( $atts ) {
              id="<?php echo esc_attr( $uid ); ?>"
              data-type="<?php echo esc_attr( $active_type ); ?>"
              data-view="<?php echo esc_attr( $view ); ?>"
-             data-week-only="<?php echo $week_only ? '1' : '0'; ?>">
+             data-week-only="<?php echo $week_only ? '1' : '0'; ?>"
+             data-show-event-list="<?php echo $show_event_list ? '1' : '0'; ?>"
+             data-event-list-title="<?php echo esc_attr( $event_list_title ); ?>">
         </div>
 
         <div class="tc-wochenplan" id="<?php echo esc_attr( $uid ); ?>-wochenplan" style="display:none;">
@@ -92,6 +99,10 @@ add_shortcode( 'training_calendar', function ( $atts ) {
             </div>
             <div class="tc-wochenplan-body"></div>
         </div>
+
+        <?php if ( $show_event_list ) : ?>
+        <div class="tc-event-overview"></div>
+        <?php endif; ?>
 
         <div class="tc-popover" id="<?php echo esc_attr( $uid ); ?>-popover"
              style="display:none;" role="dialog" aria-modal="true">
@@ -114,6 +125,12 @@ add_action( 'wp_enqueue_scripts', function () {
     wp_enqueue_style(
         'tc-calendar-frontend',
         TC_URL . 'assets/css/frontend/calendar-frontend.css',
+        array(),
+        TC_VERSION
+    );
+    wp_enqueue_style(
+        'tc-event-list',
+        TC_URL . 'assets/css/frontend/event-list.css',
         array(),
         TC_VERSION
     );
@@ -144,6 +161,4 @@ function tc_enqueue_calendar_assets() {
         'ajaxUrl' => admin_url( 'admin-ajax.php' ),
         'nonce'   => wp_create_nonce( 'tc_nonce' ),
     ) );
-
-    // CSS bereits via wp_enqueue_scripts geladen – kein Duplikat nötig.
 }
