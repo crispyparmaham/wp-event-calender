@@ -61,17 +61,17 @@
 
 /* ── Dark Mode ─────────────────────────────────────────────────── */
 .tc-dark {
-  --tc-bg:              #0f172a;
+  --tc-bg:              #151515;
   --tc-bg-secondary:    #1e293b;
-  --tc-surface:         #1e293b;
+  --tc-surface:         #1a1a1a;
   --tc-surface-raised:  #334155;
 
-  --tc-border:          #334155;
+  --tc-border:          #2d2d2d;
   --tc-border-strong:   #475569;
 
   --tc-text:            #f1f5f9;
-  --tc-text-muted:      #94a3b8;
-  --tc-text-subtle:     #64748b;
+  --tc-text-muted:      #8e8e8e;
+  --tc-text-subtle:     #818181;
 
   --tc-success-bg:      rgba(5, 150, 105, .18);
   --tc-warning-bg:      rgba(217, 119, 6, .18);
