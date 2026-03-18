@@ -360,6 +360,7 @@ add_action( 'wp_ajax_' . TC_AJAX_UPDATE_EVENT, function () {
         }
 
         update_field( 'event_dates', $event_dates, $post_id );
+        tc_clear_events_cache();
         wp_send_json_success( array( 'id' => $post_id ) );
     }
 
@@ -388,5 +389,6 @@ add_action( 'wp_ajax_' . TC_AJAX_UPDATE_EVENT, function () {
         update_field( 'end_time',  null, $post_id );
     }
 
+    tc_clear_events_cache();
     wp_send_json_success( array( 'id' => $post_id ) );
 } );

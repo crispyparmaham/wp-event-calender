@@ -48,6 +48,45 @@ document.addEventListener('DOMContentLoaded', () => {
   const errBox      = document.getElementById('tc-modal-error');
   const recurFields = document.getElementById('tc-recurring-fields');
   const recurCheck  = document.getElementById('tc-modal-recurring');
+  const saveBar     = document.getElementById('tc-save-bar');
+  const saveCount   = document.getElementById('tc-save-count');
+  const saveBtnEl   = document.getElementById('tc-save-bar-save');
+  const resetBtnEl  = document.getElementById('tc-save-bar-reset');
+
+  // ── Ausstehende Änderungen (Drag & Drop / Resize) ─────────────
+  // key: "<eventId>:<dateIndex|''>"
+  // value: { event, origStart, origEnd }
+  const pendingChanges = new Map();
+
+  const updateSaveBar = () => {
+    const n = pendingChanges.size;
+    if (n === 0) {
+      saveBar.style.display = 'none';
+      saveBar.classList.remove('is-saved');
+      return;
+    }
+    saveBar.style.display = 'flex';
+    saveCount.textContent = n === 1
+      ? '1 ungespeicherte Änderung'
+      : `${n} ungespeicherte Änderungen`;
+  };
+
+  const trackChange = (event, oldEvent) => {
+    const dateIndex = event.extendedProps.dateIndex;
+    const key       = `${event.id}:${dateIndex ?? ''}`;
+    if (!pendingChanges.has(key)) {
+      // Originalposition nur beim ersten Verschieben merken
+      pendingChanges.set(key, {
+        event,
+        origStart: oldEvent.startStr,
+        origEnd:   oldEvent.endStr || '',
+      });
+    } else {
+      // Weiteres Verschieben desselben Events: nur Referenz aktualisieren
+      pendingChanges.get(key).event = event;
+    }
+    updateSaveBar();
+  };
 
   // ── Hilfsfunktionen ────────────────────────────────────────────
   const post = async (action, data) => {
@@ -163,40 +202,65 @@ document.addEventListener('DOMContentLoaded', () => {
       if (url) window.open(url, '_blank');
     },
 
-    // ── Drag & Drop (nur editierbare Events) ──────────────────
-    eventDrop: async ({ event, revert }) => {
-      const dateIndex = event.extendedProps.dateIndex;
-      const payload   = {
-        id:    event.id,
-        start: event.startStr,
-        end:   event.endStr || '',
-      };
-      if (dateIndex !== null && dateIndex !== undefined) payload.date_index = dateIndex;
-      const res = await post('tc_update_event', payload);
-      if (!res.success) {
-        revert();
-        alert('Fehler beim Speichern: ' + (res.data?.message || ''));
-      }
+    // ── Drag & Drop → Änderung vormerken, nicht sofort speichern ─
+    eventDrop: ({ event, oldEvent }) => {
+      trackChange(event, oldEvent);
     },
 
-    // ── Resize ────────────────────────────────────────────────
-    eventResize: async ({ event, revert }) => {
-      const dateIndex = event.extendedProps.dateIndex;
-      const payload   = {
-        id:    event.id,
-        start: event.startStr,
-        end:   event.endStr || '',
-      };
-      if (dateIndex !== null && dateIndex !== undefined) payload.date_index = dateIndex;
-      const res = await post('tc_update_event', payload);
-      if (!res.success) {
-        revert();
-        alert('Fehler beim Speichern: ' + (res.data?.message || ''));
-      }
+    // ── Resize → Änderung vormerken ───────────────────────────
+    eventResize: ({ event, oldEvent }) => {
+      trackChange(event, oldEvent);
     },
   });
 
   calendar.render();
+
+  // ── Save-Bar: Speichern ───────────────────────────────────────
+  saveBtnEl.addEventListener('click', async () => {
+    saveBtnEl.disabled    = true;
+    saveBtnEl.textContent = 'Wird gespeichert…';
+
+    let errors = 0;
+
+    for (const [key, entry] of pendingChanges) {
+      const ev        = entry.event;
+      const dateIndex = ev.extendedProps.dateIndex;
+      const payload   = { id: ev.id, start: ev.startStr, end: ev.endStr || '' };
+      if (dateIndex !== null && dateIndex !== undefined) payload.date_index = dateIndex;
+
+      const res = await post('tc_update_event', payload);
+      if (res.success) {
+        pendingChanges.delete(key);
+      } else {
+        errors++;
+      }
+    }
+
+    saveBtnEl.disabled    = false;
+    saveBtnEl.textContent = 'Speichern';
+
+    if (errors > 0) {
+      saveCount.textContent = `${errors} Änderung(en) konnten nicht gespeichert werden.`;
+      return;
+    }
+
+    // Kurz "Gespeichert"-Zustand zeigen, dann Bar ausblenden
+    saveBar.classList.add('is-saved');
+    saveCount.textContent = 'Gespeichert ✓';
+    setTimeout(() => {
+      updateSaveBar();
+    }, 2000);
+  });
+
+  // ── Save-Bar: Zurücksetzen ────────────────────────────────────
+  resetBtnEl.addEventListener('click', () => {
+    pendingChanges.forEach(({ event, origStart, origEnd }) => {
+      event.setStart(origStart);
+      if (origEnd) event.setEnd(origEnd);
+    });
+    pendingChanges.clear();
+    updateSaveBar();
+  });
 
   // ── Modal: Speichern ──────────────────────────────────────────
   document.getElementById('tc-modal-save').addEventListener('click', async () => {

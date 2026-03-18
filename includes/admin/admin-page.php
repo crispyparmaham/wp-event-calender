@@ -25,6 +25,14 @@ function tc_render_calendar_page() { ?>
             <span class="tc-legend-item tc-recurring">Wiederkehrend 🔁</span>
         </div>
 
+        <div id="tc-save-bar" class="tc-save-bar" style="display:none;" aria-live="polite">
+            <span id="tc-save-count" class="tc-save-bar-count"></span>
+            <div class="tc-save-bar-actions">
+                <button id="tc-save-bar-reset" class="button">Zurücksetzen</button>
+                <button id="tc-save-bar-save"  class="button button-primary">Speichern</button>
+            </div>
+        </div>
+
         <div id="tc-calendar"></div>
 
         <!-- ── Modal: Neues Event anlegen ─────────────── -->
