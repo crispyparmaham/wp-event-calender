@@ -135,6 +135,12 @@ add_action( 'acf/include_fields', function () {
                 'type'          => 'true_false',
                 'ui'            => 1,
                 'default_value' => 0,
+                'instructions'  => 'Kann nicht gleichzeitig mit "Wiederkehrendes Event" aktiviert sein.',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_is_recurring',
+                    'operator' => '==',
+                    'value'    => '0',
+                ) ) ),
             ),
             array(
                 'key'            => 'field_tc_start_date',
@@ -187,7 +193,12 @@ add_action( 'acf/include_fields', function () {
                 'type'          => 'true_false',
                 'ui'            => 1,
                 'default_value' => 0,
-                'instructions'  => 'Aktivieren, wenn dieses Event regelmäßig stattfindet.',
+                'instructions'  => 'Aktivieren, wenn dieses Event regelmäßig stattfindet. Kann nicht gleichzeitig mit "Mehrtägig" aktiviert sein.',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_more_days',
+                    'operator' => '==',
+                    'value'    => '0',
+                ) ) ),
             ),
             array(
                 'key'           => 'field_tc_recurring_weekday',
@@ -385,7 +396,51 @@ add_action( 'acf/include_fields', function () {
 } );
 
 // ─────────────────────────────────────────────
-// 3. ACF: event_type Select dynamisch befüllen
+// 3. Admin-Notice: Konflikt more_days + is_recurring
+// ─────────────────────────────────────────────
+add_action( 'admin_notices', function () {
+    $screen = get_current_screen();
+    if ( ! $screen || $screen->base !== 'post' || $screen->post_type !== 'time_event' ) return;
+
+    $post_id = get_the_ID();
+    if ( ! $post_id ) {
+        global $post;
+        $post_id = $post ? $post->ID : 0;
+    }
+    if ( ! $post_id ) return;
+
+    $more_days    = (bool) get_field( 'more_days',    $post_id );
+    $is_recurring = (bool) get_field( 'is_recurring', $post_id );
+
+    if ( $more_days && $is_recurring ) {
+        echo '<div class="notice notice-warning is-dismissible">';
+        echo '<p><strong>Time Calendar:</strong> ';
+        echo 'Dieses Event hat sowohl &bdquo;Mehrtägig&ldquo; als auch &bdquo;Wiederkehrend&ldquo; aktiviert. ';
+        echo 'Bitte deaktiviere eine der beiden Optionen.</p>';
+        echo '</div>';
+    }
+} );
+
+// ─────────────────────────────────────────────
+// 4. JS-Absicherung im Post-Editor laden
+// ─────────────────────────────────────────────
+add_action( 'admin_enqueue_scripts', function ( $hook ) {
+    if ( 'post-new.php' !== $hook && 'post.php' !== $hook ) return;
+
+    $screen = get_current_screen();
+    if ( ! $screen || $screen->post_type !== 'time_event' ) return;
+
+    wp_enqueue_script(
+        'tc-cpt-field-logic',
+        TC_URL . 'assets/js/admin/cpt-field-logic.js',
+        array( 'jquery' ),
+        TC_VERSION,
+        true
+    );
+} );
+
+// ─────────────────────────────────────────────
+// 5. ACF: event_type Select dynamisch befüllen
 // ─────────────────────────────────────────────
 add_filter( 'acf/load_field/key=field_tc_event_type', function ( $field ) {
     $categories = tc_get_all_categories();

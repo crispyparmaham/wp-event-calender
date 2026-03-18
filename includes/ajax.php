@@ -122,6 +122,15 @@ function tc_handle_get_events() {
         $recurring_until = get_field( 'recurring_until',   $post->ID );
         $event_dates_raw = get_field( 'event_dates',       $post->ID );
 
+        // ── Konflikterkennung: more_days + is_recurring gleichzeitig ──
+        $more_days_flag = (bool) get_field( 'more_days', $post->ID );
+        if ( $more_days_flag && $is_recurring ) {
+            error_log( 'Time Calendar: Event ID ' . $post->ID . ' hat more_days und is_recurring gleichzeitig aktiv. is_recurring wird ignoriert.' );
+            $is_recurring    = false;
+            $recurring_day   = false;
+            $recurring_until = '';
+        }
+
         $has_repeater = ! empty( $event_dates_raw ) && is_array( $event_dates_raw );
 
         // ── Zukünftige Termine für Event-Übersichtskarten ─────────
