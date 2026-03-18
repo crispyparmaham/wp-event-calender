@@ -20,6 +20,7 @@ add_shortcode( 'time_calendar', function ( $atts ) {
         'type'      => 'all',
         'view'      => 'dayGridMonth',
         'week_only' => '',
+        'mobile'    => '',
     ), $atts, 'time_calendar' );
 
     $categories    = tc_get_all_categories();
@@ -50,6 +51,17 @@ add_shortcode( 'time_calendar', function ( $atts ) {
         $week_only = $global_week_only;
     }
 
+    // Mobile Kalenderansicht – Shortcode-Attribut hat Vorrang vor globaler Einstellung
+    $global_mobile_view = tc_get_setting( 'mobile_calendar_view', 'optimized' );
+    if ( $atts['mobile'] === 'desktop' ) {
+        $mobile_view = 'desktop';
+    } elseif ( $atts['mobile'] === 'optimized' ) {
+        $mobile_view = 'optimized';
+    } else {
+        $mobile_view = $global_mobile_view;
+    }
+    $desktop_forced = $mobile_view === 'desktop' ? 'tc-desktop-forced' : '';
+
     // Event-Übersicht
     $show_event_list  = tc_get_setting( 'show_event_list', '0' ) === '1';
     $event_list_title = tc_get_setting( 'event_list_title', 'Unsere Events' ) ?: 'Unsere Events';
@@ -61,7 +73,7 @@ add_shortcode( 'time_calendar', function ( $atts ) {
     tc_enqueue_calendar_assets();
 
     ob_start(); ?>
-    <div class="tc-frontend-wrap <?php echo esc_attr( $dark_class ); ?>" id="<?php echo esc_attr( $uid ); ?>-wrap">
+    <div class="tc-frontend-wrap <?php echo esc_attr( $dark_class ); ?> <?php echo esc_attr( $desktop_forced ); ?>" id="<?php echo esc_attr( $uid ); ?>-wrap">
 
         <?php if ( ! $locked_type ) : ?>
         <div class="tc-filter-bar" role="tablist" aria-label="Event-Typ filtern">
@@ -94,7 +106,8 @@ add_shortcode( 'time_calendar', function ( $atts ) {
              data-view="<?php echo esc_attr( $view ); ?>"
              data-week-only="<?php echo $week_only ? '1' : '0'; ?>"
              data-show-event-list="<?php echo $show_event_list ? '1' : '0'; ?>"
-             data-event-list-title="<?php echo esc_attr( $event_list_title ); ?>">
+             data-event-list-title="<?php echo esc_attr( $event_list_title ); ?>"
+             data-mobile-view="<?php echo esc_attr( $mobile_view ); ?>">
         </div>
 
         <div class="tc-week-plan" id="<?php echo esc_attr( $uid ); ?>-week-plan" style="display:none;">
@@ -164,7 +177,9 @@ function tc_enqueue_calendar_assets() {
     );
 
     wp_localize_script( 'tc-frontend', 'TC_Frontend', array(
-        'ajaxUrl' => admin_url( 'admin-ajax.php' ),
-        'nonce'   => wp_create_nonce( 'tc_nonce' ),
+        'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
+        'nonce'                => wp_create_nonce( 'tc_nonce' ),
+        'mobileView'           => tc_get_setting( 'mobile_calendar_view', 'optimized' ),
+        'weekPlanTimePosition' => tc_get_setting( 'week_plan_time_position', 'left' ),
     ) );
 }

@@ -22,13 +22,15 @@ add_action( 'admin_init', function () {
     register_setting( 'tc_settings_group', 'tc_settings', array(
         'sanitize_callback' => 'tc_sanitize_settings',
         'default'           => array(
-            'calendar_mode'      => 'light',
-            'registration_email' => get_option( 'admin_email' ),
-            'reminder_enabled'   => '0',
-            'primary_color'      => '#4f46e5',
-            'frontend_week_only' => '0',
-            'show_event_list'    => '0',
-            'event_list_title'   => 'Unsere Events',
+            'calendar_mode'        => 'light',
+            'registration_email'   => get_option( 'admin_email' ),
+            'reminder_enabled'     => '0',
+            'primary_color'        => '#4f46e5',
+            'frontend_week_only'   => '0',
+            'show_event_list'      => '0',
+            'event_list_title'     => 'Unsere Events',
+            'mobile_calendar_view'    => 'optimized',
+            'week_plan_time_position' => 'left',
         ),
     ) );
 } );
@@ -63,6 +65,14 @@ function tc_sanitize_settings( $input ) {
 
     $color = isset( $input['primary_color'] ) ? sanitize_hex_color( $input['primary_color'] ) : '';
     $clean['primary_color'] = $color ?: '#4f46e5';
+
+    $clean['mobile_calendar_view'] = isset( $input['mobile_calendar_view'] ) && $input['mobile_calendar_view'] === 'desktop'
+        ? 'desktop'
+        : 'optimized';
+
+    $clean['week_plan_time_position'] = isset( $input['week_plan_time_position'] ) && $input['week_plan_time_position'] === 'above'
+        ? 'above'
+        : 'left';
 
     return $clean;
 }
@@ -138,13 +148,15 @@ function tc_render_settings_page() {
     $updated = isset( $_GET['settings-updated'] ) && $_GET['settings-updated'] === 'true';
 
     // Aktuelle Werte
-    $primary_color    = tc_get_primary_color();
-    $calendar_mode    = tc_get_setting( 'calendar_mode', 'light' );
-    $week_only        = tc_get_setting( 'frontend_week_only', '0' );
-    $show_event_list  = tc_get_setting( 'show_event_list', '0' );
-    $event_list_title = tc_get_setting( 'event_list_title', 'Unsere Events' ) ?: 'Unsere Events';
-    $reg_email        = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
-    $reminder         = tc_get_setting( 'reminder_enabled', '0' );
+    $primary_color        = tc_get_primary_color();
+    $calendar_mode        = tc_get_setting( 'calendar_mode', 'light' );
+    $week_only            = tc_get_setting( 'frontend_week_only', '0' );
+    $show_event_list      = tc_get_setting( 'show_event_list', '0' );
+    $event_list_title     = tc_get_setting( 'event_list_title', 'Unsere Events' ) ?: 'Unsere Events';
+    $reg_email            = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
+    $reminder             = tc_get_setting( 'reminder_enabled', '0' );
+    $mobile_calendar_view    = tc_get_setting( 'mobile_calendar_view', 'optimized' );
+    $week_plan_time_position = tc_get_setting( 'week_plan_time_position', 'left' );
     ?>
     <div class="wrap tc-stg-wrap">
 
@@ -287,6 +299,76 @@ function tc_render_settings_page() {
                         </div>
                     </div>
 
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Mobile Kalenderansicht</strong>
+                            <span>Legt fest, wie der Kalender auf mobilen Geräten dargestellt wird.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <label class="tc-stg-radio-label">
+                                <input
+                                    type="radio"
+                                    name="tc_settings[mobile_calendar_view]"
+                                    value="optimized"
+                                    <?php checked( $mobile_calendar_view, 'optimized' ); ?>
+                                    id="tc-mobile-optimized"
+                                >
+                                Optimiert für Mobil
+                            </label>
+                            <label class="tc-stg-radio-label">
+                                <input
+                                    type="radio"
+                                    name="tc_settings[mobile_calendar_view]"
+                                    value="desktop"
+                                    <?php checked( $mobile_calendar_view, 'desktop' ); ?>
+                                    id="tc-mobile-desktop"
+                                >
+                                Identisch mit Desktop
+                            </label>
+                            <p class="tc-stg-hint" id="tc-mobile-desktop-hint"
+                               <?php echo $mobile_calendar_view !== 'desktop' ? 'style="display:none"' : ''; ?>>
+                                Die Desktop-Ansicht wird auf kleinen Bildschirmen entsprechend kleiner
+                                dargestellt. Nutzer müssen gegebenenfalls manuell zoomen um alle Inhalte
+                                zu lesen.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Uhrzeit im Wochenplan</strong>
+                            <span>Legt fest, wo die Uhrzeit der Events im Wochenplan angezeigt wird.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <label class="tc-stg-radio-label">
+                                <input
+                                    type="radio"
+                                    name="tc_settings[week_plan_time_position]"
+                                    value="left"
+                                    <?php checked( $week_plan_time_position, 'left' ); ?>
+                                >
+                                Links (Zeitspalte)
+                            </label>
+                            <label class="tc-stg-radio-label">
+                                <input
+                                    type="radio"
+                                    name="tc_settings[week_plan_time_position]"
+                                    value="above"
+                                    <?php checked( $week_plan_time_position, 'above' ); ?>
+                                >
+                                Über dem Eventtitel
+                            </label>
+                            <p class="tc-stg-hint">
+                                Bei „Über dem Eventtitel" ersetzen „Vormittag", „Nachmittag" und „Abend"
+                                die Zeitspalte links.
+                            </p>
+                        </div>
+                    </div>
+
                 </div><!-- .tc-stg-card -->
                 <div class="tc-stg-actions">
                     <button type="submit" class="tc-stg-save">Einstellungen speichern</button>
@@ -424,6 +506,17 @@ function tc_render_settings_page() {
                 (validTabs.indexOf(saved) !== -1 ? saved : null) ||
                 'design'
             );
+
+            // ── Mobile-View Hint ───────────────────────────────
+            var mobileRadios = document.querySelectorAll('input[name="tc_settings[mobile_calendar_view]"]');
+            var mobileHint   = document.getElementById('tc-mobile-desktop-hint');
+            if (mobileHint) {
+                mobileRadios.forEach(function (radio) {
+                    radio.addEventListener('change', function () {
+                        mobileHint.style.display = radio.value === 'desktop' && radio.checked ? '' : 'none';
+                    });
+                });
+            }
 
             // ── Toast ──────────────────────────────────────────
             var toast = document.getElementById('tc-stg-toast');

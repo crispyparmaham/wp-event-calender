@@ -14,10 +14,10 @@ document.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_SLOT_MIN = '08:00:00';
   const DEFAULT_SLOT_MAX = '20:00:00';
 
-  const ajaxUrl = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.ajaxUrl : null)
-                  || '/wp-admin/admin-ajax.php';
-  const nonce   = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.nonce  : null)
-                  || '';
+  const ajaxUrl          = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.ajaxUrl    : null) || '/wp-admin/admin-ajax.php';
+  const nonce            = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.nonce      : null) || '';
+  const globalMobileView   = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.mobileView           : null) || 'optimized';
+  const globalTimePosition = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.weekPlanTimePosition : null) || 'left';
 
   // ── Modul-weite Hilfsfunktionen ────────────────────────────────
   const escHtml = (s) => String(s).replace(/[&<>"']/g, c => ({
@@ -183,6 +183,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const showEventList  = el.dataset.showEventList  === '1';
     const eventListTitle = el.dataset.eventListTitle || 'Unsere Events';
     const lockedType     = el.dataset.lockedType     || '';   // gesetzt wenn type="training" etc.
+    const mobileView     = el.dataset.mobileView || globalMobileView;
+    const forceDesktop   = mobileView === 'desktop';
+    const timeAbove      = globalTimePosition === 'above';
     const overviewEl     = wrap.querySelector('.tc-event-overview');
 
     let activeType   = el.dataset.type || 'all';
@@ -395,7 +398,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      let html = '<div class="tc-week-plan-table-wrap"><table class="tc-week-plan-table"><thead><tr>';
+      let html = `<div class="tc-week-plan-table-wrap"><table class="tc-week-plan-table${timeAbove ? ' tc-week-plan-table--time-above' : ''}"><thead><tr>`;
       html += '<th class="tc-wp-th-time"></th>';
       days.forEach((d, i) => {
         const isToday = d.getTime() === today.getTime();
@@ -408,13 +411,25 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '<tr><td colspan="8" class="tc-wp-empty">Keine Events in dieser Woche.</td></tr>';
       } else {
         activeGroups.forEach(group => {
-          html += `<tr class="tc-wp-group-row"><td colspan="8" class="tc-wp-group-label">${group.label}</td></tr>`;
-          group.slots.forEach(slot => {
+          if (!timeAbove) {
+            // Modus "links": Gruppenbezeichnung als eigene Kopfzeile
+            html += `<tr class="tc-wp-group-row"><td colspan="8" class="tc-wp-group-label">${group.label}</td></tr>`;
+          }
+          group.slots.forEach((slot, slotIdx) => {
             html += '<tr class="tc-wp-slot-row">';
-            html += '<td class="tc-wp-time">';
-            html += `<span class="tc-wp-time-start">${slot.startStr}</span>`;
-            if (slot.endStr) html += `<span class="tc-wp-time-end">${slot.endStr}</span>`;
-            html += '</td>';
+            if (!timeAbove) {
+              // Modus "links": Uhrzeit in linker Spalte
+              html += '<td class="tc-wp-time">';
+              html += `<span class="tc-wp-time-start">${slot.startStr}</span>`;
+              if (slot.endStr) html += `<span class="tc-wp-time-end">${slot.endStr}</span>`;
+              html += '</td>';
+            } else if (slotIdx === 0) {
+              // Modus "oben": Gruppenbezeichnung in linker Spalte, rowspan über alle Slots
+              html += `<td class="tc-wp-time tc-wp-time--group" rowspan="${group.slots.length}">`;
+              html += `<span class="tc-wp-group-label-cell">${group.label}</span>`;
+              html += '</td>';
+              // Weitere Slots dieser Gruppe lassen die linke Zelle weg (rowspan)
+            }
             slot.days.forEach(dayEvs => {
               if (dayEvs.length === 0) {
                 html += '<td class="tc-wp-cell tc-wp-cell--empty"></td>';
@@ -429,6 +444,10 @@ document.addEventListener('DOMContentLoaded', () => {
                   const sub   = p.leadership ? escHtml(p.leadership) : '';
                   html += `<button class="tc-wp-event" data-ev-idx="${idx}" type="button"`;
                   html += ` style="background:${bg};border-left:3px solid ${color}">`;
+                  if (timeAbove) {
+                    const tStr = slot.startStr + (slot.endStr ? ` – ${slot.endStr}` : '');
+                    html += `<span class="tc-wp-event-time-above">${escHtml(tStr)}</span>`;
+                  }
                   html += `<strong class="tc-wp-event-title">${title}</strong>`;
                   if (sub) html += `<span class="tc-wp-event-sub">${sub}</span>`;
                   html += '</button>';
@@ -506,12 +525,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Responsive View-Logik ─────────────────────────────────
     const getResponsiveView = () => {
-      if (weekOnly) return 'timeGridWeek';
+      if (weekOnly || forceDesktop) return 'timeGridWeek';
       return isMobile() ? 'listMonth' : (el.dataset.view || 'dayGridMonth');
     };
 
     const getResponsiveToolbar = () => {
       if (weekOnly) return { left: '', center: 'title', right: '' };
+      if (forceDesktop) return { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
       return isMobile()
         ? { left: 'prev,next', center: 'title', right: 'listMonth,dayGridMonth' }
         : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
@@ -540,7 +560,7 @@ document.addEventListener('DOMContentLoaded', () => {
       eventsSet()  { updateVisibleTimeRange(); },
 
       windowResize() {
-        if (weekOnly) return;
+        if (weekOnly || forceDesktop) return;
         calendar.setOption('headerToolbar', getResponsiveToolbar());
         const targetView = getResponsiveView();
         if (calendar.view.type !== targetView) calendar.changeView(targetView);
@@ -557,6 +577,25 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     calendar.render();
+
+    // ── Desktop-Forced: zoom to fit, no horizontal scroll ────
+    if (forceDesktop) {
+      const NATURAL_W = 600;
+
+      const applyZoom = () => {
+        const available = wrap.offsetWidth;
+        if (!available) return;
+        const zoom = available < NATURAL_W
+          ? (available / NATURAL_W).toFixed(4)
+          : '';
+        el.style.zoom = zoom;
+        if (weekPlanWrap) weekPlanWrap.style.zoom = zoom;
+      };
+
+      // Direkt nach dem Render + bei jedem Resize
+      requestAnimationFrame(applyZoom);
+      window.addEventListener('resize', applyZoom);
+    }
 
     // ── Week-Only Mode ────────────────────────────────────────
     if (weekOnly) {
