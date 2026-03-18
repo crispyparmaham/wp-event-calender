@@ -135,12 +135,7 @@ add_action( 'acf/include_fields', function () {
                 'type'          => 'true_false',
                 'ui'            => 1,
                 'default_value' => 0,
-                'instructions'  => 'Kann nicht gleichzeitig mit "Wiederkehrendes Event" aktiviert sein.',
-                'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_is_recurring',
-                    'operator' => '==',
-                    'value'    => '0',
-                ) ) ),
+                'instructions'  => 'Kann nicht gleichzeitig mit „Wiederkehrendes Event" aktiviert sein.',
             ),
             array(
                 'key'            => 'field_tc_start_date',
@@ -193,12 +188,7 @@ add_action( 'acf/include_fields', function () {
                 'type'          => 'true_false',
                 'ui'            => 1,
                 'default_value' => 0,
-                'instructions'  => 'Aktivieren, wenn dieses Event regelmäßig stattfindet. Kann nicht gleichzeitig mit "Mehrtägig" aktiviert sein.',
-                'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_more_days',
-                    'operator' => '==',
-                    'value'    => '0',
-                ) ) ),
+                'instructions'  => 'Aktivieren, wenn dieses Event regelmäßig stattfindet. Kann nicht gleichzeitig mit „Mehrtägig" aktiviert sein.',
             ),
             array(
                 'key'           => 'field_tc_recurring_weekday',

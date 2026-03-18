@@ -244,6 +244,9 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
 
+    // Admin-Kalender neu laden damit die Server-Daten bestätigt sind
+    calendar.refetchEvents();
+
     // Kurz "Gespeichert"-Zustand zeigen, dann Bar ausblenden
     saveBar.classList.add('is-saved');
     saveCount.textContent = 'Gespeichert ✓';
