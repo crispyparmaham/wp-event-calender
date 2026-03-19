@@ -594,7 +594,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // ── Compact Time Mode ──────────────────────────────────
       ...(timeLabelMode === 'compact' ? {
-        slotLabelInterval: '02:00',
+        slotLabelInterval: { hours: 2 },
         slotLabelFormat:   { hour: '2-digit', minute: '2-digit', hour12: false },
         eventTimeFormat:   { hour: '2-digit', minute: '2-digit', hour12: false },
       } : {}),
@@ -621,6 +621,34 @@ document.addEventListener('DOMContentLoaded', () => {
         scrollSliderToToday();
       },
 
+      viewDidMount() {
+        // Compact Time Mode: Klasse + Hinweis-Box bei jedem View-Mount setzen
+        if (timeLabelMode !== 'compact') return;
+        el.classList.add('tc-compact-time-mode');
+
+        if (!el.dataset.tcHintInjected) {
+          const axisHeader = el.querySelector('.fc-col-header .fc-timegrid-axis');
+          if (axisHeader) {
+            el.dataset.tcHintInjected = '1';
+            const hint = document.createElement('div');
+            hint.className = 'tc-axis-hint';
+            hint.title = 'Wischen zum Navigieren · Querformat für mehr Übersicht';
+            hint.innerHTML =
+              '<svg width="16" height="10" viewBox="0 0 16 10" aria-hidden="true">' +
+                '<path d="M2 5h12M2 5l3-3M2 5l3 3M14 5l-3-3M14 5l-3 3"' +
+                '      stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+              '</svg>' +
+              '<svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">' +
+                '<path d="M2 7a5 5 0 1 0 5-5"' +
+                '      stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>' +
+                '<path d="M7 2L5 0M7 2L5 4"' +
+                '      stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>' +
+              '</svg>';
+            axisHeader.appendChild(hint);
+          }
+        }
+      },
+
       eventDidMount({ event, el: evEl }) {
         if (!event.startEditable) evEl.style.opacity = '0.8';
       },
@@ -630,34 +658,6 @@ document.addEventListener('DOMContentLoaded', () => {
         openPopover(event, jsEvent);
       },
     });
-
-    calendar.render();
-    updateSliderClass();
-
-    // ── Compact Time Mode: Klasse setzen + Hinweis-Box ────────
-    if (timeLabelMode === 'compact') {
-      el.classList.add('tc-compact-time-mode');
-
-      // Swipe/Querformat-Hinweis in der Achsen-Header-Zelle
-      const axisHeader = el.querySelector('.fc-col-header .fc-timegrid-axis');
-      if (axisHeader) {
-        const hint = document.createElement('div');
-        hint.className = 'tc-axis-hint';
-        hint.title = 'Wischen zum Navigieren · Querformat für mehr Übersicht';
-        hint.innerHTML = `
-          <svg width="16" height="10" viewBox="0 0 16 10" aria-hidden="true">
-            <path d="M2 5h12M2 5l3-3M2 5l3 3M14 5l-3-3M14 5l-3 3"
-                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          <svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
-            <path d="M2 7a5 5 0 1 0 5-5"
-                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round" fill="none"/>
-            <path d="M7 2L5 0M7 2L5 4"
-                  stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>`;
-        axisHeader.appendChild(hint);
-      }
-    }
 
     // ── Desktop-Forced: zoom to fit, no horizontal scroll ────
     if (forceDesktop) {

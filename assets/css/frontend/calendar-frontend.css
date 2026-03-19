@@ -804,20 +804,29 @@
 
 /* ─── Compact Time Mode ──────────────────────────────────────── */
 
-/* Zeitspalte schmal */
+/* Zeitspalte schmal — !important nötig um FC-internen table-layout zu überschreiben */
 .tc-compact-time-mode .fc-timegrid-axis,
 .tc-compact-time-mode .fc-timegrid-slot-label {
-  max-width: 36px;
-  min-width: 36px;
-  width: 36px;
+  width: 36px !important;
+  min-width: 0 !important;
+  max-width: 36px !important;
 }
 
 .tc-compact-time-mode .fc-timegrid-axis-cushion,
 .tc-compact-time-mode .fc-timegrid-slot-label-cushion {
-  font-size: 10px;
-  color: var(--tc-text-subtle, #9ca3af);
-  padding: 0 2px;
+  font-size: 10px !important;
+  color: var(--tc-text-subtle, #9ca3af) !important;
+  padding: 0 2px !important;
   white-space: nowrap;
+  overflow: hidden;
+  max-width: 34px;
+}
+
+/* Verhindert dass die Slot-Label-Spalte breiter als 36px wird */
+.tc-compact-time-mode .fc-timegrid-slots td:first-child,
+.tc-compact-time-mode .fc-col-header th:first-child {
+  width: 36px !important;
+  min-width: 0 !important;
 }
 
 /* Uhrzeit auf dem Event-Block: größer und fetter */
@@ -848,10 +857,11 @@
     display: flex;
   }
 
-  /* Achsen-Header-Zelle: kein overflow-Abschnitt */
+  /* Achsen-Header-Zelle: vertikale Zentrierung, kein Padding-Überschuss */
   .tc-compact-time-mode .fc-col-header .fc-timegrid-axis {
     vertical-align: middle;
-    padding: 2px;
+    padding: 2px !important;
+    overflow: visible;
   }
 }
 
