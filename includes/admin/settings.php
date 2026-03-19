@@ -71,8 +71,9 @@ function tc_sanitize_settings( $input ) {
         ? $input['mobile_calendar_view']
         : 'slider';
 
-    $clean['week_plan_time_position'] = isset( $input['week_plan_time_position'] ) && $input['week_plan_time_position'] === 'above'
-        ? 'above'
+    $valid_time_pos = array( 'left', 'above', 'compact' );
+    $clean['week_plan_time_position'] = isset( $input['week_plan_time_position'] ) && in_array( $input['week_plan_time_position'], $valid_time_pos, true )
+        ? $input['week_plan_time_position']
         : 'left';
 
     return $clean;
@@ -378,9 +379,21 @@ function tc_render_settings_page() {
                                 >
                                 Über dem Eventtitel
                             </label>
+                            <label class="tc-stg-radio-label">
+                                <input
+                                    type="radio"
+                                    name="tc_settings[week_plan_time_position]"
+                                    value="compact"
+                                    <?php checked( $week_plan_time_position, 'compact' ); ?>
+                                >
+                                Kompakt mit Hinweis (Mobile)
+                            </label>
                             <p class="tc-stg-hint">
                                 Bei „Über dem Eventtitel" ersetzen „Vormittag", „Nachmittag" und „Abend"
-                                die Zeitspalte links.
+                                die Zeitspalte links.<br>
+                                „Kompakt mit Hinweis" zeigt eine schmale Zeitspalte mit Uhrzeiten, prominentere Uhrzeit
+                                auf dem Event-Block und einen Swipe/Querformat-Hinweis oben links — optimiert für die
+                                mobile Slider-Ansicht.
                             </p>
                         </div>
                     </div>

@@ -802,6 +802,59 @@
   font-size: 11px;
 }
 
+/* ─── Compact Time Mode ──────────────────────────────────────── */
+
+/* Zeitspalte schmal */
+.tc-compact-time-mode .fc-timegrid-axis,
+.tc-compact-time-mode .fc-timegrid-slot-label {
+  max-width: 36px;
+  min-width: 36px;
+  width: 36px;
+}
+
+.tc-compact-time-mode .fc-timegrid-axis-cushion,
+.tc-compact-time-mode .fc-timegrid-slot-label-cushion {
+  font-size: 10px;
+  color: var(--tc-text-subtle, #9ca3af);
+  padding: 0 2px;
+  white-space: nowrap;
+}
+
+/* Uhrzeit auf dem Event-Block: größer und fetter */
+.tc-compact-time-mode .fc-event-time {
+  display: block !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  margin-bottom: 2px;
+}
+
+/* Hinweis-Box (Swipe + Querformat) */
+.tc-axis-hint {
+  display: none; /* nur auf Mobile sichtbar */
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 4px;
+  background: var(--tc-primary-light, rgba(79, 70, 229, .12));
+  border-radius: var(--tc-radius-sm, 4px);
+  color: var(--tc-primary, #4f46e5);
+  font-size: 10px;
+  cursor: default;
+  line-height: 1;
+}
+
+@media (max-width: 768px) {
+  .tc-axis-hint {
+    display: flex;
+  }
+
+  /* Achsen-Header-Zelle: kein overflow-Abschnitt */
+  .tc-compact-time-mode .fc-col-header .fc-timegrid-axis {
+    vertical-align: middle;
+    padding: 2px;
+  }
+}
+
 /* ─── Mobile Slider (horizontaler Tages-Scroll) ─────────────── */
 @media (max-width: 768px) {
 

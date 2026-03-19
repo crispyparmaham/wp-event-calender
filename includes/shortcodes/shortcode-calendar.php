@@ -187,10 +187,15 @@ function tc_enqueue_calendar_assets() {
         true
     );
 
+    $raw_time_pos   = tc_get_setting( 'week_plan_time_position', 'left' );
+    $valid_time_pos = array( 'left', 'above', 'compact' );
+    $time_label_mode = in_array( $raw_time_pos, $valid_time_pos, true ) ? $raw_time_pos : 'left';
+
     wp_localize_script( 'tc-frontend', 'TC_Frontend', array(
         'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
         'nonce'                => wp_create_nonce( 'tc_nonce' ),
         'mobileView'           => tc_get_setting( 'mobile_calendar_view', 'slider' ),
-        'weekPlanTimePosition' => tc_get_setting( 'week_plan_time_position', 'left' ),
+        'weekPlanTimePosition' => $time_label_mode,
+        'timeLabelMode'        => $time_label_mode,
     ) );
 }
