@@ -14,9 +14,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_SLOT_MIN = '08:00:00';
   const DEFAULT_SLOT_MAX = '20:00:00';
 
-  const ajaxUrl          = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.ajaxUrl    : null) || '/wp-admin/admin-ajax.php';
-  const nonce            = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.nonce      : null) || '';
-  const globalMobileView   = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.mobileView           : null) || 'optimized';
+  const ajaxUrl            = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.ajaxUrl              : null) || '/wp-admin/admin-ajax.php';
+  const nonce              = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.nonce                : null) || '';
+  const globalMobileView   = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.mobileView           : null) || 'slider';
   const globalTimePosition = (typeof TC_Frontend !== 'undefined' ? TC_Frontend.weekPlanTimePosition : null) || 'left';
 
   // ── Modul-weite Hilfsfunktionen ────────────────────────────────
@@ -186,7 +186,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const mobileView     = el.dataset.mobileView || globalMobileView;
     const forceDesktop   = mobileView === 'desktop';
     const timeAbove      = globalTimePosition === 'above';
+    const mobileSlider   = el.dataset.mobileSlider === '1' || mobileView === 'slider';
     const overviewEl     = wrap.querySelector('.tc-event-overview');
+    const sliderWrap     = document.getElementById(uid + '-day-slider');
 
     let activeType   = el.dataset.type || 'all';
     let cachedEvents = null;
@@ -560,7 +562,9 @@ document.addEventListener('DOMContentLoaded', () => {
       eventsSet()  { updateVisibleTimeRange(); },
 
       windowResize() {
+        syncSliderVisibility();
         if (weekOnly || forceDesktop) return;
+        if (sliderActive) return; // Slider übernimmt auf Mobile
         calendar.setOption('headerToolbar', getResponsiveToolbar());
         const targetView = getResponsiveView();
         if (calendar.view.type !== targetView) calendar.changeView(targetView);
@@ -610,6 +614,197 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
+    // ── Day Slider Komponente (Mobile) ──────────────────────────
+    let sliderDayIndex   = 0; // 0 = Mo … 6 = So
+    let sliderWeekOffset = 0;
+    let sliderActive     = false;
+
+    const sliderEnabled = mobileSlider && sliderWrap && !forceDesktop;
+
+    const getSliderWeekStart = (off) => {
+      const d   = new Date();
+      const day = d.getDay();
+      d.setDate(d.getDate() - (day === 0 ? 6 : day - 1) + off * 7);
+      d.setHours(0, 0, 0, 0);
+      return d;
+    };
+
+    const buildSliderHTML = () => {
+      if (!sliderWrap) return;
+
+      const weekStart = getSliderWeekStart(sliderWeekOffset);
+      const days      = Array.from({ length: 7 }, (_, i) => {
+        const d = new Date(weekStart);
+        d.setDate(weekStart.getDate() + i);
+        return d;
+      });
+
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+
+      const filtered = getFiltered();
+
+      // Events pro Tag zuordnen
+      const dayEvents = days.map(d => {
+        const dayStart = new Date(d);
+        const dayEnd   = new Date(d);
+        dayEnd.setDate(dayEnd.getDate() + 1);
+        return filtered
+          .filter(e => { const s = new Date(e.start); return s >= dayStart && s < dayEnd; })
+          .sort((a, b) => new Date(a.start) - new Date(b.start));
+      });
+
+      // Wochentag-Leiste
+      const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
+      let barHTML = '<div class="tc-ds-weekbar">';
+      days.forEach((d, i) => {
+        const isActive = i === sliderDayIndex;
+        const isToday  = d.getTime() === today.getTime();
+        const hasDot   = dayEvents[i].length > 0;
+        const dotColor = hasDot ? (dayEvents[i][0].color || 'var(--tc-primary)') : '';
+        barHTML += `<button class="tc-ds-weekday${isActive ? ' is-active' : ''}${isToday ? ' is-today' : ''}${!hasDot ? ' is-empty' : ''}" data-day-idx="${i}">`;
+        barHTML += `<span class="tc-ds-weekday-label">${dayLabels[i]}</span>`;
+        if (hasDot) barHTML += `<span class="tc-ds-weekday-dot" style="background:${dotColor}"></span>`;
+        else        barHTML += '<span class="tc-ds-weekday-dot tc-ds-weekday-dot--empty"></span>';
+        barHTML += '</button>';
+      });
+      barHTML += '</div>';
+
+      // Header mit Datum + Pfeile
+      const activeDay  = days[sliderDayIndex];
+      const dayName    = WEEKDAY_LABELS[activeDay.getDay()].substring(0, 2);
+      const dayNum     = activeDay.getDate();
+      const monthName  = MONTH_LONG[activeDay.getMonth()];
+      let headerHTML = '<div class="tc-ds-header">';
+      headerHTML += '<button class="tc-ds-nav tc-ds-prev" aria-label="Vorheriger Tag">&#8249;</button>';
+      headerHTML += `<span class="tc-ds-title">${dayName}, ${dayNum}. ${monthName}</span>`;
+      headerHTML += '<button class="tc-ds-nav tc-ds-next" aria-label="Nächster Tag">&#8250;</button>';
+      headerHTML += '</div>';
+
+      // Event-Karten für den aktiven Tag
+      const evs = dayEvents[sliderDayIndex];
+      let bodyHTML = '<div class="tc-ds-viewport"><div class="tc-ds-track">';
+
+      if (evs.length === 0) {
+        const isToday = activeDay.getTime() === today.getTime();
+        bodyHTML += `<div class="tc-ds-empty">${isToday ? 'Heute keine Trainings' : 'Keine Trainings an diesem Tag'}</div>`;
+      } else {
+        evs.forEach(ev => {
+          const color = ev.color || '#4f46e5';
+          const p     = ev.extendedProps || {};
+          const s     = new Date(ev.start);
+          const endD  = ev.end ? new Date(ev.end) : null;
+          const pad   = n => String(n).padStart(2, '0');
+          const tStart = `${pad(s.getHours())}:${pad(s.getMinutes())}`;
+          const tEnd   = endD ? `${pad(endD.getHours())}:${pad(endD.getMinutes())}` : '';
+          const timeStr = tStart + (tEnd ? ` – ${tEnd}` : '');
+          const title  = escHtml((ev.title || '').replace('🔁 ', ''));
+          const loc    = p.location ? escHtml(p.location) : '';
+          const link   = p.permalink ? escHtml(p.permalink) : '#';
+          const typeLabel = p.type === 'seminar' ? 'Seminar' : 'Gruppentraining';
+          const bg     = hexToRgba(color, 0.10);
+
+          bodyHTML += `<a class="tc-ds-card" href="${link}">`;
+          bodyHTML += `<div class="tc-ds-card-stripe" style="background:${color}"></div>`;
+          bodyHTML += '<div class="tc-ds-card-body">';
+          bodyHTML += `<span class="tc-ds-card-time">${timeStr} Uhr</span>`;
+          bodyHTML += `<strong class="tc-ds-card-title">${title}</strong>`;
+          if (loc) bodyHTML += `<span class="tc-ds-card-loc">${loc}</span>`;
+          bodyHTML += `<span class="tc-ds-card-badge" style="color:${color};background:${bg}">${typeLabel}</span>`;
+          bodyHTML += '</div></a>';
+        });
+      }
+      bodyHTML += '</div></div>';
+
+      // "Nächste Woche" Button am Sonntag
+      let footerHTML = '';
+      if (sliderDayIndex === 6) {
+        footerHTML = '<button class="tc-ds-next-week">Nächste Woche &#8594;</button>';
+      }
+
+      sliderWrap.innerHTML = barHTML + headerHTML + bodyHTML + footerHTML;
+
+      // Event-Listener verdrahten
+      sliderWrap.querySelectorAll('.tc-ds-weekday').forEach(btn => {
+        btn.addEventListener('click', () => {
+          sliderDayIndex = +btn.dataset.dayIdx;
+          buildSliderHTML();
+        });
+      });
+
+      const prevBtn = sliderWrap.querySelector('.tc-ds-prev');
+      const nextBtn = sliderWrap.querySelector('.tc-ds-next');
+      if (prevBtn) prevBtn.addEventListener('click', () => sliderNavigate(-1));
+      if (nextBtn) nextBtn.addEventListener('click', () => sliderNavigate(1));
+
+      const nextWeekBtn = sliderWrap.querySelector('.tc-ds-next-week');
+      if (nextWeekBtn) nextWeekBtn.addEventListener('click', () => {
+        sliderWeekOffset++;
+        sliderDayIndex = 0;
+        buildSliderHTML();
+      });
+
+      // Touch-Swipe
+      initSliderSwipe();
+    };
+
+    const sliderNavigate = (dir) => {
+      sliderDayIndex += dir;
+      if (sliderDayIndex > 6) {
+        sliderWeekOffset++;
+        sliderDayIndex = 0;
+      } else if (sliderDayIndex < 0) {
+        sliderWeekOffset--;
+        sliderDayIndex = 6;
+      }
+      buildSliderHTML();
+    };
+
+    const initSliderSwipe = () => {
+      const viewport = sliderWrap ? sliderWrap.querySelector('.tc-ds-viewport') : null;
+      if (!viewport) return;
+      let startX = 0, startY = 0, tracking = false;
+
+      viewport.addEventListener('touchstart', e => {
+        startX   = e.touches[0].clientX;
+        startY   = e.touches[0].clientY;
+        tracking = true;
+      }, { passive: true });
+
+      viewport.addEventListener('touchend', e => {
+        if (!tracking) return;
+        tracking = false;
+        const dx = e.changedTouches[0].clientX - startX;
+        const dy = e.changedTouches[0].clientY - startY;
+        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
+        sliderNavigate(dx < 0 ? 1 : -1);
+      }, { passive: true });
+    };
+
+    const syncSliderVisibility = () => {
+      if (!sliderEnabled) return;
+      const mobile = isMobile();
+      const viewToggle = wrap.querySelector('.tc-view-toggle');
+      if (mobile && !sliderActive) {
+        sliderActive = true;
+        sliderWrap.style.display = '';
+        el.style.display = 'none';
+        if (weekPlanWrap) weekPlanWrap.style.display = 'none';
+        if (viewToggle) viewToggle.style.display = 'none';
+        // Setze Slider auf heute
+        const now     = new Date();
+        const dayIdx  = (now.getDay() + 6) % 7; // Mo=0
+        sliderDayIndex   = dayIdx;
+        sliderWeekOffset = 0;
+        buildSliderHTML();
+      } else if (!mobile && sliderActive) {
+        sliderActive = false;
+        sliderWrap.style.display = 'none';
+        el.style.display = '';
+        if (viewToggle && !weekOnly) viewToggle.style.display = '';
+      }
+    };
+
     // ── Events einmalig per AJAX laden, dann statisch setzen ──
     (async () => {
       showLoader();
@@ -631,6 +826,9 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (showEventList) tcRenderEventOverview(overviewEl, getFiltered(), eventListTitle);
+
+      // Slider initial prüfen und bei Resize umschalten
+      syncSliderVisibility();
     })();
 
     // ── Filter-Tabs: nur Cache umsortieren, kein AJAX ─────────
@@ -644,6 +842,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (weekOnly) {
           buildWeekPlan();
+        } else if (sliderActive) {
+          buildSliderHTML();
         } else {
           calendar.getEventSources().forEach(s => s.remove());
           calendar.addEventSource(getFiltered());

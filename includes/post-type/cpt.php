@@ -120,23 +120,33 @@ add_action( 'acf/include_fields', function () {
                 'tabs'  => 'all',
             ),
 
-            // ── TAB: Datum & Uhrzeit ────────────────
+            // ── TAB: Termine (konsolidiert) ────────────────
             array(
-                'key'       => 'field_tc_tab_datetime',
-                'label'     => 'Datum & Uhrzeit',
+                'key'       => 'field_tc_tab_dates',
+                'label'     => 'Termine',
                 'type'      => 'tab',
                 'placement' => 'top',
                 'endpoint'  => 0,
             ),
+
+            // Termintyp-Auswahl
             array(
-                'key'           => 'field_tc_more_days',
-                'label'         => 'Mehrtägige Veranstaltung?',
-                'name'          => 'more_days',
-                'type'          => 'true_false',
-                'ui'            => 1,
-                'default_value' => 0,
-                'instructions'  => 'Kann nicht gleichzeitig mit „Wiederkehrendes Event" aktiviert sein.',
+                'key'           => 'field_tc_event_date_type',
+                'label'         => 'Termintyp',
+                'name'          => 'event_date_type',
+                'type'          => 'radio',
+                'choices'       => array(
+                    'single'    => 'Einzeltermin',
+                    'multiple'  => 'Mehrere Termine',
+                    'recurring' => 'Wiederkehrend',
+                ),
+                'default_value' => 'single',
+                'layout'        => 'horizontal',
+                'return_format' => 'value',
+                'required'      => 1,
             ),
+
+            // ── Einzeltermin + Wiederkehrend: gemeinsame Felder ──
             array(
                 'key'            => 'field_tc_start_date',
                 'label'          => 'Startdatum',
@@ -146,27 +156,40 @@ add_action( 'acf/include_fields', function () {
                 'return_format'  => 'Y-m-d',
                 'first_day'      => 1,
                 'required'       => 1,
+                'conditional_logic' => array(
+                    array( array( 'field' => 'field_tc_event_date_type', 'operator' => '==', 'value' => 'single' ) ),
+                    array( array( 'field' => 'field_tc_event_date_type', 'operator' => '==', 'value' => 'recurring' ) ),
+                ),
             ),
             array(
                 'key'            => 'field_tc_start_time',
-                'label'          => 'Startzeit',
+                'label'          => 'Uhrzeit von',
                 'name'           => 'start_time',
                 'type'           => 'time_picker',
                 'display_format' => 'H:i',
                 'return_format'  => 'H:i',
+                'conditional_logic' => array(
+                    array( array( 'field' => 'field_tc_event_date_type', 'operator' => '==', 'value' => 'single' ) ),
+                    array( array( 'field' => 'field_tc_event_date_type', 'operator' => '==', 'value' => 'recurring' ) ),
+                ),
             ),
             array(
                 'key'            => 'field_tc_end_time',
-                'label'          => 'Endzeit',
+                'label'          => 'Uhrzeit bis',
                 'name'           => 'end_time',
                 'type'           => 'time_picker',
                 'display_format' => 'H:i',
                 'return_format'  => 'H:i',
-                'instructions'   => 'Endzeit am selben Tag. Für mehrtägige Events unten das Enddatum setzen.',
+                'conditional_logic' => array(
+                    array( array( 'field' => 'field_tc_event_date_type', 'operator' => '==', 'value' => 'single' ) ),
+                    array( array( 'field' => 'field_tc_event_date_type', 'operator' => '==', 'value' => 'recurring' ) ),
+                ),
             ),
+
+            // ── Nur Einzeltermin: Enddatum ──
             array(
                 'key'            => 'field_tc_end_date',
-                'label'          => 'Enddatum',
+                'label'          => 'Enddatum (optional)',
                 'name'           => 'end_date',
                 'type'           => 'date_picker',
                 'display_format' => 'd.m.Y',
@@ -174,22 +197,13 @@ add_action( 'acf/include_fields', function () {
                 'first_day'      => 1,
                 'instructions'   => 'Nur bei mehrtägigen Events ausfüllen.',
                 'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_more_days',
+                    'field'    => 'field_tc_event_date_type',
                     'operator' => '==',
-                    'value'    => '1',
+                    'value'    => 'single',
                 ) ) ),
             ),
 
-            // ── Wiederholung ────────────────────────
-            array(
-                'key'           => 'field_tc_is_recurring',
-                'label'         => 'Wiederkehrendes Event?',
-                'name'          => 'is_recurring',
-                'type'          => 'true_false',
-                'ui'            => 1,
-                'default_value' => 0,
-                'instructions'  => 'Aktivieren, wenn dieses Event regelmäßig stattfindet. Kann nicht gleichzeitig mit „Mehrtägig" aktiviert sein.',
-            ),
+            // ── Nur Wiederkehrend: Wochentag + Bis-Datum ──
             array(
                 'key'           => 'field_tc_recurring_weekday',
                 'label'         => 'Wochentag der Wiederholung',
@@ -206,10 +220,11 @@ add_action( 'acf/include_fields', function () {
                     '0' => 'Sonntag',
                 ),
                 'return_format' => 'value',
+                'required'      => 1,
                 'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_is_recurring',
+                    'field'    => 'field_tc_event_date_type',
                     'operator' => '==',
-                    'value'    => '1',
+                    'value'    => 'recurring',
                 ) ) ),
             ),
             array(
@@ -221,55 +236,43 @@ add_action( 'acf/include_fields', function () {
                 'display_format' => 'd.m.Y',
                 'return_format'  => 'Y-m-d',
                 'first_day'      => 1,
-                'required'       => 0,
+                'required'       => 1,
                 'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_is_recurring',
+                    'field'    => 'field_tc_event_date_type',
                     'operator' => '==',
-                    'value'    => '1',
+                    'value'    => 'recurring',
                 ) ) ),
             ),
 
-            // ── TAB: Termine ────────────────────────
-            array(
-                'key'       => 'field_tc_tab_dates',
-                'label'     => 'Termine',
-                'type'      => 'tab',
-                'placement' => 'top',
-                'endpoint'  => 0,
-            ),
+            // ── Nur Mehrere Termine: Repeater ──
             array(
                 'key'          => 'field_tc_event_dates',
-                'label'        => 'Mehrere Termine',
+                'label'        => 'Termine',
                 'name'         => 'event_dates',
                 'type'         => 'repeater',
                 'layout'       => 'block',
                 'button_label' => 'Termin hinzufügen',
-                'instructions' => 'Fügen Sie hier einzelne Termine hinzu. Wenn Termine eingetragen sind, werden die Felder im Tab "Datum & Uhrzeit" ignoriert.',
+                'instructions' => 'Fügen Sie hier die einzelnen Termine hinzu.',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_event_date_type',
+                    'operator' => '==',
+                    'value'    => 'multiple',
+                ) ) ),
                 'sub_fields'   => array(
                     array(
                         'key'            => 'field_tc_ed_start',
-                        'label'          => 'Startdatum',
+                        'label'          => 'Datum',
                         'name'           => 'date_start',
                         'type'           => 'date_picker',
                         'display_format' => 'd.m.Y',
                         'return_format'  => 'Y-m-d',
                         'first_day'      => 1,
                         'required'       => 1,
-                        'wrapper'        => array( 'width' => '25' ),
-                    ),
-                    array(
-                        'key'            => 'field_tc_ed_end',
-                        'label'          => 'Enddatum (optional, nur mehrtägig)',
-                        'name'           => 'date_end',
-                        'type'           => 'date_picker',
-                        'display_format' => 'd.m.Y',
-                        'return_format'  => 'Y-m-d',
-                        'first_day'      => 1,
-                        'wrapper'        => array( 'width' => '25' ),
+                        'wrapper'        => array( 'width' => '20' ),
                     ),
                     array(
                         'key'            => 'field_tc_ed_time_start',
-                        'label'          => 'Startzeit',
+                        'label'          => 'Von',
                         'name'           => 'time_start',
                         'type'           => 'time_picker',
                         'display_format' => 'H:i',
@@ -278,12 +281,22 @@ add_action( 'acf/include_fields', function () {
                     ),
                     array(
                         'key'            => 'field_tc_ed_time_end',
-                        'label'          => 'Endzeit',
+                        'label'          => 'Bis',
                         'name'           => 'time_end',
                         'type'           => 'time_picker',
                         'display_format' => 'H:i',
                         'return_format'  => 'H:i',
                         'wrapper'        => array( 'width' => '15' ),
+                    ),
+                    array(
+                        'key'            => 'field_tc_ed_end',
+                        'label'          => 'Enddatum (optional)',
+                        'name'           => 'date_end',
+                        'type'           => 'date_picker',
+                        'display_format' => 'd.m.Y',
+                        'return_format'  => 'Y-m-d',
+                        'first_day'      => 1,
+                        'wrapper'        => array( 'width' => '20' ),
                     ),
                     array(
                         'key'          => 'field_tc_ed_seats',
@@ -293,7 +306,15 @@ add_action( 'acf/include_fields', function () {
                         'min'          => 0,
                         'placeholder'  => 'unbegrenzt',
                         'instructions' => 'Überschreibt die globale Teilnehmerzahl für diesen Termin.',
-                        'wrapper'      => array( 'width' => '20' ),
+                        'wrapper'      => array( 'width' => '15' ),
+                    ),
+                    array(
+                        'key'         => 'field_tc_ed_notes',
+                        'label'       => 'Hinweis',
+                        'name'        => 'notes',
+                        'type'        => 'text',
+                        'placeholder' => 'z.B. Nur online',
+                        'wrapper'     => array( 'width' => '15' ),
                     ),
                 ),
             ),
@@ -386,7 +407,7 @@ add_action( 'acf/include_fields', function () {
 } );
 
 // ─────────────────────────────────────────────
-// 3. Admin-Notice: Konflikt more_days + is_recurring
+// 3. Admin-Notice: Legacy-Felder noch aktiv
 // ─────────────────────────────────────────────
 add_action( 'admin_notices', function () {
     $screen = get_current_screen();
@@ -399,34 +420,14 @@ add_action( 'admin_notices', function () {
     }
     if ( ! $post_id ) return;
 
-    $more_days    = (bool) get_field( 'more_days',    $post_id );
-    $is_recurring = (bool) get_field( 'is_recurring', $post_id );
-
-    if ( $more_days && $is_recurring ) {
-        echo '<div class="notice notice-warning is-dismissible">';
+    $date_type = get_field( 'event_date_type', $post_id );
+    if ( empty( $date_type ) ) {
+        echo '<div class="notice notice-info is-dismissible">';
         echo '<p><strong>Time Calendar:</strong> ';
-        echo 'Dieses Event hat sowohl &bdquo;Mehrtägig&ldquo; als auch &bdquo;Wiederkehrend&ldquo; aktiviert. ';
-        echo 'Bitte deaktiviere eine der beiden Optionen.</p>';
+        echo 'Dieses Event wurde noch nicht auf den neuen Termintyp migriert. ';
+        echo 'Bitte wählen Sie im Tab &bdquo;Termine&ldquo; den passenden Termintyp und speichern Sie.</p>';
         echo '</div>';
     }
-} );
-
-// ─────────────────────────────────────────────
-// 4. JS-Absicherung im Post-Editor laden
-// ─────────────────────────────────────────────
-add_action( 'admin_enqueue_scripts', function ( $hook ) {
-    if ( 'post-new.php' !== $hook && 'post.php' !== $hook ) return;
-
-    $screen = get_current_screen();
-    if ( ! $screen || $screen->post_type !== 'time_event' ) return;
-
-    wp_enqueue_script(
-        'tc-cpt-field-logic',
-        TC_URL . 'assets/js/admin/cpt-field-logic.js',
-        array( 'jquery' ),
-        TC_VERSION,
-        true
-    );
 } );
 
 // ─────────────────────────────────────────────

@@ -43,6 +43,7 @@ require_once TC_PATH . 'includes/admin/admin-page.php';
 require_once TC_PATH . 'includes/admin/events-overview.php';
 require_once TC_PATH . 'includes/admin/categories.php';
 require_once TC_PATH . 'includes/admin/migration.php';
+require_once TC_PATH . 'includes/admin/migration-date-type.php';
 
 require_once TC_PATH . 'includes/post-type/cpt.php';
 

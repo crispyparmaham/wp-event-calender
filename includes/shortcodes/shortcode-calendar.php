@@ -17,10 +17,11 @@ defined( 'ABSPATH' ) || exit;
 add_shortcode( 'time_calendar', function ( $atts ) {
 
     $atts = shortcode_atts( array(
-        'type'      => 'all',
-        'view'      => 'dayGridMonth',
-        'week_only' => '',
-        'mobile'    => '',
+        'type'           => 'all',
+        'view'           => 'dayGridMonth',
+        'week_only'      => '',
+        'mobile'         => '',
+        'mobile_slider'  => '',
     ), $atts, 'time_calendar' );
 
     $categories    = tc_get_all_categories();
@@ -52,15 +53,22 @@ add_shortcode( 'time_calendar', function ( $atts ) {
     }
 
     // Mobile Kalenderansicht – Shortcode-Attribut hat Vorrang vor globaler Einstellung
-    $global_mobile_view = tc_get_setting( 'mobile_calendar_view', 'optimized' );
-    if ( $atts['mobile'] === 'desktop' ) {
-        $mobile_view = 'desktop';
-    } elseif ( $atts['mobile'] === 'optimized' ) {
+    // Gültige Werte: 'slider', 'optimized', 'desktop'
+    $global_mobile_view = tc_get_setting( 'mobile_calendar_view', 'slider' );
+    $valid_mobile       = array( 'slider', 'optimized', 'desktop' );
+
+    if ( in_array( $atts['mobile'], $valid_mobile, true ) ) {
+        $mobile_view = $atts['mobile'];
+    } elseif ( $atts['mobile_slider'] === 'true' ) {
+        $mobile_view = 'slider';
+    } elseif ( $atts['mobile_slider'] === 'false' ) {
         $mobile_view = 'optimized';
     } else {
         $mobile_view = $global_mobile_view;
     }
+
     $desktop_forced = $mobile_view === 'desktop' ? 'tc-desktop-forced' : '';
+    $mobile_slider  = $mobile_view === 'slider';
 
     // Event-Übersicht
     $show_event_list  = tc_get_setting( 'show_event_list', '0' ) === '1';
@@ -107,8 +115,11 @@ add_shortcode( 'time_calendar', function ( $atts ) {
              data-week-only="<?php echo $week_only ? '1' : '0'; ?>"
              data-show-event-list="<?php echo $show_event_list ? '1' : '0'; ?>"
              data-event-list-title="<?php echo esc_attr( $event_list_title ); ?>"
-             data-mobile-view="<?php echo esc_attr( $mobile_view ); ?>">
+             data-mobile-view="<?php echo esc_attr( $mobile_view ); ?>"
+             data-mobile-slider="<?php echo $mobile_slider ? '1' : '0'; ?>">
         </div>
+
+        <div class="tc-day-slider" id="<?php echo esc_attr( $uid ); ?>-day-slider" style="display:none;"></div>
 
         <div class="tc-week-plan" id="<?php echo esc_attr( $uid ); ?>-week-plan" style="display:none;">
             <div class="tc-week-plan-nav">
@@ -179,7 +190,7 @@ function tc_enqueue_calendar_assets() {
     wp_localize_script( 'tc-frontend', 'TC_Frontend', array(
         'ajaxUrl'              => admin_url( 'admin-ajax.php' ),
         'nonce'                => wp_create_nonce( 'tc_nonce' ),
-        'mobileView'           => tc_get_setting( 'mobile_calendar_view', 'optimized' ),
+        'mobileView'           => tc_get_setting( 'mobile_calendar_view', 'slider' ),
         'weekPlanTimePosition' => tc_get_setting( 'week_plan_time_position', 'left' ),
     ) );
 }

@@ -29,7 +29,7 @@ add_action( 'admin_init', function () {
             'frontend_week_only'   => '0',
             'show_event_list'      => '0',
             'event_list_title'     => 'Unsere Events',
-            'mobile_calendar_view'    => 'optimized',
+            'mobile_calendar_view'    => 'slider',
             'week_plan_time_position' => 'left',
         ),
     ) );
@@ -66,9 +66,10 @@ function tc_sanitize_settings( $input ) {
     $color = isset( $input['primary_color'] ) ? sanitize_hex_color( $input['primary_color'] ) : '';
     $clean['primary_color'] = $color ?: '#4f46e5';
 
-    $clean['mobile_calendar_view'] = isset( $input['mobile_calendar_view'] ) && $input['mobile_calendar_view'] === 'desktop'
-        ? 'desktop'
-        : 'optimized';
+    $valid_mobile = array( 'slider', 'optimized', 'desktop' );
+    $clean['mobile_calendar_view'] = isset( $input['mobile_calendar_view'] ) && in_array( $input['mobile_calendar_view'], $valid_mobile, true )
+        ? $input['mobile_calendar_view']
+        : 'slider';
 
     $clean['week_plan_time_position'] = isset( $input['week_plan_time_position'] ) && $input['week_plan_time_position'] === 'above'
         ? 'above'
@@ -155,7 +156,7 @@ function tc_render_settings_page() {
     $event_list_title     = tc_get_setting( 'event_list_title', 'Unsere Events' ) ?: 'Unsere Events';
     $reg_email            = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
     $reminder             = tc_get_setting( 'reminder_enabled', '0' );
-    $mobile_calendar_view    = tc_get_setting( 'mobile_calendar_view', 'optimized' );
+    $mobile_calendar_view    = tc_get_setting( 'mobile_calendar_view', 'slider' );
     $week_plan_time_position = tc_get_setting( 'week_plan_time_position', 'left' );
     ?>
     <div class="wrap tc-stg-wrap">
@@ -311,9 +312,17 @@ function tc_render_settings_page() {
                                 <input
                                     type="radio"
                                     name="tc_settings[mobile_calendar_view]"
+                                    value="slider"
+                                    <?php checked( $mobile_calendar_view, 'slider' ); ?>
+                                >
+                                Tages-Slider
+                            </label>
+                            <label class="tc-stg-radio-label">
+                                <input
+                                    type="radio"
+                                    name="tc_settings[mobile_calendar_view]"
                                     value="optimized"
                                     <?php checked( $mobile_calendar_view, 'optimized' ); ?>
-                                    id="tc-mobile-optimized"
                                 >
                                 Optimiert für Mobil
                             </label>
@@ -323,15 +332,22 @@ function tc_render_settings_page() {
                                     name="tc_settings[mobile_calendar_view]"
                                     value="desktop"
                                     <?php checked( $mobile_calendar_view, 'desktop' ); ?>
-                                    id="tc-mobile-desktop"
                                 >
                                 Identisch mit Desktop
                             </label>
-                            <p class="tc-stg-hint" id="tc-mobile-desktop-hint"
+                            <p class="tc-stg-hint tc-stg-mobile-hint" data-for="slider"
+                               <?php echo $mobile_calendar_view !== 'slider' ? 'style="display:none"' : ''; ?>>
+                                Nutzer sehen einen Tag und navigieren per Swipe oder Tipp durch die Woche.
+                                Überschreibbar per Shortcode: <code>[time_calendar mobile="slider"]</code>
+                            </p>
+                            <p class="tc-stg-hint tc-stg-mobile-hint" data-for="optimized"
+                               <?php echo $mobile_calendar_view !== 'optimized' ? 'style="display:none"' : ''; ?>>
+                                Standard FullCalendar-Ansicht, angepasst für kleinere Bildschirme (Listenansicht).
+                            </p>
+                            <p class="tc-stg-hint tc-stg-mobile-hint" data-for="desktop"
                                <?php echo $mobile_calendar_view !== 'desktop' ? 'style="display:none"' : ''; ?>>
-                                Die Desktop-Ansicht wird auf kleinen Bildschirmen entsprechend kleiner
-                                dargestellt. Nutzer müssen gegebenenfalls manuell zoomen um alle Inhalte
-                                zu lesen.
+                                Die Desktop-Ansicht wird proportional verkleinert.
+                                Nutzer müssen gegebenenfalls manuell zoomen.
                             </p>
                         </div>
                     </div>
@@ -507,13 +523,15 @@ function tc_render_settings_page() {
                 'design'
             );
 
-            // ── Mobile-View Hint ───────────────────────────────
+            // ── Mobile-View Hints ──────────────────────────────
             var mobileRadios = document.querySelectorAll('input[name="tc_settings[mobile_calendar_view]"]');
-            var mobileHint   = document.getElementById('tc-mobile-desktop-hint');
-            if (mobileHint) {
+            var mobileHints  = document.querySelectorAll('.tc-stg-mobile-hint');
+            if (mobileHints.length) {
                 mobileRadios.forEach(function (radio) {
                     radio.addEventListener('change', function () {
-                        mobileHint.style.display = radio.value === 'desktop' && radio.checked ? '' : 'none';
+                        mobileHints.forEach(function (h) {
+                            h.style.display = h.dataset.for === radio.value && radio.checked ? '' : 'none';
+                        });
                     });
                 });
             }

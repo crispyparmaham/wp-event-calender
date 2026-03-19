@@ -117,21 +117,36 @@ function tc_handle_get_events() {
         $start_time      = get_field( 'start_time',        $post->ID );
         $end_date        = get_field( 'end_date',          $post->ID );
         $end_time        = get_field( 'end_time',          $post->ID );
-        $is_recurring    = (bool) get_field( 'is_recurring',    $post->ID );
         $recurring_day   = get_field( 'recurring_weekday', $post->ID );
         $recurring_until = get_field( 'recurring_until',   $post->ID );
         $event_dates_raw = get_field( 'event_dates',       $post->ID );
 
-        // ── Konflikterkennung: more_days + is_recurring gleichzeitig ──
-        $more_days_flag = (bool) get_field( 'more_days', $post->ID );
-        if ( $more_days_flag && $is_recurring ) {
-            error_log( 'Time Calendar: Event ID ' . $post->ID . ' hat more_days und is_recurring gleichzeitig aktiv. is_recurring wird ignoriert.' );
-            $is_recurring    = false;
-            $recurring_day   = false;
-            $recurring_until = '';
+        // ── Termintyp bestimmen (neu: event_date_type, Fallback: Legacy-Felder) ──
+        $date_type = get_field( 'event_date_type', $post->ID );
+        if ( empty( $date_type ) ) {
+            // Backward-Compat: aus Legacy-Feldern ableiten
+            $is_recurring   = (bool) get_field( 'is_recurring', $post->ID );
+            $more_days_flag = (bool) get_field( 'more_days',    $post->ID );
+            $has_repeater   = ! empty( $event_dates_raw ) && is_array( $event_dates_raw );
+
+            if ( $is_recurring ) {
+                $date_type = 'recurring';
+            } elseif ( $has_repeater ) {
+                $date_type = 'multiple';
+            } else {
+                $date_type = 'single';
+            }
+
+            // Konflikterkennung (Legacy)
+            if ( $more_days_flag && $is_recurring ) {
+                error_log( 'Time Calendar: Event ID ' . $post->ID . ' hat more_days und is_recurring gleichzeitig aktiv. is_recurring wird ignoriert.' );
+                $date_type = 'single';
+            }
         }
 
-        $has_repeater = ! empty( $event_dates_raw ) && is_array( $event_dates_raw );
+        $is_recurring_type = $date_type === 'recurring';
+        $is_multiple_type  = $date_type === 'multiple';
+        $has_repeater      = $is_multiple_type && ! empty( $event_dates_raw ) && is_array( $event_dates_raw );
 
         // ── Zukünftige Termine für Event-Übersichtskarten ─────────
         $future_dates = array();
@@ -146,7 +161,7 @@ function tc_handle_get_events() {
                     );
                 }
             }
-        } elseif ( $start_date && ! $is_recurring && $start_date >= $today_str ) {
+        } elseif ( $start_date && ! $is_recurring_type && $start_date >= $today_str ) {
             $future_dates[] = array(
                 'date_start' => $start_date,
                 'date_end'   => $end_date   ?: '',
@@ -171,9 +186,8 @@ function tc_handle_get_events() {
                 'participants'     => get_field( 'participants',        $post->ID ),
                 'price'            => get_field( 'normal_preis',        $post->ID ),
                 'editUrl'          => get_edit_post_link( $post->ID, 'raw' ),
-                // Repeater-Events haben explizite Termine → kein recurring-Badge
-                'isRecurring'      => ! $has_repeater && $is_recurring,
-                'recurringWeekday' => ( ! $has_repeater && $is_recurring && $recurring_day !== false )
+                'isRecurring'      => $is_recurring_type,
+                'recurringWeekday' => ( $is_recurring_type && $recurring_day !== false )
                                         ? (int) $recurring_day : null,
                 'startTime'        => $start_time ?: '',
                 'endTime'          => $end_time   ?: '',
@@ -201,10 +215,10 @@ function tc_handle_get_events() {
                     'extendedProps' => $ep,
                 ) );
             }
-            continue; // Repeater-Modus: Legacy-Felder ignorieren
+            continue;
         }
 
-        // ── Legacy: Einzeldatum + optionale Wiederholung ──────────
+        // ── Einzeltermin oder Wiederkehrend ──────────────────────
         if ( ! $start_date ) continue;
 
         $main_start = tc_build_iso( $start_date, $start_time );
@@ -212,7 +226,7 @@ function tc_handle_get_events() {
             ? tc_build_iso( $end_date, $end_time )
             : ( $end_time ? tc_build_iso( $start_date, $end_time ) : null );
 
-        if ( $is_recurring && $recurring_day !== false && $recurring_until ) {
+        if ( $is_recurring_type && $recurring_day !== false && $recurring_until ) {
             $events[] = array_merge( $shared_props, array(
                 'start'    => $main_start,
                 'end'      => $main_end,
