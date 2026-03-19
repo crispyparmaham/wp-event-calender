@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Einmalig / Repeater: Terminliste
-    const dates = (p.eventDates || []).slice(); // zukünftige Termine (von PHP vorgefiltert)
+    const dates = (p.eventDates || []).slice();
     if (dates.length === 0) return '';
 
     const MAX_VISIBLE = 3;
@@ -160,7 +160,7 @@ document.addEventListener('DOMContentLoaded', () => {
     container.querySelectorAll('.tc-dates-more').forEach(btn => {
       btn.addEventListener('click', e => {
         e.preventDefault();
-        e.stopPropagation(); // verhindert Navigation der übergeordneten <a>-Karte
+        e.stopPropagation();
         const datesEl  = btn.closest('.tc-evlist-dates');
         const expanded = datesEl.classList.toggle('is-expanded');
         btn.textContent = expanded
@@ -182,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const weekOnly       = el.dataset.weekOnly       === '1';
     const showEventList  = el.dataset.showEventList  === '1';
     const eventListTitle = el.dataset.eventListTitle || 'Unsere Events';
-    const lockedType     = el.dataset.lockedType     || '';   // gesetzt wenn type="training" etc.
+    const lockedType     = el.dataset.lockedType     || '';
     const mobileView     = el.dataset.mobileView || globalMobileView;
     const forceDesktop   = mobileView === 'desktop';
     const timeAbove      = globalTimePosition === 'above';
@@ -201,7 +201,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const getFiltered = () => {
       if (!cachedEvents) return [];
-      // lockedType hat immer Vorrang – ignoriert activeType komplett
       const filterBy = lockedType || (activeType !== 'all' ? activeType : '');
       return filterBy
         ? cachedEvents.filter(e => e.type === filterBy)
@@ -359,7 +358,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return s >= weekStart && s < weekEnd;
       });
 
-      // Zeitslots: key "HH:MM|HH:MM" → { startMins, startStr, endStr, days[][events] }
       const slotMap = new Map();
       weekEvents.forEach(e => {
         const s        = new Date(e.start);
@@ -367,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const startStr = fmtT(s.getHours(), s.getMinutes());
         const endStr   = endD ? fmtT(endD.getHours(), endD.getMinutes()) : '';
         const key      = `${startStr}|${endStr}`;
-        const dayIdx   = (s.getDay() + 6) % 7; // Mo=0 … So=6
+        const dayIdx   = (s.getDay() + 6) % 7;
         if (!slotMap.has(key)) {
           slotMap.set(key, {
             startMins: s.getHours() * 60 + s.getMinutes(),
@@ -414,23 +412,19 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         activeGroups.forEach(group => {
           if (!timeAbove) {
-            // Modus "links": Gruppenbezeichnung als eigene Kopfzeile
             html += `<tr class="tc-wp-group-row"><td colspan="8" class="tc-wp-group-label">${group.label}</td></tr>`;
           }
           group.slots.forEach((slot, slotIdx) => {
             html += '<tr class="tc-wp-slot-row">';
             if (!timeAbove) {
-              // Modus "links": Uhrzeit in linker Spalte
               html += '<td class="tc-wp-time">';
               html += `<span class="tc-wp-time-start">${slot.startStr}</span>`;
               if (slot.endStr) html += `<span class="tc-wp-time-end">${slot.endStr}</span>`;
               html += '</td>';
             } else if (slotIdx === 0) {
-              // Modus "oben": Gruppenbezeichnung in linker Spalte, rowspan über alle Slots
               html += `<td class="tc-wp-time tc-wp-time--group" rowspan="${group.slots.length}">`;
               html += `<span class="tc-wp-group-label-cell">${group.label}</span>`;
               html += '</td>';
-              // Weitere Slots dieser Gruppe lassen die linke Zelle weg (rowspan)
             }
             slot.days.forEach(dayEvs => {
               if (dayEvs.length === 0) {
@@ -539,7 +533,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
     };
 
-    // ── FullCalendar initialisieren (noch ohne Events) ────────
+    // ── FullCalendar initialisieren (auf ALLEN Geräten rendern) ──
     const calendar = new FullCalendar.Calendar(el, {
       initialView:   getResponsiveView(),
       initialDate:   weekOnly ? new Date() : undefined,
@@ -564,7 +558,7 @@ document.addEventListener('DOMContentLoaded', () => {
       windowResize() {
         syncSliderVisibility();
         if (weekOnly || forceDesktop) return;
-        if (sliderActive) return; // Slider übernimmt auf Mobile
+        if (sliderActive) return;
         calendar.setOption('headerToolbar', getResponsiveToolbar());
         const targetView = getResponsiveView();
         if (calendar.view.type !== targetView) calendar.changeView(targetView);
@@ -580,6 +574,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
     });
 
+    // FullCalendar auf allen Geräten rendern (auch Mobile)
     calendar.render();
 
     // ── Desktop-Forced: zoom to fit, no horizontal scroll ────
@@ -596,14 +591,13 @@ document.addEventListener('DOMContentLoaded', () => {
         if (weekPlanWrap) weekPlanWrap.style.zoom = zoom;
       };
 
-      // Direkt nach dem Render + bei jedem Resize
       requestAnimationFrame(applyZoom);
       window.addEventListener('resize', applyZoom);
     }
 
     // ── Week-Only Mode ────────────────────────────────────────
     if (weekOnly) {
-      el.style.display = 'none';
+      el.classList.add('tc-cal-hidden');
       const viewToggle = wrap.querySelector('.tc-view-toggle');
       if (viewToggle) viewToggle.style.display = 'none';
 
@@ -615,7 +609,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // ── Day Slider Komponente (Mobile) ──────────────────────────
-    let sliderDayIndex   = 0; // 0 = Mo … 6 = So
+    let sliderDayIndex   = 0;
     let sliderWeekOffset = 0;
     let sliderActive     = false;
 
@@ -627,6 +621,14 @@ document.addEventListener('DOMContentLoaded', () => {
       d.setDate(d.getDate() - (day === 0 ? 6 : day - 1) + off * 7);
       d.setHours(0, 0, 0, 0);
       return d;
+    };
+
+    /** Slider nur initialisieren wenn Events geladen sind */
+    const initDaySlider = (events) => {
+      if (!sliderEnabled) return;
+      if (events === null) return; // Events noch nicht geladen
+      // events kann [] sein = leerer Kalender, das ist ok
+      buildSliderHTML();
     };
 
     const buildSliderHTML = () => {
@@ -644,7 +646,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const filtered = getFiltered();
 
-      // Events pro Tag zuordnen
       const dayEvents = days.map(d => {
         const dayStart = new Date(d);
         const dayEnd   = new Date(d);
@@ -654,7 +655,6 @@ document.addEventListener('DOMContentLoaded', () => {
           .sort((a, b) => new Date(a.start) - new Date(b.start));
       });
 
-      // Wochentag-Leiste
       const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
       let barHTML = '<div class="tc-ds-weekbar">';
       days.forEach((d, i) => {
@@ -670,7 +670,6 @@ document.addEventListener('DOMContentLoaded', () => {
       });
       barHTML += '</div>';
 
-      // Header mit Datum + Pfeile
       const activeDay  = days[sliderDayIndex];
       const dayName    = WEEKDAY_LABELS[activeDay.getDay()].substring(0, 2);
       const dayNum     = activeDay.getDate();
@@ -681,13 +680,12 @@ document.addEventListener('DOMContentLoaded', () => {
       headerHTML += '<button class="tc-ds-nav tc-ds-next" aria-label="Nächster Tag">&#8250;</button>';
       headerHTML += '</div>';
 
-      // Event-Karten für den aktiven Tag
       const evs = dayEvents[sliderDayIndex];
       let bodyHTML = '<div class="tc-ds-viewport"><div class="tc-ds-track">';
 
       if (evs.length === 0) {
         const isToday = activeDay.getTime() === today.getTime();
-        bodyHTML += `<div class="tc-ds-empty">${isToday ? 'Heute keine Trainings' : 'Keine Trainings an diesem Tag'}</div>`;
+        bodyHTML += `<div class="tc-ds-empty">${isToday ? 'Heute keine Termine' : 'Keine Termine an diesem Tag'}</div>`;
       } else {
         evs.forEach(ev => {
           const color = ev.color || '#4f46e5';
@@ -716,7 +714,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       bodyHTML += '</div></div>';
 
-      // "Nächste Woche" Button am Sonntag
       let footerHTML = '';
       if (sliderDayIndex === 6) {
         footerHTML = '<button class="tc-ds-next-week">Nächste Woche &#8594;</button>';
@@ -744,7 +741,6 @@ document.addEventListener('DOMContentLoaded', () => {
         buildSliderHTML();
       });
 
-      // Touch-Swipe
       initSliderSwipe();
     };
 
@@ -781,31 +777,48 @@ document.addEventListener('DOMContentLoaded', () => {
       }, { passive: true });
     };
 
+    /**
+     * Sichtbarkeit umschalten — ausschließlich per CSS-Klassen.
+     * Wird nur aufgerufen NACHDEM cachedEvents befüllt ist.
+     */
     const syncSliderVisibility = () => {
       if (!sliderEnabled) return;
-      const mobile = isMobile();
+      if (cachedEvents === null) return; // Events noch nicht geladen
+
+      const mobile     = isMobile();
       const viewToggle = wrap.querySelector('.tc-view-toggle');
+
       if (mobile && !sliderActive) {
         sliderActive = true;
-        sliderWrap.style.display = '';
-        el.style.display = 'none';
-        if (weekPlanWrap) weekPlanWrap.style.display = 'none';
-        if (viewToggle) viewToggle.style.display = 'none';
+        sliderWrap.classList.remove('tc-slider-hidden');
+        el.classList.add('tc-cal-hidden');
+        if (weekPlanWrap) weekPlanWrap.classList.add('tc-cal-hidden');
+        if (viewToggle) viewToggle.classList.add('tc-cal-hidden');
+
         // Setze Slider auf heute
-        const now     = new Date();
-        const dayIdx  = (now.getDay() + 6) % 7; // Mo=0
+        const now    = new Date();
+        const dayIdx = (now.getDay() + 6) % 7;
         sliderDayIndex   = dayIdx;
         sliderWeekOffset = 0;
-        buildSliderHTML();
+        initDaySlider(cachedEvents);
       } else if (!mobile && sliderActive) {
         sliderActive = false;
-        sliderWrap.style.display = 'none';
-        el.style.display = '';
-        if (viewToggle && !weekOnly) viewToggle.style.display = '';
+        sliderWrap.classList.add('tc-slider-hidden');
+        el.classList.remove('tc-cal-hidden');
+        if (weekPlanWrap) weekPlanWrap.classList.remove('tc-cal-hidden');
+        if (viewToggle && !weekOnly) viewToggle.classList.remove('tc-cal-hidden');
       }
     };
 
-    // ── Events einmalig per AJAX laden, dann statisch setzen ──
+    // ── orientationchange Handler ────────────────────────────
+    window.addEventListener('orientationchange', () => {
+      // Kurze Verzögerung damit der Browser die neuen Dimensionen hat
+      setTimeout(() => syncSliderVisibility(), 150);
+    });
+
+    // ── Events einmalig per AJAX laden ────────────────────────
+    // WICHTIG: FullCalendar ist bereits gerendert.
+    // AJAX abwarten → cachedEvents befüllen → ERST DANN Slider init.
     (async () => {
       showLoader();
       try {
@@ -818,6 +831,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       hideLoader();
 
+      // Events in FullCalendar setzen (auf allen Geräten)
       if (weekOnly) {
         buildWeekPlan();
       } else {
@@ -827,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (showEventList) tcRenderEventOverview(overviewEl, getFiltered(), eventListTitle);
 
-      // Slider initial prüfen und bei Resize umschalten
+      // JETZT erst: Slider prüfen (cachedEvents ist befüllt)
       syncSliderVisibility();
     })();
 
@@ -869,10 +883,10 @@ document.addEventListener('DOMContentLoaded', () => {
           calMon.setDate(calDate.getDate() - (calDay === 0 ? 6 : calDay - 1));
           calMon.setHours(0, 0, 0, 0);
           weekPlanOffset = Math.round((calMon - getWeekStart(0)) / (7 * 86400000));
-          el.style.display = 'none';
+          el.classList.add('tc-cal-hidden');
           if (weekPlanWrap) { weekPlanWrap.style.display = ''; buildWeekPlan(); }
         } else {
-          el.style.display = '';
+          el.classList.remove('tc-cal-hidden');
           if (weekPlanWrap) weekPlanWrap.style.display = 'none';
         }
       });

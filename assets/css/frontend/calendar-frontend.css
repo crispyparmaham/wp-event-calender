@@ -6,6 +6,10 @@
  * ─────────────────────────────────────────────────────────────────
  */
 
+/* ─── Visibility Helpers (Slider / Calendar toggle) ──────────────── */
+.tc-slider-hidden { display: none !important; }
+.tc-cal-hidden    { display: none !important; }
+
 /* ─── Wrapper ────────────────────────────────────────────────────── */
 .tc-frontend-wrap {
   position: static;

@@ -129,7 +129,7 @@ add_action( 'acf/include_fields', function () {
                 'endpoint'  => 0,
             ),
 
-            // Termintyp-Auswahl
+            // Termintyp-Auswahl (2 Modi)
             array(
                 'key'           => 'field_tc_event_date_type',
                 'label'         => 'Termintyp',
@@ -137,7 +137,6 @@ add_action( 'acf/include_fields', function () {
                 'type'          => 'radio',
                 'choices'       => array(
                     'single'    => 'Einzeltermin',
-                    'multiple'  => 'Mehrere Termine',
                     'recurring' => 'Wiederkehrend',
                 ),
                 'default_value' => 'single',
@@ -186,21 +185,32 @@ add_action( 'acf/include_fields', function () {
                 ),
             ),
 
-            // ── Nur Einzeltermin: Enddatum ──
+            // ── Nur Einzeltermin: Mehrtägig-Checkbox + Enddatum ──
             array(
-                'key'            => 'field_tc_end_date',
-                'label'          => 'Enddatum (optional)',
-                'name'           => 'end_date',
-                'type'           => 'date_picker',
-                'display_format' => 'd.m.Y',
-                'return_format'  => 'Y-m-d',
-                'first_day'      => 1,
-                'instructions'   => 'Nur bei mehrtägigen Events ausfüllen.',
+                'key'           => 'field_tc_multi_day',
+                'label'         => 'Mehrtägig',
+                'name'          => 'multi_day',
+                'type'          => 'true_false',
+                'ui'            => 1,
+                'default_value' => 0,
                 'conditional_logic' => array( array( array(
                     'field'    => 'field_tc_event_date_type',
                     'operator' => '==',
                     'value'    => 'single',
                 ) ) ),
+            ),
+            array(
+                'key'            => 'field_tc_end_date',
+                'label'          => 'Bis Datum',
+                'name'           => 'end_date',
+                'type'           => 'date_picker',
+                'display_format' => 'd.m.Y',
+                'return_format'  => 'Y-m-d',
+                'first_day'      => 1,
+                'conditional_logic' => array( array(
+                    array( 'field' => 'field_tc_event_date_type', 'operator' => '==', 'value' => 'single' ),
+                    array( 'field' => 'field_tc_multi_day',       'operator' => '==', 'value' => '1' ),
+                ) ),
             ),
 
             // ── Nur Wiederkehrend: Wochentag + Bis-Datum ──
@@ -244,19 +254,19 @@ add_action( 'acf/include_fields', function () {
                 ) ) ),
             ),
 
-            // ── Nur Mehrere Termine: Repeater ──
+            // ── Einzeltermin: optionaler Repeater für weitere Termine ──
             array(
                 'key'          => 'field_tc_event_dates',
-                'label'        => 'Termine',
+                'label'        => '+ Weitere Termine hinzufügen',
                 'name'         => 'event_dates',
                 'type'         => 'repeater',
                 'layout'       => 'block',
-                'button_label' => 'Termin hinzufügen',
-                'instructions' => 'Fügen Sie hier die einzelnen Termine hinzu.',
+                'button_label' => 'Weiteren Termin hinzufügen',
+                'instructions' => 'Optional: Falls dasselbe Event an mehreren Daten stattfindet.',
                 'conditional_logic' => array( array( array(
                     'field'    => 'field_tc_event_date_type',
                     'operator' => '==',
-                    'value'    => 'multiple',
+                    'value'    => 'single',
                 ) ) ),
                 'sub_fields'   => array(
                     array(

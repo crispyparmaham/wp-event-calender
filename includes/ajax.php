@@ -19,13 +19,6 @@ function tc_build_iso( $date, $time = '' ) {
 // als Haupt-Post ausgegeben, nicht hier).
 // ─────────────────────────────────────────────
 function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $weekday_int, $until ) {
-    // $start_date : 'Y-m-d'
-    // $start_time : 'H:i'
-    // $end_date   : 'Y-m-d' | null  (nur bei mehrtägig)
-    // $end_time   : 'H:i'   | null
-    // $weekday_int: 0 (So) – 6 (Sa)
-    // $until      : 'Y-m-d'
-
     $occurrences = array();
 
     try {
@@ -35,7 +28,6 @@ function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $we
         return $occurrences;
     }
 
-    // Dauer berechnen wenn mehrtägig
     $duration = null;
     if ( $end_date ) {
         try {
@@ -46,11 +38,8 @@ function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $we
         }
     }
 
-    // Ersten Occurrence-Termin bestimmen:
-    // Immer mindestens 1 Tag nach Startdatum, dann zum
-    // gesuchten Wochentag springen.
     $cur     = clone $start_dt;
-    $cur->modify( '+1 day' ); // garantiert: nie gleich wie Startdatum
+    $cur->modify( '+1 day' );
     $cur_dow = (int) $cur->format('w');
     $diff    = ( $weekday_int - $cur_dow + 7 ) % 7;
     $cur->modify( "+{$diff} days" );
@@ -105,7 +94,7 @@ function tc_handle_get_events() {
     ) );
 
     $events    = array();
-    $today_str = wp_date( 'Y-m-d' ); // Website-Zeitzone
+    $today_str = wp_date( 'Y-m-d' );
 
     foreach ( $posts as $post ) {
         $type  = get_field( 'event_type', $post->ID ) ?: 'training';
@@ -121,7 +110,7 @@ function tc_handle_get_events() {
         $recurring_until = get_field( 'recurring_until',   $post->ID );
         $event_dates_raw = get_field( 'event_dates',       $post->ID );
 
-        // ── Termintyp bestimmen (neu: event_date_type, Fallback: Legacy-Felder) ──
+        // ── Termintyp bestimmen ──────────────────────────────────
         $date_type = get_field( 'event_date_type', $post->ID );
         if ( empty( $date_type ) ) {
             // Backward-Compat: aus Legacy-Feldern ableiten
@@ -132,25 +121,40 @@ function tc_handle_get_events() {
             if ( $is_recurring ) {
                 $date_type = 'recurring';
             } elseif ( $has_repeater ) {
-                $date_type = 'multiple';
+                $date_type = 'single'; // treat legacy 'multiple' as 'single' with repeater
             } else {
                 $date_type = 'single';
             }
 
-            // Konflikterkennung (Legacy)
             if ( $more_days_flag && $is_recurring ) {
                 error_log( 'Time Calendar: Event ID ' . $post->ID . ' hat more_days und is_recurring gleichzeitig aktiv. is_recurring wird ignoriert.' );
                 $date_type = 'single';
             }
         }
 
+        // Treat legacy 'multiple' as 'single' with repeater
+        if ( $date_type === 'multiple' ) {
+            $date_type = 'single';
+        }
+
         $is_recurring_type = $date_type === 'recurring';
-        $is_multiple_type  = $date_type === 'multiple';
-        $has_repeater      = $is_multiple_type && ! empty( $event_dates_raw ) && is_array( $event_dates_raw );
+        $has_repeater      = ! empty( $event_dates_raw ) && is_array( $event_dates_raw );
 
         // ── Zukünftige Termine für Event-Übersichtskarten ─────────
         $future_dates = array();
-        if ( $has_repeater ) {
+
+        // Haupttermin als erster zukünftiger Termin (bei single)
+        if ( ! $is_recurring_type && $start_date && $start_date >= $today_str ) {
+            $future_dates[] = array(
+                'date_start' => $start_date,
+                'date_end'   => $end_date   ?: '',
+                'time_start' => $start_time ?: '',
+                'time_end'   => $end_time   ?: '',
+            );
+        }
+
+        // Repeater-Termine
+        if ( $has_repeater && ! $is_recurring_type ) {
             foreach ( $event_dates_raw as $ed ) {
                 if ( ! empty( $ed['date_start'] ) && $ed['date_start'] >= $today_str ) {
                     $future_dates[] = array(
@@ -161,13 +165,6 @@ function tc_handle_get_events() {
                     );
                 }
             }
-        } elseif ( $start_date && ! $is_recurring_type && $start_date >= $today_str ) {
-            $future_dates[] = array(
-                'date_start' => $start_date,
-                'date_end'   => $end_date   ?: '',
-                'time_start' => $start_time ?: '',
-                'time_end'   => $end_time   ?: '',
-            );
         }
 
         $shared_props = array(
@@ -179,6 +176,7 @@ function tc_handle_get_events() {
             'status'  => $post->post_status,
             'extendedProps' => array(
                 'type'             => $type,
+                'dateType'         => $date_type,
                 'permalink'        => get_permalink( $post->ID ),
                 'intro_text'       => $intro_text,
                 'leadership'       => get_field( 'seminar_leadership', $post->ID ),
@@ -192,11 +190,86 @@ function tc_handle_get_events() {
                 'startTime'        => $start_time ?: '',
                 'endTime'          => $end_time   ?: '',
                 'eventDates'       => $future_dates,
-                'dateIndex'        => null,
+                'dateIndex'        => -1, // Default: Haupttermin
             ),
         );
 
-        // ── Mehrere Termine (Repeater) ─────────────────────────────
+        // ── Haupttermin als Event ──────────────────────────────────
+        if ( ! $start_date ) {
+            // Kein Hauptdatum? Nur Repeater-Events ausgeben
+            if ( $has_repeater && ! $is_recurring_type ) {
+                foreach ( $event_dates_raw as $idx => $ed ) {
+                    if ( empty( $ed['date_start'] ) ) continue;
+                    $ev_start = tc_build_iso( $ed['date_start'], $ed['time_start'] ?? '' );
+                    $ev_end   = ! empty( $ed['date_end'] )
+                        ? tc_build_iso( $ed['date_end'],   $ed['time_end'] ?? '' )
+                        : ( ! empty( $ed['time_end'] ) ? tc_build_iso( $ed['date_start'], $ed['time_end'] ) : null );
+
+                    $ep              = $shared_props['extendedProps'];
+                    $ep['dateIndex'] = $idx;
+
+                    $events[] = array_merge( $shared_props, array(
+                        'start'         => $ev_start,
+                        'end'           => $ev_end,
+                        'editable'      => true,
+                        'extendedProps' => $ep,
+                    ) );
+                }
+            }
+            continue;
+        }
+
+        $main_start = tc_build_iso( $start_date, $start_time );
+        $main_end   = $end_date
+            ? tc_build_iso( $end_date, $end_time )
+            : ( $end_time ? tc_build_iso( $start_date, $end_time ) : null );
+
+        // ── Wiederkehrend ──────────────────────────────────────────
+        if ( $is_recurring_type && $recurring_day !== false && $recurring_until ) {
+            $ep              = $shared_props['extendedProps'];
+            $ep['dateIndex'] = -1; // Haupttermin
+
+            $events[] = array_merge( $shared_props, array(
+                'start'         => $main_start,
+                'end'           => $main_end,
+                'title'         => '🔁 ' . $post->post_title,
+                'editable'      => true,
+                'extendedProps' => $ep,
+            ) );
+
+            $occurrences = tc_get_occurrences(
+                $start_date, $start_time, $end_date, $end_time,
+                (int) $recurring_day, $recurring_until
+            );
+
+            foreach ( $occurrences as $occ ) {
+                $ep_occ              = $shared_props['extendedProps'];
+                $ep_occ['dateIndex'] = -2; // Occurrence
+
+                $events[] = array_merge( $shared_props, array(
+                    'start'         => $occ['start'],
+                    'end'           => $occ['end'],
+                    'title'         => '🔁 ' . $post->post_title,
+                    'editable'      => false,
+                    'color'         => $color . 'bb',
+                    'extendedProps' => $ep_occ,
+                ) );
+            }
+            continue;
+        }
+
+        // ── Einzeltermin (Hauptdatum) ──────────────────────────────
+        $ep              = $shared_props['extendedProps'];
+        $ep['dateIndex'] = -1;
+
+        $events[] = array_merge( $shared_props, array(
+            'start'         => $main_start,
+            'end'           => $main_end,
+            'editable'      => true,
+            'extendedProps' => $ep,
+        ) );
+
+        // ── Zusätzliche Repeater-Termine ───────────────────────────
         if ( $has_repeater ) {
             foreach ( $event_dates_raw as $idx => $ed ) {
                 if ( empty( $ed['date_start'] ) ) continue;
@@ -215,45 +288,6 @@ function tc_handle_get_events() {
                     'extendedProps' => $ep,
                 ) );
             }
-            continue;
-        }
-
-        // ── Einzeltermin oder Wiederkehrend ──────────────────────
-        if ( ! $start_date ) continue;
-
-        $main_start = tc_build_iso( $start_date, $start_time );
-        $main_end   = $end_date
-            ? tc_build_iso( $end_date, $end_time )
-            : ( $end_time ? tc_build_iso( $start_date, $end_time ) : null );
-
-        if ( $is_recurring_type && $recurring_day !== false && $recurring_until ) {
-            $events[] = array_merge( $shared_props, array(
-                'start'    => $main_start,
-                'end'      => $main_end,
-                'title'    => '🔁 ' . $post->post_title,
-                'editable' => true,
-            ) );
-
-            $occurrences = tc_get_occurrences(
-                $start_date, $start_time, $end_date, $end_time,
-                (int) $recurring_day, $recurring_until
-            );
-
-            foreach ( $occurrences as $occ ) {
-                $events[] = array_merge( $shared_props, array(
-                    'start'    => $occ['start'],
-                    'end'      => $occ['end'],
-                    'title'    => '🔁 ' . $post->post_title,
-                    'editable' => false,
-                    'color'    => $color . 'bb',
-                ) );
-            }
-        } else {
-            $events[] = array_merge( $shared_props, array(
-                'start'    => $main_start,
-                'end'      => $main_end,
-                'editable' => true,
-            ) );
         }
     }
 
@@ -283,12 +317,13 @@ add_action( 'wp_ajax_' . TC_AJAX_CREATE_EVENT, function () {
     }
 
     $title        = sanitize_text_field( $_POST['title']             ?? '' );
-    $start        = sanitize_text_field( $_POST['start']             ?? '' ); // Y-m-d\TH:i
+    $start        = sanitize_text_field( $_POST['start']             ?? '' );
     $end          = sanitize_text_field( $_POST['end']               ?? '' );
     $type         = sanitize_text_field( $_POST['type']              ?? 'training' );
-    $is_recurring = (int) ( $_POST['is_recurring']                   ?? 0 );
+    $date_type    = sanitize_text_field( $_POST['date_type']         ?? 'single' );
     $rec_weekday  = sanitize_text_field( $_POST['recurring_weekday'] ?? '' );
     $rec_until    = sanitize_text_field( $_POST['recurring_until']   ?? '' );
+    $multi_day    = (int) ( $_POST['multi_day']                      ?? 0 );
 
     if ( ! $title || ! $start ) {
         wp_send_json_error( array( 'message' => 'Titel und Startdatum sind Pflichtfelder.' ) );
@@ -317,20 +352,47 @@ add_action( 'wp_ajax_' . TC_AJAX_CREATE_EVENT, function () {
         wp_send_json_error( array( 'message' => $post_id->get_error_message() ) );
     }
 
+    // Termintyp setzen
+    $valid_types = array( 'single', 'recurring' );
+    $date_type   = in_array( $date_type, $valid_types, true ) ? $date_type : 'single';
+    update_field( 'event_date_type', $date_type, $post_id );
+
     update_field( 'event_type',  $type,       $post_id );
     update_field( 'start_date',  $start_date, $post_id );
     if ( $start_time ) update_field( 'start_time', $start_time, $post_id );
     if ( $end_time )   update_field( 'end_time',   $end_time,   $post_id );
 
-    if ( $end_date ) {
-        update_field( 'more_days', 1,         $post_id );
+    if ( $end_date && $multi_day ) {
+        update_field( 'multi_day', 1,         $post_id );
         update_field( 'end_date',  $end_date, $post_id );
     }
 
-    if ( $is_recurring && $rec_weekday !== '' && $rec_until ) {
-        update_field( 'is_recurring',      1,            $post_id );
+    if ( $date_type === 'recurring' && $rec_weekday !== '' && $rec_until ) {
         update_field( 'recurring_weekday', $rec_weekday, $post_id );
         update_field( 'recurring_until',   $rec_until,   $post_id );
+    }
+
+    // Zusätzliche Termine aus Modal-Repeater speichern
+    $additional = isset( $_POST['additional_dates'] ) && is_array( $_POST['additional_dates'] )
+        ? $_POST['additional_dates']
+        : array();
+
+    if ( ! empty( $additional ) && $date_type === 'single' ) {
+        $repeater = array();
+        foreach ( $additional as $ad ) {
+            $ad_date = sanitize_text_field( $ad['date']       ?? '' );
+            $ad_from = sanitize_text_field( $ad['time_start'] ?? '' );
+            $ad_to   = sanitize_text_field( $ad['time_end']   ?? '' );
+            if ( ! $ad_date ) continue;
+            $repeater[] = array(
+                'date_start' => $ad_date,
+                'time_start' => $ad_from,
+                'time_end'   => $ad_to,
+            );
+        }
+        if ( ! empty( $repeater ) ) {
+            update_field( 'event_dates', $repeater, $post_id );
+        }
     }
 
     wp_send_json_success( array(
@@ -341,11 +403,16 @@ add_action( 'wp_ajax_' . TC_AJAX_CREATE_EVENT, function () {
 
 // ─────────────────────────────────────────────
 // 3. Event per Drag & Drop / Resize updaten
+//
+// dateIndex:
+//   >= 0  → Repeater-Eintrag (Index)
+//   -1    → Haupttermin (start_date / start_time)
+//   -2    → Recurring Occurrence (nur start_date)
 // ─────────────────────────────────────────────
 add_action( 'wp_ajax_' . TC_AJAX_UPDATE_EVENT, function () {
     check_ajax_referer( 'tc_nonce', 'nonce' );
 
-    $post_id = intval( $_POST['id'] ?? 0 );
+    $post_id    = intval( $_POST['id'] ?? 0 );
 
     if ( ! $post_id || ! current_user_can( 'edit_post', $post_id ) ) {
         wp_send_json_error( array( 'message' => 'Keine Berechtigung.' ), 403 );
@@ -353,10 +420,22 @@ add_action( 'wp_ajax_' . TC_AJAX_UPDATE_EVENT, function () {
 
     $start      = sanitize_text_field( $_POST['start']      ?? '' );
     $end        = sanitize_text_field( $_POST['end']        ?? '' );
-    $date_index = isset( $_POST['date_index'] ) && $_POST['date_index'] !== '' ? (int) $_POST['date_index'] : null;
+    $date_index = isset( $_POST['date_index'] ) && $_POST['date_index'] !== '' ? (int) $_POST['date_index'] : -1;
 
-    // ── Repeater-Modus: einzelnen Termin aktualisieren ──
-    if ( $date_index !== null ) {
+    // ── Recurring Occurrence (dateIndex = -2) ─────────────────
+    if ( $date_index === -2 ) {
+        // Nur Haupttermin (start_date) updaten, Occurrences werden relativ berechnet
+        if ( $start ) {
+            $sp = explode( 'T', $start );
+            update_field( 'start_date', $sp[0], $post_id );
+            if ( ! empty( $sp[1] ) ) update_field( 'start_time', substr( $sp[1], 0, 5 ), $post_id );
+        }
+        tc_clear_events_cache();
+        wp_send_json_success( array( 'id' => $post_id ) );
+    }
+
+    // ── Repeater-Eintrag (dateIndex >= 0) ─────────────────────
+    if ( $date_index >= 0 ) {
         $event_dates = get_field( 'event_dates', $post_id );
         if ( ! is_array( $event_dates ) || ! isset( $event_dates[ $date_index ] ) ) {
             wp_send_json_error( array( 'message' => 'Termin nicht gefunden.' ) );
@@ -387,7 +466,7 @@ add_action( 'wp_ajax_' . TC_AJAX_UPDATE_EVENT, function () {
         wp_send_json_success( array( 'id' => $post_id ) );
     }
 
-    // ── Legacy-Modus: klassische Einzeldatum-Felder ──
+    // ── Haupttermin (dateIndex = -1) ──────────────────────────
     if ( $start ) {
         $sp = explode( 'T', $start );
         update_field( 'start_date', $sp[0], $post_id );
@@ -399,15 +478,15 @@ add_action( 'wp_ajax_' . TC_AJAX_UPDATE_EVENT, function () {
         $start_date = explode( 'T', $start )[0] ?? '';
 
         if ( $ep[0] !== $start_date ) {
-            update_field( 'more_days', 1,      $post_id );
+            update_field( 'multi_day', 1,      $post_id );
             update_field( 'end_date',  $ep[0], $post_id );
         } else {
-            update_field( 'more_days', 0,    $post_id );
+            update_field( 'multi_day', 0,    $post_id );
             update_field( 'end_date',  null, $post_id );
         }
         if ( ! empty( $ep[1] ) ) update_field( 'end_time', substr( $ep[1], 0, 5 ), $post_id );
     } else {
-        update_field( 'more_days', 0,    $post_id );
+        update_field( 'multi_day', 0,    $post_id );
         update_field( 'end_date',  null, $post_id );
         update_field( 'end_time',  null, $post_id );
     }

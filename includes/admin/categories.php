@@ -347,3 +347,61 @@ function tc_get_category_by_id( $id ) {
         ARRAY_A
     );
 }
+
+// ─────────────────────────────────────────────
+// AJAX: Kategorien laden (für Modal-Dropdown)
+// ─────────────────────────────────────────────
+add_action( 'wp_ajax_tc_get_categories', function () {
+    check_ajax_referer( 'tc_nonce', 'nonce' );
+
+    $categories = tc_get_all_categories();
+    wp_send_json_success( $categories );
+} );
+
+// ─────────────────────────────────────────────
+// AJAX: Neue Kategorie anlegen (aus Modal)
+// ─────────────────────────────────────────────
+add_action( 'wp_ajax_tc_create_category', function () {
+    check_ajax_referer( 'tc_nonce', 'nonce' );
+
+    if ( ! current_user_can( 'administrator' ) ) {
+        wp_send_json_error( array( 'message' => 'Keine Berechtigung.' ), 403 );
+    }
+
+    $name  = sanitize_text_field( $_POST['name']  ?? '' );
+    $color = sanitize_hex_color( $_POST['color'] ?? '#4f46e5' ) ?: '#4f46e5';
+
+    if ( ! $name ) {
+        wp_send_json_error( array( 'message' => 'Name ist ein Pflichtfeld.' ) );
+    }
+
+    $slug = sanitize_title( $name );
+
+    // Prüfen ob Slug bereits existiert
+    $existing = tc_get_category( $slug );
+    if ( $existing ) {
+        wp_send_json_error( array( 'message' => 'Diese Kategorie existiert bereits.' ) );
+    }
+
+    global $wpdb;
+    $result = $wpdb->insert(
+        $wpdb->prefix . 'tc_event_categories',
+        array(
+            'name'       => $name,
+            'slug'       => $slug,
+            'color'      => $color,
+            'sort_order' => 99,
+        )
+    );
+
+    if ( ! $result ) {
+        wp_send_json_error( array( 'message' => 'Kategorie konnte nicht angelegt werden.' ) );
+    }
+
+    wp_send_json_success( array(
+        'id'    => $wpdb->insert_id,
+        'name'  => $name,
+        'slug'  => $slug,
+        'color' => $color,
+    ) );
+} );

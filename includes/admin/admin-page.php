@@ -40,34 +40,99 @@ function tc_render_calendar_page() { ?>
             <div class="tc-modal-inner">
                 <h2>Neues Event anlegen</h2>
 
+                <!-- Titel -->
                 <label>Titel <span class="required">*</span>
                     <input type="text" id="tc-modal-title" placeholder="z.B. Kettlebell Kurs" />
                 </label>
 
-                <label>Event-Typ
-                    <select id="tc-modal-type">
-                        <option value="training">Gruppentraining</option>
-                        <option value="seminar">Seminar</option>
-                    </select>
+                <!-- Kategorie mit AJAX-Dropdown + Neue Kategorie -->
+                <label>Kategorie
+                    <div class="tc-modal-cat-row">
+                        <select id="tc-modal-type">
+                            <option value="">Wird geladen…</option>
+                        </select>
+                        <button type="button" id="tc-modal-new-cat-btn" class="button button-small">+ Neue Kategorie</button>
+                    </div>
                 </label>
 
-                <label>Startdatum & Uhrzeit <span class="required">*</span>
-                    <input type="datetime-local" id="tc-modal-start" />
-                </label>
-
-                <label>Enddatum & Uhrzeit <small>(nur bei mehrtägigen Events)</small>
-                    <input type="datetime-local" id="tc-modal-end" />
-                </label>
+                <!-- Inline: Neue Kategorie anlegen -->
+                <div id="tc-modal-new-cat" class="tc-modal-new-cat" style="display:none;">
+                    <label>Name <span class="required">*</span>
+                        <input type="text" id="tc-modal-cat-name" placeholder="z.B. Workshop" />
+                    </label>
+                    <label>Farbe
+                        <div class="tc-modal-color-row">
+                            <input type="color" id="tc-modal-cat-color" value="#4f46e5" />
+                            <span id="tc-modal-cat-color-val">#4f46e5</span>
+                        </div>
+                    </label>
+                    <div class="tc-modal-new-cat-actions">
+                        <button type="button" id="tc-modal-cat-save" class="button button-primary button-small">Anlegen</button>
+                        <button type="button" id="tc-modal-cat-cancel" class="button button-small">Abbrechen</button>
+                    </div>
+                    <p id="tc-modal-cat-error" class="tc-error" style="display:none;"></p>
+                </div>
 
                 <hr class="tc-divider" />
 
-                <label class="tc-toggle-row">
-                    <span>Wiederkehrendes Event?</span>
-                    <input type="checkbox" id="tc-modal-recurring" />
-                </label>
+                <!-- Termintyp Radio -->
+                <div class="tc-modal-date-type">
+                    <label class="tc-radio-label">
+                        <input type="radio" name="tc-modal-date-type" value="single" checked />
+                        Einzeltermin
+                    </label>
+                    <label class="tc-radio-label">
+                        <input type="radio" name="tc-modal-date-type" value="recurring" />
+                        Wiederkehrend
+                    </label>
+                </div>
 
-                <div id="tc-recurring-fields" style="display:none;">
-                    <label>Wochentag
+                <!-- ── Einzeltermin-Felder ── -->
+                <div id="tc-fields-single">
+                    <label>Datum <span class="required">*</span>
+                        <input type="date" id="tc-modal-date" />
+                    </label>
+                    <div class="tc-modal-time-row">
+                        <label>Von
+                            <input type="time" id="tc-modal-time-start" />
+                        </label>
+                        <label>Bis
+                            <input type="time" id="tc-modal-time-end" />
+                        </label>
+                    </div>
+
+                    <label class="tc-toggle-row">
+                        <span>Mehrtägig</span>
+                        <input type="checkbox" id="tc-modal-multiday" />
+                    </label>
+                    <div id="tc-modal-enddate-wrap" style="display:none;">
+                        <label>Bis Datum
+                            <input type="date" id="tc-modal-end-date" />
+                        </label>
+                    </div>
+
+                    <!-- + Weitere Termine (aufklappbar) -->
+                    <div class="tc-modal-extra-dates">
+                        <button type="button" id="tc-modal-add-date-toggle" class="tc-link-btn">+ Weitere Termine hinzufügen</button>
+                        <div id="tc-modal-extra-dates-list" style="display:none;"></div>
+                        <button type="button" id="tc-modal-add-date-btn" class="button button-small" style="display:none;">+ Weiterer Termin</button>
+                    </div>
+                </div>
+
+                <!-- ── Wiederkehrend-Felder ── -->
+                <div id="tc-fields-recurring" style="display:none;">
+                    <label>Erster Termin <span class="required">*</span>
+                        <input type="date" id="tc-modal-rec-date" />
+                    </label>
+                    <div class="tc-modal-time-row">
+                        <label>Von
+                            <input type="time" id="tc-modal-rec-time-start" />
+                        </label>
+                        <label>Bis
+                            <input type="time" id="tc-modal-rec-time-end" />
+                        </label>
+                    </div>
+                    <label>Wochentag <span class="required">*</span>
                         <select id="tc-modal-weekday">
                             <option value="1">Montag</option>
                             <option value="2">Dienstag</option>
@@ -82,7 +147,7 @@ function tc_render_calendar_page() { ?>
                         <input type="date" id="tc-modal-until" />
                     </label>
                     <p class="tc-modal-hint">
-                        💡 Das Event wird jeden ausgewählten Wochentag bis zum angegebenen Datum im Kalender angezeigt. Alle Details werden im Post verwaltet.
+                        💡 Das Event wird jeden ausgewählten Wochentag bis zum angegebenen Datum im Kalender angezeigt.
                     </p>
                 </div>
 
