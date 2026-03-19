@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   const formatDateLine = (dateStr, timeStart, timeEnd) => {
     if (!dateStr) return '';
-    const d     = new Date(dateStr + 'T00:00:00'); // local time
+    const d     = new Date(dateStr + 'T00:00:00');
     const dow   = DAY_SHORT[d.getDay()];
     const day   = d.getDate();
     const month = MONTH_LONG[d.getMonth()];
@@ -55,9 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return str;
   };
 
-  // Baut den Datums-HTML-Block für eine Übersichtskarte
   const buildDatesHtml = (p, cardIdx) => {
-    // Wiederkehrend: Wochentag-Badge
     if (p.isRecurring && p.recurringWeekday !== null && p.recurringWeekday !== undefined) {
       const dayName = getWeekdayLabel(p.recurringWeekday);
       let timeStr = '';
@@ -70,7 +68,6 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>`;
     }
 
-    // Einmalig / Repeater: Terminliste
     const dates = (p.eventDates || []).slice();
     if (dates.length === 0) return '';
 
@@ -131,7 +128,6 @@ document.addEventListener('DOMContentLoaded', () => {
       const rawTitle   = (ev.title || '').replace('🔁 ', '').trim();
       const typeLabel  = p.type === 'seminar' ? 'Seminar' : 'Gruppentraining';
       const permalink  = p.permalink ? escHtml(p.permalink) : '#';
-      const intro      = p.intro_text  ? escHtml(p.intro_text)  : '';
       const location   = p.location    ? escHtml(p.location)    : '';
       const leadership = p.leadership  ? escHtml(p.leadership)  : '';
       const bgColor    = hexToRgba(color, 0.12);
@@ -156,7 +152,6 @@ document.addEventListener('DOMContentLoaded', () => {
     html += '</div>';
     container.innerHTML = html;
 
-    // ── "Mehr"-Buttons verdrahten ─────────────────────────────
     container.querySelectorAll('.tc-dates-more').forEach(btn => {
       btn.addEventListener('click', e => {
         e.preventDefault();
@@ -188,13 +183,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const timeAbove      = globalTimePosition === 'above';
     const mobileSlider   = el.dataset.mobileSlider === '1' || mobileView === 'slider';
     const overviewEl     = wrap.querySelector('.tc-event-overview');
-    const sliderWrap     = document.getElementById(uid + '-day-slider');
 
     let activeType   = el.dataset.type || 'all';
     let cachedEvents = null;
 
     // ── Hilfsfunktionen ──────────────────────────────────────
-    const isMobile = () => window.innerWidth < 768;
+    const isMobile = () => window.innerWidth <= 768;
 
     const showLoader = () => { if (loader) loader.style.display = 'flex'; };
     const hideLoader = () => { if (loader) loader.style.display = 'none'; };
@@ -267,7 +261,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Zeitbereich der Wochenansicht dynamisch anpassen ─────
     const updateVisibleTimeRange = () => {
-      if (calendar.view.type !== 'timeGridWeek') return;
+      const vt = calendar.view.type;
+      if (vt !== 'timeGridWeek' && vt !== 'timeGridTwoDays') return;
 
       const viewStart = calendar.view.activeStart;
       const viewEnd   = calendar.view.activeEnd;
@@ -520,28 +515,33 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     // ── Responsive View-Logik ─────────────────────────────────
+    // Mobile + Slider → native FullCalendar 2-Tages-Ansicht
+    const useMobile2Day = () => mobileSlider && !forceDesktop && isMobile();
+
     const getResponsiveView = () => {
       if (weekOnly || forceDesktop) return 'timeGridWeek';
+      if (useMobile2Day()) return 'timeGridTwoDays';
       return isMobile() ? 'listMonth' : (el.dataset.view || 'dayGridMonth');
     };
 
     const getResponsiveToolbar = () => {
       if (weekOnly) return { left: '', center: 'title', right: '' };
+      if (useMobile2Day()) return { left: 'prev', center: 'title', right: 'next' };
       if (forceDesktop) return { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
       return isMobile()
         ? { left: 'prev,next', center: 'title', right: 'listMonth,dayGridMonth' }
         : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
     };
 
-    // ── FullCalendar initialisieren (auf ALLEN Geräten rendern) ──
+    // ── FullCalendar initialisieren ───────────────────────────
     const calendar = new FullCalendar.Calendar(el, {
       initialView:   getResponsiveView(),
-      initialDate:   weekOnly ? new Date() : undefined,
+      initialDate:   (weekOnly || useMobile2Day()) ? new Date() : undefined,
       locale:        'de',
       height:        'auto',
       firstDay:      1,
       editable:      false,
-      navLinks:      !weekOnly,
+      navLinks:      !weekOnly && !useMobile2Day(),
       headerToolbar: getResponsiveToolbar(),
       buttonText: {
         today: 'Heute',
@@ -552,16 +552,31 @@ document.addEventListener('DOMContentLoaded', () => {
       noEventsText:  'Keine Events in diesem Zeitraum.',
       slotDuration:  '00:30:00',
 
+      // Custom 2-Tages-Ansicht für Mobile
+      views: {
+        timeGridTwoDays: {
+          type:     'timeGrid',
+          duration: { days: 2 },
+        },
+      },
+
       datesSet() { updateVisibleTimeRange(); },
       eventsSet()  { updateVisibleTimeRange(); },
 
       windowResize() {
-        syncSliderVisibility();
         if (weekOnly || forceDesktop) return;
-        if (sliderActive) return;
-        calendar.setOption('headerToolbar', getResponsiveToolbar());
-        const targetView = getResponsiveView();
-        if (calendar.view.type !== targetView) calendar.changeView(targetView);
+        const targetView    = getResponsiveView();
+        const targetToolbar = getResponsiveToolbar();
+        calendar.setOption('headerToolbar', targetToolbar);
+        calendar.setOption('navLinks', !useMobile2Day());
+        if (calendar.view.type !== targetView) {
+          // Beim Wechsel auf 2-Tages-Ansicht: auf heute springen
+          if (targetView === 'timeGridTwoDays') {
+            calendar.changeView(targetView, new Date());
+          } else {
+            calendar.changeView(targetView);
+          }
+        }
       },
 
       eventDidMount({ event, el: evEl }) {
@@ -574,7 +589,6 @@ document.addEventListener('DOMContentLoaded', () => {
       },
     });
 
-    // FullCalendar auf allen Geräten rendern (auch Mobile)
     calendar.render();
 
     // ── Desktop-Forced: zoom to fit, no horizontal scroll ────
@@ -597,7 +611,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Week-Only Mode ────────────────────────────────────────
     if (weekOnly) {
-      el.classList.add('tc-cal-hidden');
+      el.style.display = 'none';
       const viewToggle = wrap.querySelector('.tc-view-toggle');
       if (viewToggle) viewToggle.style.display = 'none';
 
@@ -608,217 +622,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
 
-    // ── Day Slider Komponente (Mobile) ──────────────────────────
-    let sliderDayIndex   = 0;
-    let sliderWeekOffset = 0;
-    let sliderActive     = false;
-
-    const sliderEnabled = mobileSlider && sliderWrap && !forceDesktop;
-
-    const getSliderWeekStart = (off) => {
-      const d   = new Date();
-      const day = d.getDay();
-      d.setDate(d.getDate() - (day === 0 ? 6 : day - 1) + off * 7);
-      d.setHours(0, 0, 0, 0);
-      return d;
-    };
-
-    /** Slider nur initialisieren wenn Events geladen sind */
-    const initDaySlider = (events) => {
-      if (!sliderEnabled) return;
-      if (events === null) return; // Events noch nicht geladen
-      // events kann [] sein = leerer Kalender, das ist ok
-      buildSliderHTML();
-    };
-
-    const buildSliderHTML = () => {
-      if (!sliderWrap) return;
-
-      const weekStart = getSliderWeekStart(sliderWeekOffset);
-      const days      = Array.from({ length: 7 }, (_, i) => {
-        const d = new Date(weekStart);
-        d.setDate(weekStart.getDate() + i);
-        return d;
-      });
-
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const filtered = getFiltered();
-
-      const dayEvents = days.map(d => {
-        const dayStart = new Date(d);
-        const dayEnd   = new Date(d);
-        dayEnd.setDate(dayEnd.getDate() + 1);
-        return filtered
-          .filter(e => { const s = new Date(e.start); return s >= dayStart && s < dayEnd; })
-          .sort((a, b) => new Date(a.start) - new Date(b.start));
-      });
-
-      const dayLabels = ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'];
-      let barHTML = '<div class="tc-ds-weekbar">';
-      days.forEach((d, i) => {
-        const isActive = i === sliderDayIndex;
-        const isToday  = d.getTime() === today.getTime();
-        const hasDot   = dayEvents[i].length > 0;
-        const dotColor = hasDot ? (dayEvents[i][0].color || 'var(--tc-primary)') : '';
-        barHTML += `<button class="tc-ds-weekday${isActive ? ' is-active' : ''}${isToday ? ' is-today' : ''}${!hasDot ? ' is-empty' : ''}" data-day-idx="${i}">`;
-        barHTML += `<span class="tc-ds-weekday-label">${dayLabels[i]}</span>`;
-        if (hasDot) barHTML += `<span class="tc-ds-weekday-dot" style="background:${dotColor}"></span>`;
-        else        barHTML += '<span class="tc-ds-weekday-dot tc-ds-weekday-dot--empty"></span>';
-        barHTML += '</button>';
-      });
-      barHTML += '</div>';
-
-      const activeDay  = days[sliderDayIndex];
-      const dayName    = WEEKDAY_LABELS[activeDay.getDay()].substring(0, 2);
-      const dayNum     = activeDay.getDate();
-      const monthName  = MONTH_LONG[activeDay.getMonth()];
-      let headerHTML = '<div class="tc-ds-header">';
-      headerHTML += '<button class="tc-ds-nav tc-ds-prev" aria-label="Vorheriger Tag">&#8249;</button>';
-      headerHTML += `<span class="tc-ds-title">${dayName}, ${dayNum}. ${monthName}</span>`;
-      headerHTML += '<button class="tc-ds-nav tc-ds-next" aria-label="Nächster Tag">&#8250;</button>';
-      headerHTML += '</div>';
-
-      const evs = dayEvents[sliderDayIndex];
-      let bodyHTML = '<div class="tc-ds-viewport"><div class="tc-ds-track">';
-
-      if (evs.length === 0) {
-        const isToday = activeDay.getTime() === today.getTime();
-        bodyHTML += `<div class="tc-ds-empty">${isToday ? 'Heute keine Termine' : 'Keine Termine an diesem Tag'}</div>`;
-      } else {
-        evs.forEach(ev => {
-          const color = ev.color || '#4f46e5';
-          const p     = ev.extendedProps || {};
-          const s     = new Date(ev.start);
-          const endD  = ev.end ? new Date(ev.end) : null;
-          const pad   = n => String(n).padStart(2, '0');
-          const tStart = `${pad(s.getHours())}:${pad(s.getMinutes())}`;
-          const tEnd   = endD ? `${pad(endD.getHours())}:${pad(endD.getMinutes())}` : '';
-          const timeStr = tStart + (tEnd ? ` – ${tEnd}` : '');
-          const title  = escHtml((ev.title || '').replace('🔁 ', ''));
-          const loc    = p.location ? escHtml(p.location) : '';
-          const link   = p.permalink ? escHtml(p.permalink) : '#';
-          const typeLabel = p.type === 'seminar' ? 'Seminar' : 'Gruppentraining';
-          const bg     = hexToRgba(color, 0.10);
-
-          bodyHTML += `<a class="tc-ds-card" href="${link}">`;
-          bodyHTML += `<div class="tc-ds-card-stripe" style="background:${color}"></div>`;
-          bodyHTML += '<div class="tc-ds-card-body">';
-          bodyHTML += `<span class="tc-ds-card-time">${timeStr} Uhr</span>`;
-          bodyHTML += `<strong class="tc-ds-card-title">${title}</strong>`;
-          if (loc) bodyHTML += `<span class="tc-ds-card-loc">${loc}</span>`;
-          bodyHTML += `<span class="tc-ds-card-badge" style="color:${color};background:${bg}">${typeLabel}</span>`;
-          bodyHTML += '</div></a>';
-        });
-      }
-      bodyHTML += '</div></div>';
-
-      let footerHTML = '';
-      if (sliderDayIndex === 6) {
-        footerHTML = '<button class="tc-ds-next-week">Nächste Woche &#8594;</button>';
-      }
-
-      sliderWrap.innerHTML = barHTML + headerHTML + bodyHTML + footerHTML;
-
-      // Event-Listener verdrahten
-      sliderWrap.querySelectorAll('.tc-ds-weekday').forEach(btn => {
-        btn.addEventListener('click', () => {
-          sliderDayIndex = +btn.dataset.dayIdx;
-          buildSliderHTML();
-        });
-      });
-
-      const prevBtn = sliderWrap.querySelector('.tc-ds-prev');
-      const nextBtn = sliderWrap.querySelector('.tc-ds-next');
-      if (prevBtn) prevBtn.addEventListener('click', () => sliderNavigate(-1));
-      if (nextBtn) nextBtn.addEventListener('click', () => sliderNavigate(1));
-
-      const nextWeekBtn = sliderWrap.querySelector('.tc-ds-next-week');
-      if (nextWeekBtn) nextWeekBtn.addEventListener('click', () => {
-        sliderWeekOffset++;
-        sliderDayIndex = 0;
-        buildSliderHTML();
-      });
-
-      initSliderSwipe();
-    };
-
-    const sliderNavigate = (dir) => {
-      sliderDayIndex += dir;
-      if (sliderDayIndex > 6) {
-        sliderWeekOffset++;
-        sliderDayIndex = 0;
-      } else if (sliderDayIndex < 0) {
-        sliderWeekOffset--;
-        sliderDayIndex = 6;
-      }
-      buildSliderHTML();
-    };
-
-    const initSliderSwipe = () => {
-      const viewport = sliderWrap ? sliderWrap.querySelector('.tc-ds-viewport') : null;
-      if (!viewport) return;
-      let startX = 0, startY = 0, tracking = false;
-
-      viewport.addEventListener('touchstart', e => {
-        startX   = e.touches[0].clientX;
-        startY   = e.touches[0].clientY;
-        tracking = true;
-      }, { passive: true });
-
-      viewport.addEventListener('touchend', e => {
-        if (!tracking) return;
-        tracking = false;
-        const dx = e.changedTouches[0].clientX - startX;
-        const dy = e.changedTouches[0].clientY - startY;
-        if (Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return;
-        sliderNavigate(dx < 0 ? 1 : -1);
-      }, { passive: true });
-    };
-
-    /**
-     * Sichtbarkeit umschalten — ausschließlich per CSS-Klassen.
-     * Wird nur aufgerufen NACHDEM cachedEvents befüllt ist.
-     */
-    const syncSliderVisibility = () => {
-      if (!sliderEnabled) return;
-      if (cachedEvents === null) return; // Events noch nicht geladen
-
-      const mobile     = isMobile();
-      const viewToggle = wrap.querySelector('.tc-view-toggle');
-
-      if (mobile && !sliderActive) {
-        sliderActive = true;
-        sliderWrap.classList.remove('tc-slider-hidden');
-        el.classList.add('tc-cal-hidden');
-        if (weekPlanWrap) weekPlanWrap.classList.add('tc-cal-hidden');
-        if (viewToggle) viewToggle.classList.add('tc-cal-hidden');
-
-        // Setze Slider auf heute
-        const now    = new Date();
-        const dayIdx = (now.getDay() + 6) % 7;
-        sliderDayIndex   = dayIdx;
-        sliderWeekOffset = 0;
-        initDaySlider(cachedEvents);
-      } else if (!mobile && sliderActive) {
-        sliderActive = false;
-        sliderWrap.classList.add('tc-slider-hidden');
-        el.classList.remove('tc-cal-hidden');
-        if (weekPlanWrap) weekPlanWrap.classList.remove('tc-cal-hidden');
-        if (viewToggle && !weekOnly) viewToggle.classList.remove('tc-cal-hidden');
-      }
-    };
-
-    // ── orientationchange Handler ────────────────────────────
-    window.addEventListener('orientationchange', () => {
-      // Kurze Verzögerung damit der Browser die neuen Dimensionen hat
-      setTimeout(() => syncSliderVisibility(), 150);
-    });
-
-    // ── Events einmalig per AJAX laden ────────────────────────
-    // WICHTIG: FullCalendar ist bereits gerendert.
-    // AJAX abwarten → cachedEvents befüllen → ERST DANN Slider init.
+    // ── Events einmalig per AJAX laden, dann statisch setzen ──
     (async () => {
       showLoader();
       try {
@@ -831,7 +635,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       hideLoader();
 
-      // Events in FullCalendar setzen (auf allen Geräten)
       if (weekOnly) {
         buildWeekPlan();
       } else {
@@ -840,9 +643,6 @@ document.addEventListener('DOMContentLoaded', () => {
       }
 
       if (showEventList) tcRenderEventOverview(overviewEl, getFiltered(), eventListTitle);
-
-      // JETZT erst: Slider prüfen (cachedEvents ist befüllt)
-      syncSliderVisibility();
     })();
 
     // ── Filter-Tabs: nur Cache umsortieren, kein AJAX ─────────
@@ -856,8 +656,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (weekOnly) {
           buildWeekPlan();
-        } else if (sliderActive) {
-          buildSliderHTML();
         } else {
           calendar.getEventSources().forEach(s => s.remove());
           calendar.addEventSource(getFiltered());
@@ -883,10 +681,10 @@ document.addEventListener('DOMContentLoaded', () => {
           calMon.setDate(calDate.getDate() - (calDay === 0 ? 6 : calDay - 1));
           calMon.setHours(0, 0, 0, 0);
           weekPlanOffset = Math.round((calMon - getWeekStart(0)) / (7 * 86400000));
-          el.classList.add('tc-cal-hidden');
+          el.style.display = 'none';
           if (weekPlanWrap) { weekPlanWrap.style.display = ''; buildWeekPlan(); }
         } else {
-          el.classList.remove('tc-cal-hidden');
+          el.style.display = '';
           if (weekPlanWrap) weekPlanWrap.style.display = 'none';
         }
       });
