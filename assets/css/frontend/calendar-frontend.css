@@ -521,13 +521,21 @@
 /* Gruppen-Trennzeile (Vormittag / Nachmittag / Abend) */
 .tc-wp-group-row td {
   background: var(--tc-surface);
+  border-top: 2px solid var(--tc-border);
+}
+
+.tc-wp-group-row .tc-wp-group-label {
   padding: 5px 12px;
   font-size: 10px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: .07em;
   color: var(--tc-text-muted);
-  border-top: 2px solid var(--tc-border);
+  white-space: nowrap;
+}
+
+.tc-wp-group-row .tc-wp-group-spacer {
+  padding: 0;
 }
 
 /* Zeitspalte */
@@ -794,16 +802,144 @@
   font-size: 11px;
 }
 
-/* ─── Mobile 2-Day TimeGrid ──────────────────────────────────── */
+/* ─── Mobile Slider (horizontaler Tages-Scroll) ─────────────── */
 @media (max-width: 768px) {
-  .tc-frontend-wrap .fc .fc-timeGridTwoDays-view .fc-col-header-cell {
-    font-size: 11px;
-    padding: 6px 0;
+
+  /* Scroll-Container: der View-Harness */
+  .tc-frontend-wrap.tc-mobile-slider .fc-view-harness {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--tc-border, #e5e7eb) transparent;
   }
 
-  .tc-frontend-wrap .fc .fc-timeGridTwoDays-view .fc-timegrid-event {
+  .tc-frontend-wrap.tc-mobile-slider .fc-view-harness::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .fc-view-harness::-webkit-scrollbar-thumb {
+    background: var(--tc-border, #e5e7eb);
+    border-radius: 2px;
+  }
+
+  /* Scrollgrid: volle 7-Tage-Breite erzwingen */
+  .tc-frontend-wrap.tc-mobile-slider .fc-scrollgrid {
+    min-width: calc(60px + 7 * 140px);
+  }
+
+  /* Tages-Spalten: feste Mindestbreite pro Tag */
+  .tc-frontend-wrap.tc-mobile-slider .fc-col-header-cell {
+    min-width: 140px;
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .fc-timegrid-col {
+    min-width: 140px;
+  }
+
+  /* Innere Tabellen: mindestens 7 × 140px */
+  .tc-frontend-wrap.tc-mobile-slider .fc-scrollgrid-sync-table,
+  .tc-frontend-wrap.tc-mobile-slider .fc-col-header {
+    min-width: calc(7 * 140px);
+  }
+
+  /* Zeitspalte links: sticky fixiert */
+  .tc-frontend-wrap.tc-mobile-slider .fc .fc-timegrid-axis,
+  .tc-frontend-wrap.tc-mobile-slider .fc .fc-timegrid-slot-label {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--tc-bg, #fff);
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .fc .fc-scrollgrid thead > tr > th:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 4;
+    background: var(--tc-surface, #f9fafb);
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .fc .fc-scrollgrid tbody > tr > td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 3;
+    background: var(--tc-bg, #fff);
+  }
+
+  /* Tages-Header: nicht abschneiden */
+  .tc-frontend-wrap.tc-mobile-slider .fc .fc-col-header {
+    overflow-x: visible;
+  }
+
+  /* Toolbar: vereinfacht, nicht mitscrollen */
+  .tc-frontend-wrap.tc-mobile-slider .fc .fc-toolbar {
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .fc .fc-toolbar-title {
+    font-size: 1em;
+  }
+
+  /* Events in der TimeGrid-Ansicht */
+  .tc-frontend-wrap.tc-mobile-slider .fc-timegrid-event {
     font-size: 11px;
     border-radius: 4px;
+  }
+
+  /* ── Week-Plan-Tabelle: Mobile Slider ─────────────────────── */
+
+  /* Tabelle statt Karten-Ansicht zeigen */
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table-wrap {
+    display: block !important;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
+    scrollbar-color: var(--tc-border, #e5e7eb) transparent;
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table-wrap::-webkit-scrollbar {
+    height: 4px;
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table-wrap::-webkit-scrollbar-thumb {
+    background: var(--tc-border, #e5e7eb);
+    border-radius: 2px;
+  }
+
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-mobile {
+    display: none !important;
+  }
+
+  /* Tabelle breiter als Viewport */
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table {
+    min-width: calc(60px + 7 * 120px);
+  }
+
+  /* Tages-Spalten: feste Mindestbreite */
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table th:not(:first-child),
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table td:not(:first-child):not(.tc-wp-group-spacer) {
+    min-width: 120px;
+  }
+
+  /* Erste Spalte (Zeit / Gruppen): sticky links */
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table th:first-child,
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-table td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 2;
+    background: var(--tc-surface, #f9fafb);
+  }
+
+  /* Gruppen-Label in der sticky Spalte */
+  .tc-frontend-wrap.tc-mobile-slider .tc-wp-group-row .tc-wp-group-label {
+    z-index: 3;
+    background: var(--tc-surface, #f9fafb);
+  }
+
+  /* Navigation: vereinfacht, kein Wrapping */
+  .tc-frontend-wrap.tc-mobile-slider .tc-week-plan-nav {
+    flex-wrap: nowrap;
+    justify-content: center;
   }
 }
 

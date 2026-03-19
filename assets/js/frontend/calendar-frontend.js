@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── Zeitbereich der Wochenansicht dynamisch anpassen ─────
     const updateVisibleTimeRange = () => {
       const vt = calendar.view.type;
-      if (vt !== 'timeGridWeek' && vt !== 'timeGridTwoDays') return;
+      if (vt !== 'timeGridWeek') return;
 
       const viewStart = calendar.view.activeStart;
       const viewEnd   = calendar.view.activeEnd;
@@ -407,7 +407,9 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         activeGroups.forEach(group => {
           if (!timeAbove) {
-            html += `<tr class="tc-wp-group-row"><td colspan="8" class="tc-wp-group-label">${group.label}</td></tr>`;
+            html += `<tr class="tc-wp-group-row"><td class="tc-wp-group-label">${group.label}</td>`;
+            for (let d = 0; d < 7; d++) html += '<td class="tc-wp-group-spacer"></td>';
+            html += '</tr>';
           }
           group.slots.forEach((slot, slotIdx) => {
             html += '<tr class="tc-wp-slot-row">';
@@ -514,19 +516,56 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
-    // ── Responsive View-Logik ─────────────────────────────────
-    // Mobile + Slider → native FullCalendar 2-Tages-Ansicht
-    const useMobile2Day = () => mobileSlider && !forceDesktop && isMobile();
+    // ── Mobile Slider: Klasse & Scroll-Helfer ────────────────
+    const useMobileSlider = () => mobileSlider && !forceDesktop && isMobile();
 
+    const updateSliderClass = () => {
+      wrap.classList.toggle('tc-mobile-slider', useMobileSlider());
+    };
+
+    const scrollSliderToToday = () => {
+      if (!useMobileSlider()) return;
+      requestAnimationFrame(() => {
+        const todayCol = el.querySelector('.fc-day-today');
+        if (todayCol) {
+          todayCol.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        }
+      });
+    };
+
+    const initSliderScrollSync = () => {
+      if (!useMobileSlider()) return;
+      const bodyScroller  = el.querySelector('.fc-scroller-liquid-absolute');
+      const headerScroller = el.querySelector('.fc-scrollgrid-section-header .fc-scroller');
+      if (bodyScroller && headerScroller && !bodyScroller._tcSyncH) {
+        bodyScroller._tcSyncH = true;
+        bodyScroller.addEventListener('scroll', () => {
+          headerScroller.scrollLeft = bodyScroller.scrollLeft;
+        }, { passive: true });
+      }
+    };
+
+    // Week-Plan-Tabelle: zum heutigen Tag scrollen (Mobile Slider)
+    const scrollWeekPlanToToday = () => {
+      if (!mobileSlider || !isMobile() || !weekPlanWrap) return;
+      requestAnimationFrame(() => {
+        const todayTh = weekPlanWrap.querySelector('th.tc-wp-today');
+        if (todayTh) {
+          todayTh.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
+        }
+      });
+    };
+
+    // ── Responsive View-Logik ─────────────────────────────────
     const getResponsiveView = () => {
       if (weekOnly || forceDesktop) return 'timeGridWeek';
-      if (useMobile2Day()) return 'timeGridTwoDays';
+      if (useMobileSlider()) return 'timeGridWeek';
       return isMobile() ? 'listMonth' : (el.dataset.view || 'dayGridMonth');
     };
 
     const getResponsiveToolbar = () => {
+      if (useMobileSlider()) return { left: 'prev', center: 'title', right: 'next' };
       if (weekOnly) return { left: '', center: 'title', right: '' };
-      if (useMobile2Day()) return { left: 'prev', center: 'title', right: 'next' };
       if (forceDesktop) return { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
       return isMobile()
         ? { left: 'prev,next', center: 'title', right: 'listMonth,dayGridMonth' }
@@ -536,12 +575,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // ── FullCalendar initialisieren ───────────────────────────
     const calendar = new FullCalendar.Calendar(el, {
       initialView:   getResponsiveView(),
-      initialDate:   (weekOnly || useMobile2Day()) ? new Date() : undefined,
+      initialDate:   (weekOnly || useMobileSlider()) ? new Date() : undefined,
       locale:        'de',
       height:        'auto',
       firstDay:      1,
       editable:      false,
-      navLinks:      !weekOnly && !useMobile2Day(),
+      navLinks:      !weekOnly && !useMobileSlider(),
       headerToolbar: getResponsiveToolbar(),
       buttonText: {
         today: 'Heute',
@@ -552,31 +591,26 @@ document.addEventListener('DOMContentLoaded', () => {
       noEventsText:  'Keine Events in diesem Zeitraum.',
       slotDuration:  '00:30:00',
 
-      // Custom 2-Tages-Ansicht für Mobile
-      views: {
-        timeGridTwoDays: {
-          type:     'timeGrid',
-          duration: { days: 2 },
-        },
+      datesSet() {
+        updateVisibleTimeRange();
+        initSliderScrollSync();
       },
-
-      datesSet() { updateVisibleTimeRange(); },
       eventsSet()  { updateVisibleTimeRange(); },
 
       windowResize() {
-        if (weekOnly || forceDesktop) return;
+        if (forceDesktop) return;
+        updateSliderClass();
+        if (weekOnly) return;
+
         const targetView    = getResponsiveView();
         const targetToolbar = getResponsiveToolbar();
         calendar.setOption('headerToolbar', targetToolbar);
-        calendar.setOption('navLinks', !useMobile2Day());
+        calendar.setOption('navLinks', !useMobileSlider());
         if (calendar.view.type !== targetView) {
-          // Beim Wechsel auf 2-Tages-Ansicht: auf heute springen
-          if (targetView === 'timeGridTwoDays') {
-            calendar.changeView(targetView, new Date());
-          } else {
-            calendar.changeView(targetView);
-          }
+          calendar.changeView(targetView);
         }
+        calendar.updateSize();
+        scrollSliderToToday();
       },
 
       eventDidMount({ event, el: evEl }) {
@@ -590,6 +624,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     calendar.render();
+    updateSliderClass();
 
     // ── Desktop-Forced: zoom to fit, no horizontal scroll ────
     if (forceDesktop) {
@@ -637,9 +672,11 @@ document.addEventListener('DOMContentLoaded', () => {
 
       if (weekOnly) {
         buildWeekPlan();
+        scrollWeekPlanToToday();
       } else {
         calendar.addEventSource(getFiltered());
         updateVisibleTimeRange();
+        scrollSliderToToday();
       }
 
       if (showEventList) tcRenderEventOverview(overviewEl, getFiltered(), eventListTitle);
@@ -656,6 +693,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (weekOnly) {
           buildWeekPlan();
+          scrollWeekPlanToToday();
         } else {
           calendar.getEventSources().forEach(s => s.remove());
           calendar.addEventSource(getFiltered());
