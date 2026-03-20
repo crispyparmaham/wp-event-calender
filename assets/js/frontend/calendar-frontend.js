@@ -14,13 +14,23 @@ document.addEventListener('DOMContentLoaded', () => {
   const DEFAULT_SLOT_MIN = '08:00:00';
   const DEFAULT_SLOT_MAX = '20:00:00';
 
-  const TF               = typeof TC_Frontend !== 'undefined' ? TC_Frontend : {};
-  const ajaxUrl          = TF.ajaxUrl       || '/wp-admin/admin-ajax.php';
-  const nonce            = TF.nonce          || '';
-  const globalMobileView = TF.mobileView     || 'optimized';
-  const globalDefaultView = TF.defaultView   || 'timeGridWeek';
-  const globalWeekStart  = TF.weekStartsOn   || 'monday';
-  const timeLabelMode    = (TF.timeLabelMode === 'left' ? 'standard' : TF.timeLabelMode) || 'standard';
+  const TF                     = typeof TC_Frontend !== 'undefined' ? TC_Frontend : {};
+  const ajaxUrl                = TF.ajaxUrl           || '/wp-admin/admin-ajax.php';
+  const nonce                  = TF.nonce              || '';
+  const globalMobileView       = TF.mobileView         || 'optimized';
+  const globalDefaultView      = TF.defaultView         || 'timeGridWeek';
+  const globalWeekStart        = TF.weekStartsOn        || 'monday';
+  const globalTimeColumnLabel  = TF.timeColumnLabel      || 'hours';
+  const globalEventTimeDisplay = TF.eventTimeDisplay     || 'none';
+
+  // ── Debug: Einstellungen im Browser prüfbar machen ────────────
+  console.log('[TimeCalendar] Settings:', {
+    timeColumnLabel: globalTimeColumnLabel,
+    eventTimeDisplay: globalEventTimeDisplay,
+    mobileView: globalMobileView,
+    defaultView: globalDefaultView,
+    weekStartsOn: globalWeekStart,
+  });
 
   // ── Modul-weite Hilfsfunktionen ────────────────────────────────
   const escHtml = (s) => String(s).replace(/[&<>"']/g, c => ({
@@ -183,9 +193,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const lockedType     = el.dataset.lockedType     || '';
     const mobileView     = el.dataset.mobileView || globalMobileView;
     const forceDesktop   = mobileView === 'desktop';
-    const timeAbove      = timeLabelMode === 'above';
+    const mobileScaled   = mobileView === 'scaled' || wrap.dataset.mobileScaled === '1';
     const mobileSlider   = el.dataset.mobileSlider === '1' || mobileView === 'slider';
     const overviewEl     = wrap.querySelector('.tc-event-overview');
+    const colLabel       = wrap.dataset.colLabel  || globalTimeColumnLabel;
+    const eventTime      = wrap.dataset.eventTime || globalEventTimeDisplay;
+    const showEventTime  = eventTime !== 'none';
 
     let activeType   = el.dataset.type || 'all';
     let cachedEvents = null;
@@ -266,6 +279,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const updateVisibleTimeRange = () => {
       const vt = calendar.view.type;
       if (vt !== 'timeGridWeek') return;
+
+      // Bei 'groups' ist slotMinTime/slotMaxTime fest — nicht überschreiben
+      if (globalTimeColumnLabel === 'groups') return;
 
       const viewStart = calendar.view.activeStart;
       const viewEnd   = calendar.view.activeEnd;
@@ -396,7 +412,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const today = new Date();
       today.setHours(0, 0, 0, 0);
 
-      let html = `<div class="tc-week-plan-table-wrap"><table class="tc-week-plan-table${timeAbove ? ' tc-week-plan-table--time-above' : ''}"><thead><tr>`;
+      let html = `<div class="tc-week-plan-table-wrap"><table class="tc-week-plan-table"><thead><tr>`;
       html += '<th class="tc-wp-th-time"></th>';
       days.forEach((d, i) => {
         const isToday = d.getTime() === today.getTime();
@@ -409,23 +425,31 @@ document.addEventListener('DOMContentLoaded', () => {
         html += '<tr><td colspan="8" class="tc-wp-empty">Keine Events in dieser Woche.</td></tr>';
       } else {
         activeGroups.forEach(group => {
-          if (!timeAbove) {
-            html += `<tr class="tc-wp-group-row"><td class="tc-wp-group-label">${group.label}</td>`;
-            for (let d = 0; d < 7; d++) html += '<td class="tc-wp-group-spacer"></td>';
+          // 'both': full-width group header row above each group's slots
+          if (colLabel === 'both') {
+            html += '<tr class="tc-wp-group-header-row">';
+            html += `<td class="tc-wp-group-header" colspan="8">${group.label}</td>`;
             html += '</tr>';
           }
+
           group.slots.forEach((slot, slotIdx) => {
             html += '<tr class="tc-wp-slot-row">';
-            if (!timeAbove) {
+
+            if (colLabel === 'groups') {
+              // Left column: group name with rowspan (first slot only)
+              if (slotIdx === 0) {
+                html += `<td class="tc-wp-time tc-wp-time--group" rowspan="${group.slots.length}">`;
+                html += `<span class="tc-wp-group-label-cell">${group.label}</span>`;
+                html += '</td>';
+              }
+            } else {
+              // 'hours' and 'both': left column shows only the time range
               html += '<td class="tc-wp-time">';
               html += `<span class="tc-wp-time-start">${slot.startStr}</span>`;
               if (slot.endStr) html += `<span class="tc-wp-time-end">${slot.endStr}</span>`;
               html += '</td>';
-            } else if (slotIdx === 0) {
-              html += `<td class="tc-wp-time tc-wp-time--group" rowspan="${group.slots.length}">`;
-              html += `<span class="tc-wp-group-label-cell">${group.label}</span>`;
-              html += '</td>';
             }
+
             slot.days.forEach(dayEvs => {
               if (dayEvs.length === 0) {
                 html += '<td class="tc-wp-cell tc-wp-cell--empty"></td>';
@@ -440,7 +464,7 @@ document.addEventListener('DOMContentLoaded', () => {
                   const sub   = p.leadership ? escHtml(p.leadership) : '';
                   html += `<button class="tc-wp-event" data-ev-idx="${idx}" type="button"`;
                   html += ` style="background:${bg};border-left:3px solid ${color}">`;
-                  if (timeAbove) {
+                  if (showEventTime) {
                     const tStr = slot.startStr + (slot.endStr ? ` – ${slot.endStr}` : '');
                     html += `<span class="tc-wp-event-time-above">${escHtml(tStr)}</span>`;
                   }
@@ -575,30 +599,52 @@ document.addEventListener('DOMContentLoaded', () => {
         : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
     };
 
-    // ── Zeit-Label-Modus: FC-Optionen aufbauen ────────────────
-    const timeModeOpts = {};
+    // ── Einstellung 1: Zeitspalte links ────────────────────────
+    const applyTimeColumnLabel = (opts, mode) => {
+      if (mode === 'hours') {
+        opts.slotLabelInterval = '01:00';
+        opts.slotLabelFormat   = { hour: '2-digit', minute: '2-digit', hour12: false };
+        // slotLabelContent explizit NICHT setzen
+      } else if (mode === 'groups') {
+        opts.slotLabelInterval = '06:00';
+        opts.slotMinTime       = '06:00:00';
+        opts.slotMaxTime       = '23:00:00';
+        opts.slotLabelContent  = function(arg) {
+          const h = arg.date.getHours();
+          if (h >= 6  && h < 12) return 'Vormittag';
+          if (h >= 12 && h < 17) return 'Nachmittag';
+          if (h >= 17)           return 'Abend';
+          return '';
+        };
+      } else if (mode === 'both') {
+        opts.slotLabelInterval = '01:00';
+        opts.slotLabelContent  = function(arg) {
+          const h = arg.date.getHours();
+          if (arg.date.getMinutes() !== 0) return '';
+          const group = h < 12 ? 'Vorm.' : h < 17 ? 'Nachm.' : 'Abend';
+          const time  = String(h).padStart(2, '0') + ':00';
+          return {
+            html: '<span style="display:block;font-size:9px;color:var(--tc-text-subtle,#9ca3af);'
+                + 'line-height:1.1;text-transform:uppercase;letter-spacing:.03em">'
+                + group + '</span>'
+                + '<span style="display:block;font-size:10px;color:var(--tc-text-muted,#6b7280);'
+                + 'line-height:1.2">' + time + '</span>'
+          };
+        };
+      }
+    };
 
-    if (timeLabelMode === 'standard') {
-      timeModeOpts.slotLabelFormat  = { hour: '2-digit', minute: '2-digit', hour12: false };
-      timeModeOpts.displayEventTime = false;
-    } else if (timeLabelMode === 'above') {
-      timeModeOpts.displayEventTime = true;
-      timeModeOpts.eventTimeFormat  = { hour: '2-digit', minute: '2-digit', hour12: false };
-      timeModeOpts.slotLabelInterval = '06:00';
-      timeModeOpts.slotLabelContent  = (arg) => {
-        const h = arg.date.getHours();
-        if (h < 12)  return 'Vormittag';
-        if (h < 17)  return 'Nachmittag';
-        return 'Abend';
-      };
-    } else if (timeLabelMode === 'compact') {
-      timeModeOpts.slotLabelInterval = { hours: 2 };
-      timeModeOpts.slotLabelFormat   = { hour: '2-digit', minute: '2-digit', hour12: false };
-      timeModeOpts.displayEventTime  = true;
-      timeModeOpts.eventTimeFormat   = { hour: '2-digit', minute: '2-digit', hour12: false };
-    }
+    // ── Einstellung 2: Zeitstempel im Event-Block ───────────
+    const applyEventTimeDisplay = (opts, mode) => {
+      if (mode === 'none') {
+        opts.displayEventTime = false;
+      } else {
+        opts.displayEventTime = true;
+        opts.eventTimeFormat  = { hour: '2-digit', minute: '2-digit', hour12: false };
+      }
+    };
 
-    // ── FullCalendar initialisieren ───────────────────────────
+    // ── FullCalendar initialisieren (immer Standard-Darstellung) ──
     const calendar = new FullCalendar.Calendar(el, {
       initialView:   getResponsiveView(),
       initialDate:   (weekOnly || useMobileSlider()) ? new Date() : undefined,
@@ -616,8 +662,7 @@ document.addEventListener('DOMContentLoaded', () => {
       },
       noEventsText:  'Keine Events in diesem Zeitraum.',
       slotDuration:  '00:30:00',
-
-      ...timeModeOpts,
+      slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
 
       datesSet() {
         updateVisibleTimeRange();
@@ -670,6 +715,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
       requestAnimationFrame(applyZoom);
       window.addEventListener('resize', applyZoom);
+    }
+
+    // ── Mobile Scaled: transform statt zoom (cross-browser) ──
+    if (mobileScaled && !forceDesktop) {
+      const SCALED_W = 800;
+
+      const applyScale = () => {
+        if (!isMobile()) {
+          wrap.classList.remove('tc-mobile-scaled');
+          el.style.transform = '';
+          el.style.width     = '';
+          wrap.style.height  = '';
+          return;
+        }
+        wrap.classList.add('tc-mobile-scaled');
+        const containerW = wrap.offsetWidth;
+        const scale      = Math.min(1, containerW / SCALED_W);
+        el.style.transformOrigin = 'top left';
+        el.style.transform       = `scale(${scale})`;
+        el.style.width           = `${SCALED_W}px`;
+        // Wrapper-Höhe anpassen damit kein Leerraum entsteht
+        requestAnimationFrame(() => {
+          wrap.style.height = `${el.offsetHeight * scale}px`;
+        });
+      };
+
+      requestAnimationFrame(applyScale);
+      window.addEventListener('resize', applyScale);
     }
 
     // ── Week-Only Mode ────────────────────────────────────────

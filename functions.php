@@ -22,7 +22,7 @@ define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
 define( 'TC_VERSION',     '3.1.1' );
 
 // ── Wiederholungs- & Rate-Limit-Grenzen ───────────────────────
-define( 'TC_RECURRING_LIMIT',    260 ); // Max. ~5 Jahre wöchentlich
+define( 'TC_RECURRING_LIMIT',    104 ); // Max. ~5 Jahre wöchentlich
 define( 'TC_RATE_LIMIT_COUNT',   5   ); // Anmeldungen pro Zeitfenster
 define( 'TC_RATE_LIMIT_SECONDS', 900 ); // Zeitfenster: 15 Minuten (in Sek.)
 define( 'TC_EVENTS_CACHE_TTL',   300 ); // Events-Cache: 5 Minuten (in Sek.)

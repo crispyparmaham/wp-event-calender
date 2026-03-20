@@ -33,6 +33,8 @@ add_action( 'admin_init', function () {
             'event_list_title'        => 'Unsere Events',
             'mobile_calendar_view'    => 'optimized',
             'mobile_hint_box'         => '1',
+            'time_column_label'       => 'hours',
+            'event_time_display'      => 'none',
             'week_plan_time_position' => 'standard',
         ),
     ) );
@@ -80,12 +82,22 @@ function tc_sanitize_settings( $input ) {
         ? $input['week_starts_on']
         : 'monday';
 
-    $valid_mobile = array( 'slider', 'optimized', 'desktop' );
+    $valid_mobile = array( 'slider', 'optimized', 'scaled', 'desktop' );
     $clean['mobile_calendar_view'] = isset( $input['mobile_calendar_view'] ) && in_array( $input['mobile_calendar_view'], $valid_mobile, true )
         ? $input['mobile_calendar_view']
         : 'optimized';
 
-    // Abwärtskompatibilität: 'left' → 'standard'
+    $valid_col_label = array( 'hours', 'groups', 'both' );
+    $clean['time_column_label'] = isset( $input['time_column_label'] ) && in_array( $input['time_column_label'], $valid_col_label, true )
+        ? $input['time_column_label']
+        : 'hours';
+
+    $valid_evt_time = array( 'none', 'normal', 'prominent' );
+    $clean['event_time_display'] = isset( $input['event_time_display'] ) && in_array( $input['event_time_display'], $valid_evt_time, true )
+        ? $input['event_time_display']
+        : 'none';
+
+    // Abwärtskompatibilität: alte zusammengefasste Einstellung
     $raw_time = isset( $input['week_plan_time_position'] ) ? $input['week_plan_time_position'] : 'standard';
     if ( $raw_time === 'left' ) $raw_time = 'standard';
     $valid_time_pos = array( 'standard', 'compact', 'above' );
@@ -176,8 +188,9 @@ function tc_render_settings_page() {
     $reminder                = tc_get_setting( 'reminder_enabled', '0' );
     $mobile_calendar_view    = tc_get_setting( 'mobile_calendar_view', 'optimized' );
     $mobile_hint_box         = tc_get_setting( 'mobile_hint_box', '1' );
+    $time_column_label       = tc_get_setting( 'time_column_label', 'hours' );
+    $event_time_display      = tc_get_setting( 'event_time_display', 'none' );
     $week_plan_time_position = tc_get_setting( 'week_plan_time_position', 'standard' );
-    // Abwärtskompatibilität
     if ( $week_plan_time_position === 'left' ) $week_plan_time_position = 'standard';
     ?>
     <div class="wrap tc-stg-wrap">
@@ -320,42 +333,78 @@ function tc_render_settings_page() {
 
                     <div class="tc-stg-row">
                         <div class="tc-stg-row-left">
-                            <strong>Zeitspalte</strong>
-                            <span>Darstellung der Zeitspalte in der Wochenansicht.</span>
+                            <strong>Zeitspalte links</strong>
+                            <span>Was in der Zeitspalte der Wochenansicht angezeigt wird.</span>
                         </div>
                         <div class="tc-stg-row-right">
                             <label class="tc-stg-radio-label">
-                                <input type="radio" name="tc_settings[week_plan_time_position]"
-                                    value="standard" <?php checked( $week_plan_time_position, 'standard' ); ?>>
-                                Standard
+                                <input type="radio" name="tc_settings[time_column_label]"
+                                    value="hours" <?php checked( $time_column_label, 'hours' ); ?>>
+                                Uhrzeiten
                             </label>
-                            <p class="tc-stg-hint tc-stg-time-hint" data-for="standard"
-                               <?php echo $week_plan_time_position !== 'standard' ? 'style="display:none"' : ''; ?>>
-                                Zeitspalte normal breit mit Uhrzeiten.
-                                Kein Zeitstempel auf dem Event-Block.
+                            <p class="tc-stg-hint tc-stg-col-hint" data-for="hours"
+                               <?php echo $time_column_label !== 'hours' ? 'style="display:none"' : ''; ?>>
+                                08:00, 09:00, 10:00… jede Stunde
                             </p>
 
                             <label class="tc-stg-radio-label">
-                                <input type="radio" name="tc_settings[week_plan_time_position]"
-                                    value="compact" <?php checked( $week_plan_time_position, 'compact' ); ?>>
-                                Kompakt
-                            </label>
-                            <p class="tc-stg-hint tc-stg-time-hint" data-for="compact"
-                               <?php echo $week_plan_time_position !== 'compact' ? 'style="display:none"' : ''; ?>>
-                                Schmale Zeitspalte mit Uhrzeiten (jede 2. Stunde).
-                                Uhrzeit größer und fetter direkt im Event-Block —
-                                empfohlen in Kombination mit dem Tages-Slider.
-                            </p>
-
-                            <label class="tc-stg-radio-label">
-                                <input type="radio" name="tc_settings[week_plan_time_position]"
-                                    value="above" <?php checked( $week_plan_time_position, 'above' ); ?>>
+                                <input type="radio" name="tc_settings[time_column_label]"
+                                    value="groups" <?php checked( $time_column_label, 'groups' ); ?>>
                                 Tagesgruppen
                             </label>
-                            <p class="tc-stg-hint tc-stg-time-hint" data-for="above"
-                               <?php echo $week_plan_time_position !== 'above' ? 'style="display:none"' : ''; ?>>
-                                Zeitspalte zeigt Tagesgruppen (Vormittag / Nachmittag / Abend).
-                                Uhrzeit wird über dem Eventtitel angezeigt.
+                            <p class="tc-stg-hint tc-stg-col-hint" data-for="groups"
+                               <?php echo $time_column_label !== 'groups' ? 'style="display:none"' : ''; ?>>
+                                Vormittag, Nachmittag, Abend
+                            </p>
+
+                            <label class="tc-stg-radio-label">
+                                <input type="radio" name="tc_settings[time_column_label]"
+                                    value="both" <?php checked( $time_column_label, 'both' ); ?>>
+                                Beides
+                            </label>
+                            <p class="tc-stg-hint tc-stg-col-hint" data-for="both"
+                               <?php echo $time_column_label !== 'both' ? 'style="display:none"' : ''; ?>>
+                                Tagesgruppe klein über der Uhrzeit
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Zeitstempel im Event</strong>
+                            <span>Ob und wie die Uhrzeit im Event-Block angezeigt wird.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <label class="tc-stg-radio-label">
+                                <input type="radio" name="tc_settings[event_time_display]"
+                                    value="none" <?php checked( $event_time_display, 'none' ); ?>>
+                                Kein Zeitstempel
+                            </label>
+                            <p class="tc-stg-hint tc-stg-evt-hint" data-for="none"
+                               <?php echo $event_time_display !== 'none' ? 'style="display:none"' : ''; ?>>
+                                Nur Titel im Event-Block
+                            </p>
+
+                            <label class="tc-stg-radio-label">
+                                <input type="radio" name="tc_settings[event_time_display]"
+                                    value="normal" <?php checked( $event_time_display, 'normal' ); ?>>
+                                Normal
+                            </label>
+                            <p class="tc-stg-hint tc-stg-evt-hint" data-for="normal"
+                               <?php echo $event_time_display !== 'normal' ? 'style="display:none"' : ''; ?>>
+                                Uhrzeit klein über dem Titel
+                            </p>
+
+                            <label class="tc-stg-radio-label">
+                                <input type="radio" name="tc_settings[event_time_display]"
+                                    value="prominent" <?php checked( $event_time_display, 'prominent' ); ?>>
+                                Prominent
+                            </label>
+                            <p class="tc-stg-hint tc-stg-evt-hint" data-for="prominent"
+                               <?php echo $event_time_display !== 'prominent' ? 'style="display:none"' : ''; ?>>
+                                Uhrzeit groß und fett über dem Titel
                             </p>
                         </div>
                     </div>
@@ -389,6 +438,15 @@ function tc_render_settings_page() {
                                <?php echo $mobile_calendar_view !== 'slider' ? 'style="display:none"' : ''; ?>>
                                 Zeigt 2 Tage nebeneinander, horizontal scrollbar.
                                 Zeitspalte bleibt links fixiert.
+                            </p>
+                            <label class="tc-stg-radio-label">
+                                <input type="radio" name="tc_settings[mobile_calendar_view]"
+                                    value="scaled" <?php checked( $mobile_calendar_view, 'scaled' ); ?>>
+                                Desktop-Ansicht skaliert
+                            </label>
+                            <p class="tc-stg-hint tc-stg-mobile-hint" data-for="scaled"
+                               <?php echo $mobile_calendar_view !== 'scaled' ? 'style="display:none"' : ''; ?>>
+                                Kalender wird wie auf dem Desktop dargestellt und automatisch auf die Bildschirmbreite verkleinert.
                             </p>
                         </div>
                     </div>
@@ -600,18 +658,21 @@ function tc_render_settings_page() {
                 });
             }
 
-            // ── Time-Position Hints ──────────────────────────────
-            var timeRadios = document.querySelectorAll('input[name="tc_settings[week_plan_time_position]"]');
-            var timeHints  = document.querySelectorAll('.tc-stg-time-hint');
-            if (timeHints.length) {
-                timeRadios.forEach(function (radio) {
+            // ── Column-Label Hints ───────────────────────────────
+            function bindRadioHints(radioName, hintClass) {
+                var radios = document.querySelectorAll('input[name="' + radioName + '"]');
+                var hints  = document.querySelectorAll('.' + hintClass);
+                if (!hints.length) return;
+                radios.forEach(function (radio) {
                     radio.addEventListener('change', function () {
-                        timeHints.forEach(function (h) {
+                        hints.forEach(function (h) {
                             h.style.display = h.dataset.for === radio.value && radio.checked ? '' : 'none';
                         });
                     });
                 });
             }
+            bindRadioHints('tc_settings[time_column_label]',  'tc-stg-col-hint');
+            bindRadioHints('tc_settings[event_time_display]', 'tc-stg-evt-hint');
 
             // ── Event-List Conditional ───────────────────────────
             var eventListCb  = document.getElementById('tc-show-event-list');

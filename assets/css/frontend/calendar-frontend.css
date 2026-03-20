@@ -547,6 +547,8 @@
   width: 60px;
   min-width: 60px;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .tc-wp-time-start {
@@ -568,6 +570,7 @@
   height: 100px;
   padding: 4px;
   vertical-align: top;
+  word-break: break-word;
 }
 
 .tc-wp-cell--empty {
@@ -618,28 +621,35 @@
   white-space: nowrap;
 }
 
-/* Gruppenbezeichnung in linker Spalte (Modus "Uhrzeit oben") */
+/* 'groups' Modus: schmale Zeitspalte mit vertikalem Gruppenname */
 .tc-wp-time--group {
   vertical-align: middle !important;
   background: var(--tc-surface);
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  padding: 6px 0 !important;
+  overflow: hidden;
 }
 
 .tc-wp-group-label-cell {
   display: block;
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: .07em;
+  letter-spacing: .05em;
   color: var(--tc-text-muted);
-  line-height: 1.3;
   white-space: nowrap;
   text-align: center;
+  writing-mode: vertical-lr;
+  text-orientation: mixed;
+  margin: 0 auto;
 }
 
-/* Im "Uhrzeit oben"-Modus: Header-Zelle passt sich dem längsten Gruppentext an */
-.tc-week-plan-table--time-above .tc-wp-th-time {
-  width: auto;
-  min-width: 0;
+/* 'groups' Modus: Kopfzelle (th) auf gleiche Breite wie td bringen */
+.tc-frontend-wrap.tc-col-groups .tc-wp-th-time {
+  width: 32px;
+  min-width: 32px;
 }
 
 .tc-wp-event-sub {
@@ -802,64 +812,114 @@
   font-size: 11px;
 }
 
-/* ─── Option 2: Über dem Eventtitel (tc-time-above) ─────────── */
+/* ─── Einstellung 1: Zeitspalte — Tagesgruppen (tc-col-groups) ── */
 
-/* Zeitspalte schmal mit vertikalen Gruppen-Labels */
-.tc-time-above .fc .fc-timegrid-axis {
-  width: 28px !important;
-  min-width: 28px !important;
-  max-width: 28px !important;
+.tc-frontend-wrap.tc-col-groups .fc .fc-timegrid-axis,
+.tc-frontend-wrap.tc-col-groups .fc .fc-timegrid-slot-label {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
 }
 
-.tc-time-above .fc .fc-timegrid-slot-label {
-  width: 28px !important;
-  min-width: 28px !important;
-  max-width: 28px !important;
-}
-
-.tc-time-above .fc .fc-timegrid-slot-label-cushion {
-  font-size: 11px !important;
+.tc-frontend-wrap.tc-col-groups .fc .fc-timegrid-slot-label-cushion {
+  font-size: 9px !important;
   color: var(--tc-text-muted, #6b7280) !important;
-  writing-mode: vertical-rl;
-  text-orientation: mixed;
-  white-space: nowrap;
-  padding: 4px 2px !important;
+  writing-mode: vertical-rl !important;
+  text-orientation: mixed !important;
+  white-space: nowrap !important;
+  padding: 4px 0 !important;
   letter-spacing: 0.03em;
 }
 
-/* Uhrzeit im Event-Block: über dem Titel */
-.tc-time-above .fc .fc-event-time {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  opacity: 0.85;
-  margin-bottom: 2px;
+/* ─── Einstellung 1: Zeitspalte — Beides (tc-col-both) ──────── */
+
+.tc-frontend-wrap.tc-col-both .fc .fc-timegrid-axis,
+.tc-frontend-wrap.tc-col-both .fc .fc-timegrid-slot-label {
+  width: 52px !important;
+  min-width: 52px !important;
+  max-width: 52px !important;
 }
 
-/* ─── Option 3: Kompakt mit Hinweis (tc-time-compact) ───────── */
-
-/* Zeitspalte schmal mit Uhrzeiten */
-.tc-time-compact .fc .fc-timegrid-axis,
-.tc-time-compact .fc .fc-timegrid-slot-label {
-  width: 40px !important;
-  min-width: 40px !important;
-  max-width: 40px !important;
-  padding: 0 2px !important;
+.tc-frontend-wrap.tc-col-both .fc .fc-timegrid-slot-label-cushion {
+  padding: 2px 4px !important;
+  line-height: 1.2 !important;
 }
 
-.tc-time-compact .fc .fc-timegrid-slot-label-cushion {
-  font-size: 10px !important;
-  color: var(--tc-text-subtle, #9ca3af) !important;
-  padding: 0 !important;
-  white-space: nowrap;
+/* ─── Einstellung 2: Kein Zeitstempel (tc-event-none) ────────── */
+
+.tc-frontend-wrap.tc-event-none .fc .fc-event-time {
+  display: none !important;
 }
 
-/* Uhrzeit im Event-Block: prominent */
-.tc-time-compact .fc .fc-event-time {
+/* ─── Einstellung 2: Zeitstempel Normal (tc-event-normal) ────── */
+
+.tc-frontend-wrap.tc-event-normal .fc .fc-event-time {
   display: block !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
+  font-size: 11px !important;
+  font-weight: 500 !important;
+  opacity: 0.85 !important;
   margin-bottom: 2px !important;
+}
+
+/* ─── Einstellung 2: Zeitstempel Prominent (tc-event-prominent) ─ */
+
+.tc-frontend-wrap.tc-event-prominent .fc .fc-event-time {
+  display: block !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  margin-bottom: 3px !important;
+  letter-spacing: .01em !important;
+}
+
+/* ─── Week-Plan: Einstellung 2 – Zeitstempel im Event ────────── */
+
+.tc-frontend-wrap.tc-event-none .tc-wp-event-time-above {
+  display: none !important;
+}
+
+.tc-frontend-wrap.tc-event-normal .tc-wp-event-time-above {
+  font-size: 10px !important;
+  font-weight: 500 !important;
+  opacity: .85 !important;
+}
+
+.tc-frontend-wrap.tc-event-prominent .tc-wp-event-time-above {
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  opacity: 1 !important;
+  margin-bottom: 4px !important;
+}
+
+/* ─── Week-Plan: 'both' Modus – Gruppen-Header-Zeile ─────────── */
+
+.tc-wp-group-header-row td {
+  background: var(--tc-surface);
+  border-top: 2px solid var(--tc-border);
+  padding: 6px;
+}
+
+.tc-wp-group-header {
+  padding: 4px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+  color: var(--tc-text-muted);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+/* ─── Einstellung 3: Mobile Scaled (tc-mobile-scaled) ────────── */
+
+.tc-frontend-wrap.tc-mobile-scaled {
+  overflow-x: hidden !important;
+  overflow-y: visible;
+}
+
+.tc-frontend-wrap.tc-mobile-scaled .tc-frontend-calendar {
+  transform-origin: top left;
 }
 
 /* ─── Hinweis-Box (Mobile Slider, nur Mobile) ───────────────── */
