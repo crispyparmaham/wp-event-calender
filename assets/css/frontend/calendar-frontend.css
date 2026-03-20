@@ -802,66 +802,91 @@
   font-size: 11px;
 }
 
-/* ─── Compact Time Mode ──────────────────────────────────────── */
+/* ─── Option 2: Über dem Eventtitel (tc-time-above) ─────────── */
 
-/* Zeitspalte schmal — !important nötig um FC-internen table-layout zu überschreiben */
-.tc-compact-time-mode .fc-timegrid-axis,
-.tc-compact-time-mode .fc-timegrid-slot-label {
-  width: 36px !important;
-  min-width: 0 !important;
-  max-width: 36px !important;
+/* Zeitspalte schmal mit vertikalen Gruppen-Labels */
+.tc-time-above .fc .fc-timegrid-axis {
+  width: 28px !important;
+  min-width: 28px !important;
+  max-width: 28px !important;
 }
 
-.tc-compact-time-mode .fc-timegrid-axis-cushion,
-.tc-compact-time-mode .fc-timegrid-slot-label-cushion {
-  font-size: 10px !important;
-  color: var(--tc-text-subtle, #9ca3af) !important;
-  padding: 0 2px !important;
+.tc-time-above .fc .fc-timegrid-slot-label {
+  width: 28px !important;
+  min-width: 28px !important;
+  max-width: 28px !important;
+}
+
+.tc-time-above .fc .fc-timegrid-slot-label-cushion {
+  font-size: 11px !important;
+  color: var(--tc-text-muted, #6b7280) !important;
+  writing-mode: vertical-rl;
+  text-orientation: mixed;
   white-space: nowrap;
-  overflow: hidden;
-  max-width: 34px;
+  padding: 4px 2px !important;
+  letter-spacing: 0.03em;
 }
 
-/* Verhindert dass die Slot-Label-Spalte breiter als 36px wird */
-.tc-compact-time-mode .fc-timegrid-slots td:first-child,
-.tc-compact-time-mode .fc-col-header th:first-child {
-  width: 36px !important;
-  min-width: 0 !important;
-}
-
-/* Uhrzeit auf dem Event-Block: größer und fetter */
-.tc-compact-time-mode .fc-event-time {
-  display: block !important;
-  font-size: 12px !important;
-  font-weight: 700 !important;
+/* Uhrzeit im Event-Block: über dem Titel */
+.tc-time-above .fc .fc-event-time {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  opacity: 0.85;
   margin-bottom: 2px;
 }
 
-/* Hinweis-Box (Swipe + Querformat) */
-.tc-axis-hint {
-  display: none; /* nur auf Mobile sichtbar */
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 4px;
-  background: var(--tc-primary-light, rgba(79, 70, 229, .12));
-  border-radius: var(--tc-radius-sm, 4px);
-  color: var(--tc-primary, #4f46e5);
-  font-size: 10px;
-  cursor: default;
-  line-height: 1;
+/* ─── Option 3: Kompakt mit Hinweis (tc-time-compact) ───────── */
+
+/* Zeitspalte schmal mit Uhrzeiten */
+.tc-time-compact .fc .fc-timegrid-axis,
+.tc-time-compact .fc .fc-timegrid-slot-label {
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  padding: 0 2px !important;
+}
+
+.tc-time-compact .fc .fc-timegrid-slot-label-cushion {
+  font-size: 10px !important;
+  color: var(--tc-text-subtle, #9ca3af) !important;
+  padding: 0 !important;
+  white-space: nowrap;
+}
+
+/* Uhrzeit im Event-Block: prominent */
+.tc-time-compact .fc .fc-event-time {
+  display: block !important;
+  font-size: 12px !important;
+  font-weight: 700 !important;
+  margin-bottom: 2px !important;
+}
+
+/* ─── Hinweis-Box (Mobile Slider, nur Mobile) ───────────────── */
+.tc-hint-box {
+  display: none;
 }
 
 @media (max-width: 768px) {
-  .tc-axis-hint {
+  .tc-hint-box {
     display: flex;
+    gap: 16px;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 16px;
+    margin-bottom: 10px;
+    background: var(--tc-primary-light, rgba(79, 70, 229, 0.12));
+    border-radius: var(--tc-radius-sm, 4px);
+    font-size: 12px;
+    color: var(--tc-primary, #4f46e5);
+    font-weight: 500;
   }
 
-  /* Achsen-Header-Zelle: vertikale Zentrierung, kein Padding-Überschuss */
-  .tc-compact-time-mode .fc-col-header .fc-timegrid-axis {
-    vertical-align: middle;
-    padding: 2px !important;
-    overflow: visible;
+  .tc-hint-swipe,
+  .tc-hint-rotate {
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 }
 
