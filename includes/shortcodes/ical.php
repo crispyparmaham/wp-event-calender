@@ -41,7 +41,7 @@ add_action( 'template_redirect', function () {
 function tc_build_ics( WP_Post $post ) {
     $event_id   = $post->ID;
     $title      = $post->post_title;
-    $description = wp_strip_all_tags( get_field( 'intro_text', $event_id ) ?: '' );
+    $description = wp_strip_all_tags( get_field( 'event_description', $event_id ) ?: '' );
     $location   = wp_strip_all_tags( get_field( 'location',   $event_id ) ?: '' );
     $start_date = get_field( 'start_date', $event_id ); // Y-m-d
     $start_time = get_field( 'start_time', $event_id ); // H:i or empty

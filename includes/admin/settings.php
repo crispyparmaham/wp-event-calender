@@ -59,6 +59,59 @@ add_action( 'admin_init', function () {
 } );
 
 // ─────────────────────────────────────────────
+// Helper: Custom CSS Sanitize (zeilenweiser Parser)
+// ─────────────────────────────────────────────
+function tc_sanitize_custom_css( string $input ): string {
+    if ( empty( $input ) ) return '';
+
+    $lines    = explode( "\n", $input );
+    $allowed  = array();
+    $in_block = false;
+    $block    = '';
+
+    foreach ( $lines as $line ) {
+        $trimmed = trim( $line );
+
+        // Einzeiliger Kommentar /* ... */
+        if ( preg_match( '/^\/\*[^*]*\*+(?:[^\/][^*]*\*+)*\/$/', $trimmed ) ) {
+            $allowed[] = $line;
+            continue;
+        }
+
+        // .tc-dark { Block öffnen
+        if ( preg_match( '/^\.tc-dark\s*\{/', $trimmed ) ) {
+            $in_block = true;
+            $block    = $line . "\n";
+            continue;
+        }
+
+        // Block schließen
+        if ( $in_block && $trimmed === '}' ) {
+            $block    .= $line;
+            $allowed[] = $block;
+            $in_block  = false;
+            $block     = '';
+            continue;
+        }
+
+        // Zeile innerhalb .tc-dark Block
+        if ( $in_block ) {
+            if ( preg_match( '/^\s*--tc-[a-z][a-z0-9\-]*\s*:\s*[^;{}]+;/', $line ) ) {
+                $block .= $line . "\n";
+            }
+            continue;
+        }
+
+        // Einzelne --tc-* Deklaration außerhalb eines Blocks
+        if ( preg_match( '/^--tc-[a-z][a-z0-9\-]*\s*:\s*[^;{}]+;$/', $trimmed ) ) {
+            $allowed[] = $line;
+        }
+    }
+
+    return implode( "\n", $allowed );
+}
+
+// ─────────────────────────────────────────────
 // Sanitize Callback
 // ─────────────────────────────────────────────
 function tc_sanitize_settings( $input ) {
@@ -142,18 +195,10 @@ function tc_sanitize_settings( $input ) {
         ? sanitize_text_field( $input['token_font_family'] )
         : '';
 
-    // Custom CSS: --tc-* Deklarationen, .tc-dark{}-Blöcke und /* Kommentare */ erlaubt
-    $raw_css = isset( $input['token_custom_css'] ) ? wp_unslash( $input['token_custom_css'] ) : '';
-    $raw_css = preg_replace( '/<[^>]*>/i',           '', $raw_css ); // kein HTML
-    $raw_css = preg_replace( '/\burl\s*\(/i',         '', $raw_css ); // kein url()
-    $raw_css = preg_replace( '/\bexpression\s*\(/i',  '', $raw_css ); // kein expression()
-    $raw_css = preg_replace( '/javascript\s*:/i',     '', $raw_css ); // kein JS
-    preg_match_all(
-        '/--tc-[a-z][a-z0-9\-]*\s*:\s*[^;]+;|\.tc-dark\s*\{[^}]*\}|\/\*[^*]*(?:\*(?!\/)[^*]*)*\*\//',
-        $raw_css,
-        $css_matches
-    );
-    $clean['token_custom_css'] = trim( implode( "\n", $css_matches[0] ) );
+    // Custom CSS: zeilenweiser Parser — erlaubt --tc-* Deklarationen,
+    // .tc-dark { } Blöcke und einzeilige /* Kommentare */
+    $raw_css  = isset( $input['token_custom_css'] ) ? wp_unslash( $input['token_custom_css'] ) : '';
+    $clean['token_custom_css'] = tc_sanitize_custom_css( $raw_css );
 
     // SEO
     $clean['schema_enabled'] = ! empty( $input['schema_enabled'] ) ? '1' : '0';

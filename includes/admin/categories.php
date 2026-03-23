@@ -37,8 +37,8 @@ function tc_install_default_categories() {
     $count = (int) $wpdb->get_var( "SELECT COUNT(*) FROM {$table}" );
     if ( $count > 0 ) return;
 
-    $wpdb->insert( $table, array( 'name' => 'Gruppentraining', 'slug' => 'training', 'color' => '#4f46e5', 'sort_order' => 0 ) );
-    $wpdb->insert( $table, array( 'name' => 'Seminar',         'slug' => 'seminar',  'color' => '#059669', 'sort_order' => 1 ) );
+    $wpdb->insert( $table, array( 'name' => 'Termin',        'slug' => 'termin',       'color' => '#4f46e5', 'sort_order' => 0 ) );
+    $wpdb->insert( $table, array( 'name' => 'Veranstaltung', 'slug' => 'veranstaltung', 'color' => '#059669', 'sort_order' => 1 ) );
 }
 
 // ─────────────────────────────────────────────

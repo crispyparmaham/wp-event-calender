@@ -122,7 +122,7 @@ function tc_get_event_mail_info( $event_id, $event_date = '' ) {
 // ---------------------------------------------
 function tc_send_thank_you_mail( $data ) {
     $info        = tc_get_event_mail_info( $data['event_id'], $data['event_date'] ?? '' );
-    $is_trial    = (bool) get_field( 'price_on_request', $data['event_id'] );
+    $is_trial    = ( get_field( 'event_price_type', $data['event_id'] ) ?: 'fixed' ) === 'request';
     $blogname    = get_option( 'blogname' );
     $headers     = array( 'Content-Type: text/html; charset=UTF-8' );
     $cancel_url  = ! empty( $data['cancel_token'] )
@@ -165,7 +165,7 @@ function tc_send_confirmation_mail( $registration_id ) {
     if ( ! $reg ) return;
 
     $info       = tc_get_event_mail_info( $reg['event_id'], $reg['event_date'] ?? '' );
-    $is_trial   = (bool) get_field( 'price_on_request', $reg['event_id'] );
+    $is_trial   = ( get_field( 'event_price_type', $reg['event_id'] ) ?: 'fixed' ) === 'request';
     $blogname   = get_option( 'blogname' );
     $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
     $cancel_url = ! empty( $reg['cancel_token'] )
@@ -207,7 +207,7 @@ function tc_send_cancellation_mail( $registration_id ) {
     if ( ! $reg ) return;
 
     $info      = tc_get_event_mail_info( $reg['event_id'], $reg['event_date'] ?? '' );
-    $is_trial  = (bool) get_field( 'price_on_request', $reg['event_id'] );
+    $is_trial  = ( get_field( 'event_price_type', $reg['event_id'] ) ?: 'fixed' ) === 'request';
     $blogname  = get_option( 'blogname' );
     $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
 
@@ -244,7 +244,7 @@ function tc_send_admin_notification( $data ) {
     if ( $admin_email === $data['email'] ) return;
 
     $info      = tc_get_event_mail_info( $data['event_id'], $data['event_date'] ?? '' );
-    $is_trial  = (bool) get_field( 'price_on_request', $data['event_id'] );
+    $is_trial  = ( get_field( 'event_price_type', $data['event_id'] ) ?: 'fixed' ) === 'request';
     $blogname  = get_option( 'blogname' );
     $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
 
@@ -379,10 +379,10 @@ function tc_handle_registration_submission() {
         wp_send_json_error( array( 'message' => 'Diese Veranstaltung existiert nicht.' ) );
     }
 
-    $is_trial = (bool) get_field( 'price_on_request', $event_id );
+    $is_trial = ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) === 'request';
 
-    $track_p = get_field( 'track_participants', $event_id );
-    $max_p   = get_field( 'participants',       $event_id );
+    $track_p = get_field( 'registration_limit', $event_id );
+    $max_p   = get_field( 'max_participants',   $event_id );
     if ( $track_p && $max_p ) {
         $cur = (int) $wpdb->get_var( $wpdb->prepare(
             "SELECT COUNT(*) FROM {$table_name} WHERE event_id = %d AND status IN ('pending','confirmed')",
@@ -476,10 +476,10 @@ function tc_get_event_details_ajax() {
     $event  = get_post( $event_id );
     $fields = get_fields( $event_id ) ?: array();
 
-    $leadership = $fields['seminar_leadership'] ?? null;
+    $leadership = $fields['event_host']         ?? null;
     $location   = $fields['location']           ?? null;
-    $track_p    = $fields['track_participants'] ?? null;
-    $max_p      = $fields['participants']       ?? null;
+    $track_p    = $fields['registration_limit'] ?? null;
+    $max_p      = $fields['max_participants']   ?? null;
     $date_type  = $fields['event_date_type']    ?? 'single';
 
     $dates = array(); $is_multiday = false; $is_recurring_event = false;

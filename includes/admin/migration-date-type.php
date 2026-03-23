@@ -170,3 +170,65 @@ function tc_migrate_main_date_to_repeater() {
     update_option( 'tc_date_type_v3_migrated', '1', true );
     tc_clear_events_cache();
 }
+
+// ── Phase 4: Feldnamen-Generalisierung ────────────────────────────
+add_action( 'admin_init', 'tc_migrate_generalize_v1' );
+
+function tc_migrate_generalize_v1() {
+    if ( get_option( 'tc_generalize_v1_migrated' ) ) {
+        return;
+    }
+
+    $posts = get_posts( array(
+        'post_type'      => 'time_event',
+        'posts_per_page' => -1,
+        'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+        'fields'         => 'ids',
+    ) );
+
+    foreach ( $posts as $post_id ) {
+        // seminar_leadership → event_host
+        $val = get_post_meta( $post_id, 'seminar_leadership', true );
+        if ( $val !== '' && $val !== false ) {
+            update_field( 'event_host', $val, $post_id );
+        }
+
+        // intro_text → event_description
+        $val = get_post_meta( $post_id, 'intro_text', true );
+        if ( $val !== '' && $val !== false ) {
+            update_field( 'event_description', $val, $post_id );
+        }
+
+        // participants → max_participants
+        $val = get_post_meta( $post_id, 'participants', true );
+        if ( $val !== '' && $val !== false ) {
+            update_field( 'max_participants', $val, $post_id );
+        }
+
+        // track_participants → registration_limit
+        $val = get_post_meta( $post_id, 'track_participants', true );
+        if ( $val !== '' && $val !== false ) {
+            update_field( 'registration_limit', $val, $post_id );
+        }
+
+        // normal_preis → event_price
+        $val = get_post_meta( $post_id, 'normal_preis', true );
+        if ( $val !== '' && $val !== false ) {
+            update_field( 'event_price', $val, $post_id );
+        }
+
+        // price_on_request (true_false) → event_price_type (fixed/request)
+        $price_on_req = get_post_meta( $post_id, 'price_on_request', true );
+        $price_type   = ( $price_on_req == '1' || $price_on_req === true ) ? 'request' : 'fixed';
+        update_field( 'event_price_type', $price_type, $post_id );
+
+        // registration_mode: set default 'open' if not already set
+        $existing_mode = get_post_meta( $post_id, 'registration_mode', true );
+        if ( $existing_mode === '' || $existing_mode === false ) {
+            update_field( 'registration_mode', 'open', $post_id );
+        }
+    }
+
+    update_option( 'tc_generalize_v1_migrated', '1', true );
+    tc_clear_events_cache();
+}

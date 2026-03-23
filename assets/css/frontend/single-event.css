@@ -16,7 +16,7 @@
 /* ── Wrapper ───────────────────────────────────────────────────── */
 .tc-single-event {
   color: var(--tc-text);
-  font-family: var(--tc-font-family, inherit);
+  font-family: var(--tc-font-family);
   background: var(--tc-bg);
   max-width: 1100px;
   margin: 0 auto;

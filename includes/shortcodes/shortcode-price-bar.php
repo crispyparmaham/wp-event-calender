@@ -27,20 +27,20 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
     $link      = esc_url( $atts['link'] );
     $link_text = esc_html( $atts['link_text'] );
 
-    $today            = date( 'Y-m-d' );
-    $price_on_request = get_field( 'price_on_request', $post_id );
-    $normal_price     = get_field( 'normal_preis',     $post_id );
-    $early_bird       = get_field( 'early_bird',       $post_id );
-    $early_price      = $early_bird['early_bird_preis'] ?? null;
-    $price_date_str   = $early_bird['anmeldung']        ?? null;
-    $price_date       = $price_date_str
+    $today        = date( 'Y-m-d' );
+    $price_type   = get_field( 'event_price_type', $post_id ) ?: 'fixed';
+    $normal_price = get_field( 'event_price',      $post_id );
+    $early_bird   = get_field( 'early_bird',       $post_id );
+    $early_price  = $early_bird['early_bird_preis'] ?? null;
+    $price_date_str = $early_bird['anmeldung']      ?? null;
+    $price_date     = $price_date_str
         ? date_create_from_format( 'Y-m-d', $price_date_str )
         : null;
 
     // Kapazitaetspruefung
-    $track_participants    = get_field( 'track_participants', $post_id );
-    $max_participants      = get_field( 'participants',       $post_id );
-    $is_full               = false;
+    $track_participants = get_field( 'registration_limit', $post_id );
+    $max_participants   = get_field( 'max_participants',   $post_id );
+    $is_full            = false;
 
     if ( $track_participants && $max_participants ) {
         global $wpdb;
@@ -53,7 +53,7 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
     }
 
     $show_early = $price_date && $early_price && $price_date_str >= $today;
-    $has_price  = ! $price_on_request && $normal_price;
+    $has_price  = $price_type === 'fixed' && $normal_price;
 
     // Dark/Light Mode Klasse
     $dark_class = tc_dark_class();
@@ -73,7 +73,12 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
                             Leider keine Pl&auml;tze mehr verf&uuml;gbar.
                         </div>
 
-                    <?php elseif ( $price_on_request ) : ?>
+                    <?php elseif ( $price_type === 'free' ) : ?>
+
+                        <div class="tc-price-bar-label">Preis</div>
+                        <div class="tc-price-bar-amount">Kostenlos</div>
+
+                    <?php elseif ( $price_type === 'request' ) : ?>
 
                         <div class="tc-price-bar-teaser">
                             <strong>Neugierig geworden?</strong>
@@ -107,9 +112,9 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
                    class="tc-price-bar-btn <?php echo ( $show_early && $has_price ) ? 'tc-price-bar-btn--early' : ''; ?>"
                    <?php echo $is_full ? 'style="pointer-events:none;opacity:.5;cursor:not-allowed;"' : ''; ?>>
                     <?php
-                    if ( $is_full )              echo 'Ausgebucht';
-                    elseif ( $price_on_request ) echo 'Probetraining anfragen';
-                    else                         echo $link_text;
+                    if ( $is_full )                        echo 'Ausgebucht';
+                    elseif ( $price_type === 'request' )   echo 'Probetraining anfragen';
+                    else                                   echo $link_text;
                     ?>
                 </a>
 

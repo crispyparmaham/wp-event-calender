@@ -97,13 +97,41 @@ add_shortcode( 'time_registration', function ( $atts ) {
         return '<p class="tc-error">Veranstaltung nicht gefunden.</p>';
     }
 
+    // ── registration_mode prüfen ─────────────────────────────
+    if ( $event_id ) {
+        $reg_mode = get_field( 'registration_mode', $event_id ) ?: 'open';
+        if ( $reg_mode === 'none' ) {
+            return '';
+        }
+        if ( $reg_mode === 'request' ) {
+            $contact_email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
+            $event_title   = get_the_title( $event_id );
+            $subject       = rawurlencode( 'Anfrage: ' . $event_title );
+            $dark_class    = tc_dark_class();
+            ob_start(); ?>
+            <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+                <div class="tc-trial-notice">
+                    <strong>Interesse?</strong>
+                    F&uuml;r weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.
+                </div>
+                <a href="mailto:<?php echo esc_attr( $contact_email ); ?>?subject=<?php echo $subject; ?>"
+                   class="tc-btn tc-btn-primary">
+                    Jetzt anfragen
+                </a>
+            </div>
+            <?php
+            return ob_get_clean();
+        }
+    }
+
     static $instance = 0;
     $instance++;
     $form_id = 'tc-registration-form-' . $instance;
     $nonce   = wp_create_nonce( 'tc_registration_nonce' );
 
-    // Probetraining-Modus pruefen
-    $is_trial = $event_id ? (bool) get_field( 'price_on_request', $event_id ) : false;
+    // Preistyp ermitteln (request → Probetraining-Modus)
+    $price_type = $event_id ? ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) : 'fixed';
+    $is_trial   = ( $price_type === 'request' );
 
     // Formulartitel: bei Probetraining angepasst, sonst Shortcode-Attribut
     $form_title = $is_trial ? 'Kostenloses Probetraining anfragen' : esc_html( $atts['title'] );
@@ -120,8 +148,8 @@ add_shortcode( 'time_registration', function ( $atts ) {
     // Ausgebucht? Warteliste prüfen
     $is_full = false;
     if ( $event_id ) {
-        $track_p = get_field( 'track_participants', $event_id );
-        $max_p   = get_field( 'participants',       $event_id );
+        $track_p = get_field( 'registration_limit', $event_id );
+        $max_p   = get_field( 'max_participants',  $event_id );
         if ( $track_p && $max_p ) {
             global $wpdb;
             $cur_p   = (int) $wpdb->get_var( $wpdb->prepare(

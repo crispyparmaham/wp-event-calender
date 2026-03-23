@@ -85,8 +85,8 @@ function tc_render_events_overview_page() {
             <?php foreach ( $posts as $post ) :
                 $type        = get_field( 'event_type',  $post->ID ) ?: 'training';
                 $location    = wp_strip_all_tags( get_field( 'location', $post->ID ) ?: '–' );
-                $max_p       = (int) get_field( 'participants',       $post->ID );
-                $track_p     = (bool) get_field( 'track_participants', $post->ID );
+                $max_p       = (int) get_field( 'max_participants',   $post->ID );
+                $track_p     = (bool) get_field( 'registration_limit', $post->ID );
                 $date_type_v = get_field( 'event_date_type', $post->ID ) ?: 'single';
                 $is_recurring = $date_type_v === 'recurring';
 

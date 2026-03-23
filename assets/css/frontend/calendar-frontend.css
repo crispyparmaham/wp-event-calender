@@ -9,7 +9,7 @@
 /* ─── Wrapper ────────────────────────────────────────────────────── */
 .tc-frontend-wrap {
   position: static;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  font-family: var(--tc-font-family);
   color: var(--tc-text);
 }
 

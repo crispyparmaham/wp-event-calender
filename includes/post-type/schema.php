@@ -18,7 +18,7 @@ function tc_output_schema_json_ld() {
     $name = get_the_title( $post_id );
     $url  = get_permalink( $post_id );
 
-    $raw_desc    = wp_strip_all_tags( get_field( 'intro_text', $post_id ) ?: $post->post_content );
+    $raw_desc    = wp_strip_all_tags( get_field( 'event_description', $post_id ) ?: $post->post_content );
     $description = mb_substr( $raw_desc, 0, 300 );
     if ( mb_strlen( $raw_desc ) > 300 ) $description .= '…';
 
@@ -85,15 +85,15 @@ function tc_output_schema_json_ld() {
         'url'   => home_url(),
     );
 
-    $leadership = get_field( 'seminar_leadership', $post_id );
+    $leadership = get_field( 'event_host', $post_id );
     $performer  = $leadership ? array( '@type' => 'Person', 'name' => $leadership ) : null;
 
     // ── Preis / Angebote ───────────────────────
-    $price_on_request = (bool) get_field( 'price_on_request', $post_id );
-    $offers           = null;
+    $price_type = get_field( 'event_price_type', $post_id ) ?: 'fixed';
+    $offers     = null;
 
-    if ( ! $price_on_request ) {
-        $normal_price = (float) get_field( 'normal_preis', $post_id );
+    if ( $price_type === 'fixed' ) {
+        $normal_price = (float) get_field( 'event_price', $post_id );
         $eb_group     = get_field( 'early_bird', $post_id );
         $eb_price     = $eb_group ? (float) ( $eb_group['early_bird_preis'] ?? 0 ) : 0;
         $eb_deadline  = $eb_group ? ( $eb_group['anmeldung'] ?? '' ) : '';

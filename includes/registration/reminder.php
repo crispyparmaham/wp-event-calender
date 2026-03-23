@@ -56,7 +56,7 @@ function tc_send_event_reminders() {
 function tc_send_reminder_mail( $reg ) {
     $event_id  = (int) $reg['event_id'];
     $info      = tc_get_event_mail_info( $event_id, $reg['event_date'] ?? '' );
-    $trainer   = get_field( 'seminar_leadership', $event_id ) ?: '';
+    $trainer   = get_field( 'event_host', $event_id ) ?: '';
     $blogname  = get_option( 'blogname' );
     $headers   = [ 'Content-Type: text/html; charset=UTF-8' ];
     $subject   = 'Erinnerung: ' . $info['title'] . ' – in 3 Tagen';

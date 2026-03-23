@@ -223,13 +223,13 @@ function tc_dashboard_get_kpis() {
         'pending'
     ) );
 
-    // Auslastung: Events mit track_participants ermitteln
+    // Auslastung: Events mit registration_limit ermitteln
     $tracked_ids = get_posts( [
         'post_type'      => 'time_event',
         'post_status'    => 'publish',
         'posts_per_page' => -1,
         'fields'         => 'ids',
-        'meta_query'     => [ [ 'key' => 'track_participants', 'value' => '1' ] ],
+        'meta_query'     => [ [ 'key' => 'registration_limit', 'value' => '1' ] ],
     ] );
 
     $capacity_total = 0;
@@ -237,7 +237,7 @@ function tc_dashboard_get_kpis() {
 
     if ( ! empty( $tracked_ids ) ) {
         foreach ( $tracked_ids as $eid ) {
-            $max = (int) get_field( 'participants', $eid );
+            $max = (int) get_field( 'max_participants', $eid );
             if ( $max > 0 ) $capacity_total += $max;
         }
         $placeholders  = implode( ',', array_fill( 0, count( $tracked_ids ), '%d' ) );
@@ -288,8 +288,8 @@ function tc_dashboard_get_next_events() {
     $result = [];
     foreach ( $events as $event ) {
         $eid        = $event->ID;
-        $track_p    = get_field( 'track_participants', $eid );
-        $max_p      = (int) get_field( 'participants',       $eid );
+        $track_p    = get_field( 'registration_limit', $eid );
+        $max_p      = (int) get_field( 'max_participants',   $eid );
         $start_date = get_field( 'start_date', $eid );
         $event_type = get_field( 'event_type',  $eid );
 

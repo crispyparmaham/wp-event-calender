@@ -51,14 +51,14 @@ add_action( 'acf/include_fields', function () {
                 'name'          => 'event_type',
                 'type'          => 'select',
                 'choices'       => array(),   // wird per acf/load_field dynamisch befüllt
-                'default_value' => 'training',
+                'default_value' => 'termin',
                 'return_format' => 'value',
                 'required'      => 1,
             ),
             array(
                 'key'       => 'field_tc_intro_text',
-                'label'     => 'Einleitungstext',
-                'name'      => 'intro_text',
+                'label'     => 'Beschreibung',
+                'name'      => 'event_description',
                 'type'      => 'textarea',
                 'rows'      => 4,
                 'new_lines' => 'wpautop',
@@ -83,26 +83,40 @@ add_action( 'acf/include_fields', function () {
             ),
             array(
                 'key'         => 'field_tc_leadership',
-                'label'       => 'Seminar-/Trainingsleitung',
-                'name'        => 'seminar_leadership',
+                'label'       => 'Veranstaltungsleitung',
+                'name'        => 'event_host',
                 'type'        => 'text',
                 'placeholder' => 'z.B. Max Mustermann',
             ),
             array(
                 'key'         => 'field_tc_participants',
                 'label'       => 'Max. Teilnehmer (optional)',
-                'name'        => 'participants',
+                'name'        => 'max_participants',
                 'type'        => 'number',
                 'placeholder' => 'z.B. 12',
                 'instructions' => 'Lassen Sie leer, wenn keine Kapazitätsbegrenzung verwendet wird.',
             ),
             array(
-                'key'         => 'field_tc_track_participants',
-                'label'       => 'Teilnehmer tracken?',
-                'name'        => 'track_participants',
-                'type'        => 'true_false',
+                'key'           => 'field_tc_track_participants',
+                'label'         => 'Anmeldungen begrenzen?',
+                'name'          => 'registration_limit',
+                'type'          => 'true_false',
                 'default_value' => 0,
-                'instructions' => 'Aktivieren Sie dies, um die Anmeldungen zu zählen und den Termin zu sperren, wenn die maximale Teilnehmerzahl erreicht ist.',
+                'instructions'  => 'Aktivieren Sie dies, um die Anmeldungen zu zählen und den Termin zu sperren, wenn die maximale Teilnehmerzahl erreicht ist.',
+            ),
+            array(
+                'key'           => 'field_tc_registration_mode',
+                'label'         => 'Anmeldung',
+                'name'          => 'registration_mode',
+                'type'          => 'select',
+                'choices'       => array(
+                    'open'    => 'Offen – Anmeldeformular anzeigen',
+                    'request' => 'Auf Anfrage – Kontakt-Button anzeigen',
+                    'none'    => 'Keine Anmeldung',
+                ),
+                'default_value' => 'open',
+                'return_format' => 'value',
+                'instructions'  => 'Steuert, ob und wie Besucher sich anmelden können.',
             ),
             array(
                 'key'          => 'field_tc_difficulty',
@@ -312,35 +326,39 @@ add_action( 'acf/include_fields', function () {
                 'endpoint'  => 0,
             ),
 
-            // NEU: Preis auf Anfrage Toggle
             array(
-                'key'           => 'field_tc_price_on_request',
-                'label'         => 'Probetraining Button anzeigen (kein fixer Preis)',
-                'name'          => 'price_on_request',
-                'type'          => 'true_false',
-                'ui'            => 1,
-                'default_value' => 0,
-                'instructions'  => 'Aktivieren wenn kein fixer Preis angegeben werden soll. Preisfelder werden dann ausgeblendet.',
+                'key'           => 'field_tc_event_price_type',
+                'label'         => 'Preistyp',
+                'name'          => 'event_price_type',
+                'type'          => 'select',
+                'choices'       => array(
+                    'fixed'   => 'Fixpreis',
+                    'free'    => 'Kostenlos',
+                    'request' => 'Auf Anfrage',
+                ),
+                'default_value' => 'fixed',
+                'return_format' => 'value',
+                'instructions'  => 'Fixpreis: Preis eingeben. Kostenlos: Keine Preisangabe. Auf Anfrage: Anfrage-Button anzeigen.',
             ),
 
-            // Regulärer Preis — nur sichtbar wenn NICHT auf Anfrage
+            // Regulärer Preis — nur sichtbar bei Fixpreis
             array(
                 'key'      => 'field_tc_normal_price',
                 'label'    => 'Regulärer Preis (€)',
-                'name'     => 'normal_preis',
+                'name'     => 'event_price',
                 'type'     => 'number',
-                'required' => 1,
+                'required' => 0,
                 'min'      => 0,
                 'step'     => 0.01,
                 'prepend'  => '€',
                 'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_price_on_request',
+                    'field'    => 'field_tc_event_price_type',
                     'operator' => '==',
-                    'value'    => '0',
+                    'value'    => 'fixed',
                 ) ) ),
             ),
 
-            // Early Bird — nur sichtbar wenn NICHT auf Anfrage
+            // Early Bird — nur sichtbar bei Fixpreis
             array(
                 'key'        => 'field_tc_early_bird',
                 'label'      => 'Early Bird',
@@ -348,9 +366,9 @@ add_action( 'acf/include_fields', function () {
                 'type'       => 'group',
                 'layout'     => 'row',
                 'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_price_on_request',
+                    'field'    => 'field_tc_event_price_type',
                     'operator' => '==',
-                    'value'    => '0',
+                    'value'    => 'fixed',
                 ) ) ),
                 'sub_fields' => array(
                     array(

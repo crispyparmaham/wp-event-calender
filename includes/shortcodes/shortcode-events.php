@@ -201,11 +201,12 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	$fields     = get_fields( $post->ID ) ?: [];
 	$event_type = $fields['event_type']         ?? '';
 	$location   = $fields['location']           ?? '';
-	$trainer    = $fields['seminar_leadership'] ?? '';
-	$price_raw  = $fields['normal_preis']       ?? '';
-	$on_request = ! empty( $fields['price_on_request'] );
-	$track_p    = ! empty( $fields['track_participants'] );
-	$max_p      = (int) ( $fields['participants'] ?? 0 );
+	$trainer    = $fields['event_host']         ?? '';
+	$price_raw  = $fields['event_price']        ?? '';
+	$price_type_ev = $fields['event_price_type'] ?? 'fixed';
+	$on_request = ( $price_type_ev === 'request' );
+	$track_p    = ! empty( $fields['registration_limit'] );
+	$max_p      = (int) ( $fields['max_participants'] ?? 0 );
 
 	// Datum / Zeit aus erstem Repeater-Eintrag
 	$first_date = tc_get_first_event_date( $post->ID );
@@ -369,6 +370,11 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 				echo '<li class="tc-events-meta-item tc-events-meta--price">'
 					. $price_icon
 					. '<span>Preis auf Anfrage</span>'
+					. '</li>';
+			} elseif ( $price_type_ev === 'free' ) {
+				echo '<li class="tc-events-meta-item tc-events-meta--price">'
+					. $price_icon
+					. '<span>Kostenlos</span>'
 					. '</li>';
 			} elseif ( $price_raw !== '' && $price_raw !== false ) {
 				$price_fmt = number_format( (float) $price_raw, 2, ',', '.' ) . ' €';

@@ -100,7 +100,7 @@ function tc_handle_get_events() {
         $type  = get_field( 'event_type', $post->ID ) ?: 'training';
         $color = tc_get_category_color( $type );
 
-        $intro_text      = get_field( 'intro_text',        $post->ID );
+        $intro_text      = get_field( 'event_description', $post->ID );
         $recurring_day   = get_field( 'recurring_weekday', $post->ID );
         $recurring_until = get_field( 'recurring_until',   $post->ID );
         $event_dates_raw = get_field( 'event_dates',       $post->ID );
@@ -146,10 +146,10 @@ function tc_handle_get_events() {
                 'dateType'         => $date_type,
                 'permalink'        => get_permalink( $post->ID ),
                 'intro_text'       => $intro_text,
-                'leadership'       => get_field( 'seminar_leadership', $post->ID ),
+                'leadership'       => get_field( 'event_host',    $post->ID ),
                 'location'         => wp_strip_all_tags( get_field( 'location', $post->ID ) ),
-                'participants'     => get_field( 'participants',        $post->ID ),
-                'price'            => get_field( 'normal_preis',        $post->ID ),
+                'participants'     => get_field( 'max_participants', $post->ID ),
+                'price'            => get_field( 'event_price',     $post->ID ),
                 'editUrl'          => get_edit_post_link( $post->ID, 'raw' ),
                 'isRecurring'      => $is_recurring_type,
                 'recurringWeekday' => ( $is_recurring_type && $recurring_day !== false )

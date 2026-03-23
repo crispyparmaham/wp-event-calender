@@ -13,15 +13,16 @@ $post_id    = get_the_ID();
 $dark_class = tc_dark_class();
 
 // ── Felder lesen ──────────────────────────────────────────
-$date_type    = get_field( 'event_date_type', $post_id ) ?: 'single';
-$intro_text   = get_field( 'intro_text',       $post_id ) ?: '';
-$location_raw = get_field( 'location',         $post_id ) ?: '';
-$leadership   = get_field( 'seminar_leadership', $post_id ) ?: '';
-$event_type   = get_field( 'event_type',        $post_id ) ?: '';
-$difficulty   = get_field( 'difficulty',        $post_id ) ?: '';
+$date_type         = get_field( 'event_date_type',   $post_id ) ?: 'single';
+$event_description = get_field( 'event_description', $post_id ) ?: '';
+$location_raw      = get_field( 'location',          $post_id ) ?: '';
+$leadership        = get_field( 'event_host',         $post_id ) ?: '';
+$event_type        = get_field( 'event_type',         $post_id ) ?: '';
+$difficulty        = get_field( 'difficulty',         $post_id ) ?: '';
 
-$price_on_request = (bool) get_field( 'price_on_request', $post_id );
-$normal_price     = (float) get_field( 'normal_preis',    $post_id );
+$price_type       = get_field( 'event_price_type', $post_id ) ?: 'fixed';
+$price_on_request = ( $price_type === 'request' );
+$normal_price     = (float) get_field( 'event_price', $post_id );
 $eb_group         = get_field( 'early_bird', $post_id );
 $eb_price         = $eb_group ? (float) ( $eb_group['early_bird_preis'] ?? 0 ) : 0;
 $eb_deadline      = $eb_group ? ( $eb_group['anmeldung'] ?? '' ) : '';
@@ -121,9 +122,9 @@ if ( $date_type === 'recurring' ) {
         <!-- Links: Beschreibung + Editor-Inhalt -->
         <div class="tc-se-main">
 
-            <?php if ( $intro_text ) : ?>
+            <?php if ( $event_description ) : ?>
             <div class="tc-se-intro">
-                <?php echo wp_kses_post( wpautop( $intro_text ) ); ?>
+                <?php echo wp_kses_post( wpautop( $event_description ) ); ?>
             </div>
             <?php endif; ?>
 
@@ -136,8 +137,11 @@ if ( $date_type === 'recurring' ) {
             </div>
             <?php endif; ?>
 
-            <!-- Anmeldeformular -->
-            <?php if ( shortcode_exists( 'time_registration' ) ) : ?>
+            <!-- Anmeldeformular / Kontakt-Button -->
+            <?php
+            $reg_mode = get_field( 'registration_mode', $post_id ) ?: 'open';
+            if ( $reg_mode !== 'none' && shortcode_exists( 'time_registration' ) ) :
+            ?>
             <div class="tc-se-registration">
                 <?php echo do_shortcode( '[time_registration event_id="' . $post_id . '"]' ); ?>
             </div>
