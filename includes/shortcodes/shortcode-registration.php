@@ -109,7 +109,8 @@ add_shortcode( 'time_registration', function ( $atts ) {
     $form_title = $is_trial ? 'Kostenloses Probetraining anfragen' : esc_html( $atts['title'] );
 
     // Termine aufbereiten: Repeater-Termine haben Vorrang vor Wiederholungen
-    $is_recurring   = $event_id ? (bool) get_field( 'is_recurring', $event_id ) : false;
+    $date_type_val  = $event_id ? ( get_field( 'event_date_type', $event_id ) ?: 'single' ) : 'single';
+    $is_recurring   = $date_type_val === 'recurring';
     $repeater_dates = $event_id ? tc_get_repeater_dates_for_registration( $event_id ) : array();
     $occurrences    = empty( $repeater_dates ) && $event_id && $is_recurring
         ? tc_get_upcoming_occurrences( $event_id )

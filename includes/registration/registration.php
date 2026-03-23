@@ -77,12 +77,22 @@ function tc_delete_registration( $id ) {
 // Helper: Event-Infos für Mails aufbereiten
 // ---------------------------------------------
 function tc_get_event_mail_info( $event_id, $event_date = '' ) {
-    $event      = get_post( $event_id );
-    $title      = $event ? $event->post_title : '-';
-    $start_date = get_field( 'start_date', $event_id );
-    $start_time = get_field( 'start_time', $event_id );
-    $end_date   = get_field( 'end_date',   $event_id );
-    $location   = wp_strip_all_tags( get_field( 'location', $event_id ) ?: '' );
+    $event    = get_post( $event_id );
+    $title    = $event ? $event->post_title : '-';
+    $location = wp_strip_all_tags( get_field( 'location', $event_id ) ?: '' );
+
+    $date_type = get_field( 'event_date_type', $event_id );
+
+    if ( $date_type === 'recurring' ) {
+        $start_date = get_field( 'start_date', $event_id );
+        $start_time = get_field( 'start_time', $event_id );
+        $end_date   = '';
+    } else {
+        $first      = tc_get_first_event_date( $event_id );
+        $start_date = $first['date_start'] ?? '';
+        $start_time = $first['time_start'] ?? '';
+        $end_date   = $first['date_end']   ?? '';
+    }
 
     if ( $event_date ) {
         $d        = DateTime::createFromFormat( 'Y-m-d', $event_date );
@@ -466,48 +476,50 @@ function tc_get_event_details_ajax() {
     $event  = get_post( $event_id );
     $fields = get_fields( $event_id ) ?: array();
 
-    $leadership        = $fields['seminar_leadership']  ?? null;
-    $location          = $fields['location']            ?? null;
-    $start_date        = $fields['start_date']          ?? null;
-    $start_time        = $fields['start_time']          ?? null;
-    $more_days         = $fields['more_days']           ?? null;
-    $end_date          = $fields['end_date']            ?? null;
-    $is_recurring      = $fields['is_recurring']        ?? null;
-    $recurring_weekday = $fields['recurring_weekday']   ?? null;
-    $recurring_until   = $fields['recurring_until']     ?? null;
-    $track_p           = $fields['track_participants']  ?? null;
-    $max_p             = $fields['participants']        ?? null;
+    $leadership = $fields['seminar_leadership'] ?? null;
+    $location   = $fields['location']           ?? null;
+    $track_p    = $fields['track_participants'] ?? null;
+    $max_p      = $fields['participants']       ?? null;
+    $date_type  = $fields['event_date_type']    ?? 'single';
 
     $dates = array(); $is_multiday = false; $is_recurring_event = false;
+    $start_date = null; $start_time = null;
 
-    if ( $more_days && $end_date ) {
-        $is_multiday = true;
-        try {
-            $cur = new DateTime( $start_date );
-            $end = new DateTime( $end_date );
-            while ( $cur <= $end ) { $dates[] = $cur->format('Y-m-d'); $cur->modify('+1 day'); }
-        } catch ( Exception $e ) {
-            if ( $start_date ) $dates = array( $start_date );
-        }
-    } elseif ( $is_recurring && $recurring_weekday !== '' && $recurring_until ) {
-        $is_recurring_event = true;
-        try {
-            $target   = (int) $recurring_weekday;
-            $cur      = new DateTime( $start_date );
-            $until_dt = new DateTime( $recurring_until . ' 23:59:59' );
-            $diff     = ( $target - (int) $cur->format('w') + 7 ) % 7;
-            if ( $diff > 0 ) $cur->modify( "+{$diff} days" );
-            $limit = 0;
-            while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
-                $dates[] = $cur->format('Y-m-d');
-                $cur->modify('+7 days');
-                $limit++;
+    if ( $date_type === 'recurring' ) {
+        $start_date        = $fields['start_date']        ?? null;
+        $start_time        = $fields['start_time']        ?? null;
+        $recurring_weekday = $fields['recurring_weekday'] ?? null;
+        $recurring_until   = $fields['recurring_until']   ?? null;
+
+        if ( $start_date && $recurring_weekday !== '' && $recurring_until ) {
+            $is_recurring_event = true;
+            try {
+                $target   = (int) $recurring_weekday;
+                $cur      = new DateTime( $start_date );
+                $until_dt = new DateTime( $recurring_until . ' 23:59:59' );
+                $diff     = ( $target - (int) $cur->format('w') + 7 ) % 7;
+                if ( $diff > 0 ) $cur->modify( "+{$diff} days" );
+                $limit = 0;
+                while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
+                    $dates[] = $cur->format('Y-m-d');
+                    $cur->modify('+7 days');
+                    $limit++;
+                }
+            } catch ( Exception $e ) {
+                if ( $start_date ) $dates = array( $start_date );
             }
-        } catch ( Exception $e ) {
-            if ( $start_date ) $dates = array( $start_date );
         }
     } else {
-        $dates[] = $start_date;
+        // Einzeltermin: Datum-Logik ausschließlich über event_dates Repeater
+        $rows = get_field( 'event_dates', $event_id ) ?: array();
+        foreach ( $rows as $row ) {
+            if ( ! empty( $row['date_start'] ) ) {
+                $dates[] = $row['date_start'];
+            }
+        }
+        $start_date  = $rows[0]['date_start'] ?? null;
+        $start_time  = $rows[0]['time_start'] ?? null;
+        $is_multiday = (bool) array_filter( $rows, fn( $r ) => ! empty( $r['date_end'] ) );
     }
 
     $current_reg = 0; $is_full = false;

@@ -24,15 +24,20 @@ function tc_render_events_overview_page() {
     global $wpdb;
     $table = $wpdb->prefix . 'tc_registrations';
 
-    // Alle Events laden — aufsteigend nach Startdatum
+    // Alle Events laden — Sortierung nach erstem Repeater-Datum in PHP
     $posts = get_posts( array(
         'post_type'      => 'time_event',
         'posts_per_page' => -1,
         'post_status'    => array( 'publish', 'draft' ),
-        'meta_key'       => 'start_date',
-        'orderby'        => 'meta_value',
+        'orderby'        => 'title',
         'order'          => 'ASC',
     ) );
+
+    usort( $posts, function ( $a, $b ) {
+        $da = tc_get_first_event_date( $a->ID )['date_start'] ?? '';
+        $db = tc_get_first_event_date( $b->ID )['date_start'] ?? '';
+        return strcmp( $da ?: '9999-12-31', $db ?: '9999-12-31' );
+    } );
 
     // Anmeldezahlen für alle Events in einer Query laden
     $counts_raw = $wpdb->get_results(
@@ -79,20 +84,17 @@ function tc_render_events_overview_page() {
             <tbody>
             <?php foreach ( $posts as $post ) :
                 $type        = get_field( 'event_type',  $post->ID ) ?: 'training';
-                $start_date  = get_field( 'start_date',  $post->ID ); // Y-m-d
-                $end_date    = get_field( 'end_date',    $post->ID );
-                $start_time  = get_field( 'start_time',  $post->ID );
                 $location    = wp_strip_all_tags( get_field( 'location', $post->ID ) ?: '–' );
                 $max_p       = (int) get_field( 'participants',       $post->ID );
                 $track_p     = (bool) get_field( 'track_participants', $post->ID );
-                $is_recurring = (bool) get_field( 'is_recurring',     $post->ID );
+                $date_type_v = get_field( 'event_date_type', $post->ID ) ?: 'single';
+                $is_recurring = $date_type_v === 'recurring';
 
-                // Datum formatieren – Repeater-Termine haben Vorrang
+                // Datum formatieren – ausschließlich aus event_dates Repeater
                 $event_dates_raw = get_field( 'event_dates', $post->ID );
                 $date_str        = '–';
 
                 if ( ! empty( $event_dates_raw ) && is_array( $event_dates_raw ) ) {
-                    $today    = date( 'Y-m-d' );
                     $upcoming = array_filter( $event_dates_raw, fn( $r ) => ! empty( $r['date_start'] ) && $r['date_start'] >= $today );
                     $count    = count( $event_dates_raw );
                     if ( ! empty( $upcoming ) ) {
@@ -100,19 +102,21 @@ function tc_render_events_overview_page() {
                         $d_obj = DateTime::createFromFormat( 'Y-m-d', $next['date_start'] );
                         $date_str = $d_obj ? $d_obj->format( 'd.m.Y' ) : $next['date_start'];
                         if ( ! empty( $next['time_start'] ) ) $date_str .= ' ' . $next['time_start'] . ' Uhr';
+                        if ( ! empty( $next['date_end'] ) && $next['date_end'] !== $next['date_start'] ) {
+                            $d_end    = DateTime::createFromFormat( 'Y-m-d', $next['date_end'] );
+                            $date_str .= ' – ' . ( $d_end ? $d_end->format( 'd.m.Y' ) : $next['date_end'] );
+                        }
                         $date_str .= ' <span style="font-size:11px;color:#6b7280;">(' . $count . ' Termin' . ( $count !== 1 ? 'e' : '' ) . ' gesamt)</span>';
                     } else {
                         $date_str = '<span style="color:#9ca3af;">Alle ' . $count . ' Termine vergangen</span>';
                     }
-                } elseif ( $start_date ) {
-                    $d        = DateTime::createFromFormat( 'Y-m-d', $start_date );
-                    $date_str = $d ? $d->format( 'd.m.Y' ) : $start_date;
-                    if ( $start_time ) $date_str .= ' ' . $start_time . ' Uhr';
-                    if ( $end_date && $end_date !== $start_date ) {
-                        $de        = DateTime::createFromFormat( 'Y-m-d', $end_date );
-                        $date_str .= ' – ' . ( $de ? $de->format( 'd.m.Y' ) : $end_date );
-                    }
-                    if ( $is_recurring ) {
+                } elseif ( $is_recurring ) {
+                    $start_date = get_field( 'start_date', $post->ID );
+                    $start_time = get_field( 'start_time', $post->ID );
+                    if ( $start_date ) {
+                        $d        = DateTime::createFromFormat( 'Y-m-d', $start_date );
+                        $date_str = $d ? $d->format( 'd.m.Y' ) : $start_date;
+                        if ( $start_time ) $date_str .= ' ' . $start_time . ' Uhr';
                         $until     = get_field( 'recurring_until', $post->ID );
                         $date_str .= $until ? ' 🔁 bis ' . DateTime::createFromFormat('Y-m-d', $until)->format('d.m.Y') : ' 🔁';
                     }
@@ -142,7 +146,9 @@ function tc_render_events_overview_page() {
                 }
 
                 // Event-Status
-                $is_past   = $start_date && $start_date < $today && ! $is_recurring;
+                $first_ed  = tc_get_first_event_date( $post->ID );
+                $first_date = $first_ed['date_start'] ?? '';
+                $is_past    = $first_date && $first_date < $today && ! $is_recurring;
                 $status_badge = '';
                 if ( $post->post_status === 'draft' ) {
                     $status_badge = '<span class="tc-badge tc-badge-draft">Entwurf</span>';

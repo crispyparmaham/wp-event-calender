@@ -9,6 +9,9 @@ defined( 'ABSPATH' ) || exit;
  *   - Erster event_dates Eintrag → start_date / start_time / end_time
  *   - Restliche Einträge bleiben im Repeater
  *   - event_date_type wird auf 'single' gesetzt
+ * Phase 3 (v3.3): Haupttermin (start_date) → event_dates Repeater
+ *   - start_date / start_time / end_time / end_date als ersten Repeater-Eintrag
+ *   - Datenbankwerte der alten Felder bleiben erhalten
  */
 
 // ── Phase 1: Legacy → event_date_type ─────────────────────────────
@@ -100,5 +103,70 @@ function tc_migrate_multiple_to_single() {
     }
 
     update_option( 'tc_date_type_v2_migrated', '1', true );
+    tc_clear_events_cache();
+}
+
+// ── Phase 3: Haupttermin → event_dates Repeater ───────────────
+add_action( 'admin_init', 'tc_migrate_main_date_to_repeater' );
+
+function tc_migrate_main_date_to_repeater() {
+    if ( get_option( 'tc_date_type_v3_migrated' ) ) {
+        return;
+    }
+
+    $posts = get_posts( array(
+        'post_type'      => 'time_event',
+        'posts_per_page' => -1,
+        'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+        'fields'         => 'ids',
+    ) );
+
+    foreach ( $posts as $post_id ) {
+        $date_type = get_field( 'event_date_type', $post_id );
+        if ( $date_type !== 'single' ) {
+            continue;
+        }
+
+        // Alte Felder direkt aus der Meta-Tabelle lesen (unabhängig vom ACF-Register)
+        $start_date = get_post_meta( $post_id, 'start_date', true );
+        if ( empty( $start_date ) ) {
+            continue;
+        }
+
+        $start_time = get_post_meta( $post_id, 'start_time', true ) ?: '';
+        $end_time   = get_post_meta( $post_id, 'end_time',   true ) ?: '';
+        $end_date   = get_post_meta( $post_id, 'end_date',   true ) ?: '';
+        $multi_day  = get_post_meta( $post_id, 'multi_day',  true );
+
+        // Prüfen ob dieser date_start bereits im Repeater vorhanden ist
+        $existing = get_field( 'event_dates', $post_id );
+        if ( ! empty( $existing ) && is_array( $existing ) ) {
+            $already = false;
+            foreach ( $existing as $row ) {
+                if ( ( $row['date_start'] ?? '' ) === $start_date ) {
+                    $already = true;
+                    break;
+                }
+            }
+            if ( $already ) {
+                continue;
+            }
+        }
+
+        $new_entry = array(
+            'date_start' => $start_date,
+            'date_end'   => ( $multi_day == '1' || $multi_day === true ) ? $end_date : '',
+            'time_start' => $start_time,
+            'time_end'   => $end_time,
+            'seats'      => '',
+            'notes'      => '',
+        );
+
+        // Neuen Eintrag an den ANFANG des Repeaters setzen
+        $new_repeater = array_merge( array( $new_entry ), $existing ?: array() );
+        update_field( 'event_dates', $new_repeater, $post_id );
+    }
+
+    update_option( 'tc_date_type_v3_migrated', '1', true );
     tc_clear_events_cache();
 }

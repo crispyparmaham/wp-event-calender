@@ -36,6 +36,15 @@ add_action( 'admin_init', function () {
             'time_column_label'       => 'hours',
             'event_time_display'      => 'none',
             'week_plan_time_position' => 'standard',
+            // Design Tokens
+            'token_bg'                => '',
+            'token_text'              => '',
+            'token_border'            => '',
+            'token_radius'            => '',
+            'token_font_family'       => '',
+            'token_custom_css'        => '',
+            // SEO
+            'schema_enabled'          => '1',
         ),
     ) );
 } );
@@ -102,6 +111,34 @@ function tc_sanitize_settings( $input ) {
     if ( $raw_time === 'left' ) $raw_time = 'standard';
     $valid_time_pos = array( 'standard', 'compact', 'above' );
     $clean['week_plan_time_position'] = in_array( $raw_time, $valid_time_pos, true ) ? $raw_time : 'standard';
+
+    // Design Tokens
+    $clean['token_bg']     = isset( $input['token_bg'] )     ? ( sanitize_hex_color( $input['token_bg'] )     ?: '' ) : '';
+    $clean['token_text']   = isset( $input['token_text'] )   ? ( sanitize_hex_color( $input['token_text'] )   ?: '' ) : '';
+    $clean['token_border'] = isset( $input['token_border'] ) ? ( sanitize_hex_color( $input['token_border'] ) ?: '' ) : '';
+
+    $raw_radius = isset( $input['token_radius'] ) ? sanitize_text_field( $input['token_radius'] ) : '';
+    $r_val      = (int) filter_var( $raw_radius, FILTER_SANITIZE_NUMBER_INT );
+    $clean['token_radius'] = $r_val > 0 ? $r_val . 'px' : '';
+
+    $clean['token_font_family'] = isset( $input['token_font_family'] )
+        ? sanitize_text_field( $input['token_font_family'] )
+        : '';
+
+    // Custom CSS: nur Zeilen erlaubt die mit --tc- beginnen und valide Deklarationen sind
+    $raw_css    = isset( $input['token_custom_css'] ) ? wp_unslash( $input['token_custom_css'] ) : '';
+    $css_lines  = explode( "\n", $raw_css );
+    $clean_css  = array();
+    foreach ( $css_lines as $line ) {
+        $line = trim( $line );
+        if ( $line && preg_match( '/^--tc-[a-z][a-z0-9-]*\s*:\s*[^;]+;$/', $line ) ) {
+            $clean_css[] = $line;
+        }
+    }
+    $clean['token_custom_css'] = implode( "\n", $clean_css );
+
+    // SEO
+    $clean['schema_enabled'] = ! empty( $input['schema_enabled'] ) ? '1' : '0';
 
     return $clean;
 }
@@ -171,6 +208,58 @@ add_action( 'wp_head', function () {
 } );
 
 // ─────────────────────────────────────────────
+// Design Tokens im <head> ausgeben
+// Priorität 11 → nach dem #tc-primary-color Block (Prio 10)
+// ─────────────────────────────────────────────
+add_action( 'wp_head', function () {
+    $bg          = tc_get_setting( 'token_bg',          '' );
+    $text        = tc_get_setting( 'token_text',        '' );
+    $border      = tc_get_setting( 'token_border',      '' );
+    $radius      = tc_get_setting( 'token_radius',      '' );
+    $font_family = tc_get_setting( 'token_font_family', '' );
+    $custom_css  = tc_get_setting( 'token_custom_css',  '' );
+
+    if ( ! $bg && ! $text && ! $border && ! $radius && ! $font_family && ! $custom_css ) {
+        return;
+    }
+
+    $lines = array();
+    if ( $bg )     $lines[] = '    --tc-bg: ' . esc_attr( $bg ) . ';';
+    if ( $text )   $lines[] = '    --tc-text: ' . esc_attr( $text ) . ';';
+    if ( $border ) $lines[] = '    --tc-border: ' . esc_attr( $border ) . ';';
+
+    if ( $radius ) {
+        $r  = max( 0, (int) filter_var( $radius, FILTER_SANITIZE_NUMBER_INT ) );
+        $sm = max( 2, (int) round( $r * 0.6 ) ) . 'px';
+        $lg = (int) round( $r * 1.6 ) . 'px';
+        $lines[] = '    --tc-radius: ' . $r . 'px;';
+        $lines[] = '    --tc-radius-sm: ' . $sm . ';';
+        $lines[] = '    --tc-radius-lg: ' . $lg . ';';
+    }
+
+    if ( ! empty( $font_family ) ) {
+        $lines[] = '    --tc-font-family: ' . esc_attr( $font_family ) . ';';
+    }
+
+    if ( ! empty( $custom_css ) ) {
+        foreach ( explode( "\n", $custom_css ) as $css_line ) {
+            $css_line = trim( $css_line );
+            if ( $css_line ) $lines[] = '    ' . $css_line;
+        }
+    }
+
+    if ( empty( $lines ) ) return;
+    ?>
+<style id="tc-design-tokens">
+:root {
+<?php echo implode( "\n", $lines ); ?>
+
+}
+</style>
+    <?php
+}, 11 );
+
+// ─────────────────────────────────────────────
 // Settings-Seite rendern
 // ─────────────────────────────────────────────
 function tc_render_settings_page() {
@@ -179,6 +268,13 @@ function tc_render_settings_page() {
     // Aktuelle Werte
     $primary_color           = tc_get_primary_color();
     $calendar_mode           = tc_get_setting( 'calendar_mode', 'light' );
+    $token_bg                = tc_get_setting( 'token_bg',          '' );
+    $token_text              = tc_get_setting( 'token_text',        '' );
+    $token_border            = tc_get_setting( 'token_border',      '' );
+    $token_radius            = tc_get_setting( 'token_radius',      '' );
+    $token_font_family       = tc_get_setting( 'token_font_family', '' );
+    $token_custom_css        = tc_get_setting( 'token_custom_css',  '' );
+    $schema_enabled          = tc_get_setting( 'schema_enabled',    '1' );
     $default_view            = tc_get_setting( 'default_view', 'timeGridWeek' );
     $week_starts_on          = tc_get_setting( 'week_starts_on', 'monday' );
     $week_only               = tc_get_setting( 'frontend_week_only', '0' );
@@ -214,7 +310,8 @@ function tc_render_settings_page() {
         <nav class="tc-stg-tabs" role="tablist">
             <button class="tc-stg-tab" data-tab="design"   role="tab">🎨 Design</button>
             <button class="tc-stg-tab" data-tab="kalender" role="tab">📅 Kalender</button>
-            <button class="tc-stg-tab" data-tab="email"    role="tab">📧 E-Mails & Anmeldungen</button>
+            <button class="tc-stg-tab" data-tab="email"    role="tab">📧 E-Mails &amp; Anmeldungen</button>
+            <button class="tc-stg-tab" data-tab="seo"      role="tab">🔍 SEO</button>
             <button class="tc-stg-tab" data-tab="updates"  role="tab">🔄 Updates</button>
         </nav>
 
@@ -269,6 +366,114 @@ function tc_render_settings_page() {
                     </div>
 
                 </div><!-- .tc-stg-card -->
+
+                <!-- ── Design Token Editor ────────────────────── -->
+                <div class="tc-stg-card">
+                    <h3 class="tc-stg-section-title">Design Tokens</h3>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Hintergrundfarbe</strong>
+                            <span>Überschreibt <code>--tc-bg</code>. Standard: <code>#ffffff</code></span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <div class="tc-stg-color-wrap">
+                                <input type="color" name="tc_settings[token_bg]"
+                                       id="tc-token-bg"
+                                       value="<?php echo esc_attr( $token_bg ?: '#ffffff' ); ?>">
+                                <code id="tc-token-bg-label"><?php echo esc_html( $token_bg ?: '#ffffff' ); ?></code>
+                            </div>
+                            <?php if ( ! $token_bg ) : ?>
+                            <p class="tc-stg-hint">Nicht gesetzt — Systemwert aus design-system.css gilt.</p>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Textfarbe</strong>
+                            <span>Überschreibt <code>--tc-text</code>. Standard: <code>#0f172a</code></span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <div class="tc-stg-color-wrap">
+                                <input type="color" name="tc_settings[token_text]"
+                                       id="tc-token-text"
+                                       value="<?php echo esc_attr( $token_text ?: '#0f172a' ); ?>">
+                                <code id="tc-token-text-label"><?php echo esc_html( $token_text ?: '#0f172a' ); ?></code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Rahmenfarbe</strong>
+                            <span>Überschreibt <code>--tc-border</code>. Standard: <code>#e2e8f0</code></span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <div class="tc-stg-color-wrap">
+                                <input type="color" name="tc_settings[token_border]"
+                                       id="tc-token-border"
+                                       value="<?php echo esc_attr( $token_border ?: '#e2e8f0' ); ?>">
+                                <code id="tc-token-border-label"><?php echo esc_html( $token_border ?: '#e2e8f0' ); ?></code>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Ecken-Radius</strong>
+                            <span>Überschreibt <code>--tc-radius</code>. Standard: <code>10px</code><br>
+                            <code>--tc-radius-sm</code> (60&nbsp;%) und <code>--tc-radius-lg</code> (160&nbsp;%) werden automatisch berechnet.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <input type="text" name="tc_settings[token_radius]"
+                                   value="<?php echo esc_attr( $token_radius ); ?>"
+                                   class="tc-stg-input" placeholder="z.B. 10px" style="max-width:120px;">
+                            <p class="tc-stg-hint">Nur numerischer Wert (px), z.B. <code>10px</code> oder <code>0px</code>.</p>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Schriftfamilie</strong>
+                            <span>Überschreibt <code>--tc-font-family</code>. Leer lassen für Systemschrift.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <input type="text" name="tc_settings[token_font_family]"
+                                   value="<?php echo esc_attr( $token_font_family ); ?>"
+                                   class="tc-stg-input" placeholder="z.B. 'Inter', sans-serif">
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Freie CSS Custom Properties</strong>
+                            <span>Beliebige <code>--tc-*</code> Variablen überschreiben.<br>
+                            Nur Zeilen der Form <code>--tc-name: wert;</code> werden gespeichert.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <textarea name="tc_settings[token_custom_css]"
+                                      class="tc-stg-input" rows="8"
+                                      style="font-family:monospace;font-size:13px;"
+                                      placeholder="--tc-surface: #f8f8f8;
+--tc-text-muted: #888888;
+--tc-shadow: none;"><?php echo esc_textarea( $token_custom_css ); ?></textarea>
+                            <p class="tc-stg-hint">Kein &lt;style&gt;, kein JavaScript, keine Selektoren. Nur <code>--tc-*</code> Deklarationen.</p>
+                        </div>
+                    </div>
+
+                </div><!-- .tc-stg-card Design Tokens -->
+
                 <div class="tc-stg-actions">
                     <button type="submit" class="tc-stg-save">Einstellungen speichern</button>
                 </div>
@@ -555,6 +760,32 @@ function tc_render_settings_page() {
                 </div>
             </div><!-- .tc-stg-pane[email] -->
 
+            <!-- ═══ Tab: SEO ══════════════════════════════════ -->
+            <div class="tc-stg-pane" data-tab="seo">
+                <div class="tc-stg-card">
+                    <h3 class="tc-stg-section-title">Strukturierte Daten</h3>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Schema.org JSON-LD</strong>
+                            <span>Gibt auf Event-Detailseiten (<code>single-time_event</code>) automatisch strukturierte Daten aus. Verbessert die Darstellung in Google-Suchergebnissen.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <label class="tc-toggle">
+                                <input type="checkbox" name="tc_settings[schema_enabled]" value="1"
+                                    <?php checked( $schema_enabled, '1' ); ?>>
+                                <span class="tc-toggle-track"></span>
+                            </label>
+                            <p class="tc-stg-hint">Standard: aktiviert. Gibt JSON-LD Event Markup im <code>&lt;head&gt;</code> aus.</p>
+                        </div>
+                    </div>
+
+                </div><!-- .tc-stg-card -->
+                <div class="tc-stg-actions">
+                    <button type="submit" class="tc-stg-save">Einstellungen speichern</button>
+                </div>
+            </div><!-- .tc-stg-pane[seo] -->
+
             <!-- ═══ Tab: Updates ══════════════════════════════ -->
             <div class="tc-stg-pane" data-tab="updates">
                 <div class="tc-stg-card">
@@ -588,14 +819,18 @@ function tc_render_settings_page() {
         <!-- ── Inline-Scripts ──────────────────────────────── -->
         <script>
         (function () {
-            // ── Color picker ───────────────────────────────────
-            var colorInput = document.getElementById('tc-primary-color-input');
-            var colorLabel = document.getElementById('tc-primary-color-label');
-            if (colorInput && colorLabel) {
-                colorInput.addEventListener('input', function () {
-                    colorLabel.textContent = colorInput.value;
-                });
+            // ── Color pickers ──────────────────────────────────
+            function bindColorPicker(inputId, labelId) {
+                var inp = document.getElementById(inputId);
+                var lbl = document.getElementById(labelId);
+                if (inp && lbl) {
+                    inp.addEventListener('input', function () { lbl.textContent = inp.value; });
+                }
             }
+            bindColorPicker('tc-primary-color-input', 'tc-primary-color-label');
+            bindColorPicker('tc-token-bg',     'tc-token-bg-label');
+            bindColorPicker('tc-token-text',   'tc-token-text-label');
+            bindColorPicker('tc-token-border', 'tc-token-border-label');
 
             // ── Dark-Mode Label ────────────────────────────────
             var modeCb    = document.querySelector('input[name="tc_settings[calendar_mode]"]');
@@ -610,7 +845,7 @@ function tc_render_settings_page() {
             var TABS_KEY  = 'tc_settings_active_tab';
             var tabBtns   = document.querySelectorAll('.tc-stg-tab');
             var tabPanes  = document.querySelectorAll('.tc-stg-pane');
-            var validTabs = ['design', 'kalender', 'email', 'updates'];
+            var validTabs = ['design', 'kalender', 'email', 'seo', 'updates'];
 
             function activateTab(id) {
                 if (validTabs.indexOf(id) === -1) id = 'design';

@@ -69,34 +69,40 @@ function tc_time_events_shortcode( $atts ): string {
 	$atts['columns'] = $columns;
 
 	// ── Query ──────────────────────────────────────────────────────────────
-	$meta_query = [ 'relation' => 'AND' ];
-
+	$meta_query = [];
 	if ( $category ) {
-		$meta_query[] = [
+		$meta_query = [ [
 			'key'     => 'event_type',
 			'value'   => $category,
 			'compare' => '=',
-		];
+		] ];
 	}
 
-	if ( ! $show_past ) {
-		$meta_query[] = [
-			'key'     => 'start_date',
-			'value'   => wp_date( 'Y-m-d' ),
-			'compare' => '>=',
-			'type'    => 'DATE',
-		];
-	}
-
-	$posts = get_posts( [
+	$all_posts = get_posts( [
 		'post_type'      => 'time_event',
 		'post_status'    => 'publish',
-		'posts_per_page' => $limit > 0 ? $limit : -1,
-		'meta_key'       => 'start_date',
-		'orderby'        => 'meta_value',
-		'order'          => 'ASC',
+		'posts_per_page' => -1,
 		'meta_query'     => $meta_query,
 	] );
+
+	// Datum aus Repeater lesen, filtern und sortieren
+	$today       = wp_date( 'Y-m-d' );
+	$dated_posts = [];
+	foreach ( $all_posts as $post ) {
+		$first = tc_get_first_event_date( $post->ID );
+		$date  = $first['date_start'] ?? '';
+		if ( ! $date ) continue;
+		if ( ! $show_past && $date < $today ) continue;
+		$dated_posts[] = [ 'post' => $post, 'date' => $date ];
+	}
+
+	usort( $dated_posts, fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
+
+	if ( $limit > 0 ) {
+		$dated_posts = array_slice( $dated_posts, 0, $limit );
+	}
+
+	$posts = array_column( $dated_posts, 'post' );
 
 	// ── Enqueue CSS (now that we know the shortcode is on this page) ───────
 	wp_enqueue_style( 'tc-events' );
@@ -144,7 +150,8 @@ function tc_events_render_grouped( array $posts, array $atts ): void {
 	$groups = [];
 
 	foreach ( $posts as $post ) {
-		$date = get_field( 'start_date', $post->ID );
+		$first = tc_get_first_event_date( $post->ID );
+		$date  = $first['date_start'] ?? '';
 		if ( ! $date ) {
 			continue;
 		}
@@ -190,18 +197,21 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	$show_badge    = filter_var( $atts['show_badge'],    FILTER_VALIDATE_BOOLEAN );
 	$layout        = $atts['layout'] ?? 'grid';
 
-	// ── ACF fields (single batch read) ────────────────────────────────────
+	// ── ACF fields ────────────────────────────────────────────────────────
 	$fields     = get_fields( $post->ID ) ?: [];
 	$event_type = $fields['event_type']         ?? '';
-	$start_date = $fields['start_date']         ?? '';
-	$start_time = $fields['start_time']         ?? '';
-	$end_time   = $fields['end_time']           ?? '';
 	$location   = $fields['location']           ?? '';
 	$trainer    = $fields['seminar_leadership'] ?? '';
 	$price_raw  = $fields['normal_preis']       ?? '';
 	$on_request = ! empty( $fields['price_on_request'] );
 	$track_p    = ! empty( $fields['track_participants'] );
 	$max_p      = (int) ( $fields['participants'] ?? 0 );
+
+	// Datum / Zeit aus erstem Repeater-Eintrag
+	$first_date = tc_get_first_event_date( $post->ID );
+	$start_date = $first_date['date_start'] ?? '';
+	$start_time = $first_date['time_start'] ?? '';
+	$end_time   = $first_date['time_end']   ?? '';
 
 	// ── Capacity check ─────────────────────────────────────────────────────
 	$is_full = false;
