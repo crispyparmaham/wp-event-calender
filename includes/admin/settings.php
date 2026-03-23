@@ -37,12 +37,21 @@ add_action( 'admin_init', function () {
             'event_time_display'      => 'none',
             'week_plan_time_position' => 'standard',
             // Design Tokens
-            'token_bg'                => '',
-            'token_text'              => '',
-            'token_border'            => '',
-            'token_radius'            => '',
-            'token_font_family'       => '',
-            'token_custom_css'        => '',
+            'token_bg_light'              => '',
+            'token_bg_dark'               => '',
+            'token_bg_secondary_light'    => '',
+            'token_bg_secondary_dark'     => '',
+            'token_surface_light'         => '',
+            'token_surface_dark'          => '',
+            'token_text_light'            => '',
+            'token_text_dark'             => '',
+            'token_text_muted_light'      => '',
+            'token_text_muted_dark'       => '',
+            'token_border_light'          => '',
+            'token_border_dark'           => '',
+            'token_radius'                => '',
+            'token_font_family'           => '',
+            'token_custom_css'            => '',
             // SEO
             'schema_enabled'          => '1',
         ),
@@ -112,10 +121,18 @@ function tc_sanitize_settings( $input ) {
     $valid_time_pos = array( 'standard', 'compact', 'above' );
     $clean['week_plan_time_position'] = in_array( $raw_time, $valid_time_pos, true ) ? $raw_time : 'standard';
 
-    // Design Tokens
-    $clean['token_bg']     = isset( $input['token_bg'] )     ? ( sanitize_hex_color( $input['token_bg'] )     ?: '' ) : '';
-    $clean['token_text']   = isset( $input['token_text'] )   ? ( sanitize_hex_color( $input['token_text'] )   ?: '' ) : '';
-    $clean['token_border'] = isset( $input['token_border'] ) ? ( sanitize_hex_color( $input['token_border'] ) ?: '' ) : '';
+    // Design Tokens — Farbpaare Light / Dark
+    $color_token_keys = array(
+        'token_bg_light',          'token_bg_dark',
+        'token_bg_secondary_light','token_bg_secondary_dark',
+        'token_surface_light',     'token_surface_dark',
+        'token_text_light',        'token_text_dark',
+        'token_text_muted_light',  'token_text_muted_dark',
+        'token_border_light',      'token_border_dark',
+    );
+    foreach ( $color_token_keys as $k ) {
+        $clean[ $k ] = isset( $input[ $k ] ) ? ( sanitize_hex_color( $input[ $k ] ) ?: '' ) : '';
+    }
 
     $raw_radius = isset( $input['token_radius'] ) ? sanitize_text_field( $input['token_radius'] ) : '';
     $r_val      = (int) filter_var( $raw_radius, FILTER_SANITIZE_NUMBER_INT );
@@ -125,17 +142,18 @@ function tc_sanitize_settings( $input ) {
         ? sanitize_text_field( $input['token_font_family'] )
         : '';
 
-    // Custom CSS: nur Zeilen erlaubt die mit --tc- beginnen und valide Deklarationen sind
-    $raw_css    = isset( $input['token_custom_css'] ) ? wp_unslash( $input['token_custom_css'] ) : '';
-    $css_lines  = explode( "\n", $raw_css );
-    $clean_css  = array();
-    foreach ( $css_lines as $line ) {
-        $line = trim( $line );
-        if ( $line && preg_match( '/^--tc-[a-z][a-z0-9-]*\s*:\s*[^;]+;$/', $line ) ) {
-            $clean_css[] = $line;
-        }
-    }
-    $clean['token_custom_css'] = implode( "\n", $clean_css );
+    // Custom CSS: --tc-* Deklarationen, .tc-dark{}-Blöcke und /* Kommentare */ erlaubt
+    $raw_css = isset( $input['token_custom_css'] ) ? wp_unslash( $input['token_custom_css'] ) : '';
+    $raw_css = preg_replace( '/<[^>]*>/i',           '', $raw_css ); // kein HTML
+    $raw_css = preg_replace( '/\burl\s*\(/i',         '', $raw_css ); // kein url()
+    $raw_css = preg_replace( '/\bexpression\s*\(/i',  '', $raw_css ); // kein expression()
+    $raw_css = preg_replace( '/javascript\s*:/i',     '', $raw_css ); // kein JS
+    preg_match_all(
+        '/--tc-[a-z][a-z0-9\-]*\s*:\s*[^;]+;|\.tc-dark\s*\{[^}]*\}|\/\*[^*]*(?:\*(?!\/)[^*]*)*\*\//',
+        $raw_css,
+        $css_matches
+    );
+    $clean['token_custom_css'] = trim( implode( "\n", $css_matches[0] ) );
 
     // SEO
     $clean['schema_enabled'] = ! empty( $input['schema_enabled'] ) ? '1' : '0';
@@ -208,56 +226,78 @@ add_action( 'wp_head', function () {
 } );
 
 // ─────────────────────────────────────────────
-// Design Tokens im <head> ausgeben
-// Priorität 11 → nach dem #tc-primary-color Block (Prio 10)
+// Design Tokens als wp_add_inline_style nach design-system.css
+// Priorität 20 = nach Enqueue von tc-design-system (Prio 5)
+// → .tc-dark{} in der gleichen Stylesheet-Quelle → korrekte Spezifität
 // ─────────────────────────────────────────────
-add_action( 'wp_head', function () {
-    $bg          = tc_get_setting( 'token_bg',          '' );
-    $text        = tc_get_setting( 'token_text',        '' );
-    $border      = tc_get_setting( 'token_border',      '' );
+function tc_build_token_css(): string {
+    $color_map = array(
+        'token_bg_light'           => '--tc-bg',
+        'token_bg_secondary_light' => '--tc-bg-secondary',
+        'token_surface_light'      => '--tc-surface',
+        'token_text_light'         => '--tc-text',
+        'token_text_muted_light'   => '--tc-text-muted',
+        'token_border_light'       => '--tc-border',
+    );
+    $dark_map = array(
+        'token_bg_dark'            => '--tc-bg',
+        'token_bg_secondary_dark'  => '--tc-bg-secondary',
+        'token_surface_dark'       => '--tc-surface',
+        'token_text_dark'          => '--tc-text',
+        'token_text_muted_dark'    => '--tc-text-muted',
+        'token_border_dark'        => '--tc-border',
+    );
+
     $radius      = tc_get_setting( 'token_radius',      '' );
     $font_family = tc_get_setting( 'token_font_family', '' );
     $custom_css  = tc_get_setting( 'token_custom_css',  '' );
 
-    if ( ! $bg && ! $text && ! $border && ! $radius && ! $font_family && ! $custom_css ) {
-        return;
-    }
+    $root_lines = array();
+    $dark_lines = array();
 
-    $lines = array();
-    if ( $bg )     $lines[] = '    --tc-bg: ' . esc_attr( $bg ) . ';';
-    if ( $text )   $lines[] = '    --tc-text: ' . esc_attr( $text ) . ';';
-    if ( $border ) $lines[] = '    --tc-border: ' . esc_attr( $border ) . ';';
+    foreach ( $color_map as $key => $prop ) {
+        $val = tc_get_setting( $key, '' );
+        if ( $val ) $root_lines[] = '  ' . $prop . ': ' . $val . ';';
+    }
 
     if ( $radius ) {
-        $r  = max( 0, (int) filter_var( $radius, FILTER_SANITIZE_NUMBER_INT ) );
-        $sm = max( 2, (int) round( $r * 0.6 ) ) . 'px';
-        $lg = (int) round( $r * 1.6 ) . 'px';
-        $lines[] = '    --tc-radius: ' . $r . 'px;';
-        $lines[] = '    --tc-radius-sm: ' . $sm . ';';
-        $lines[] = '    --tc-radius-lg: ' . $lg . ';';
+        $r            = max( 0, (int) filter_var( $radius, FILTER_SANITIZE_NUMBER_INT ) );
+        $sm           = max( 2, (int) round( $r * 0.6 ) ) . 'px';
+        $lg           = (int) round( $r * 1.6 ) . 'px';
+        $root_lines[] = '  --tc-radius: ' . $r . 'px;';
+        $root_lines[] = '  --tc-radius-sm: ' . $sm . ';';
+        $root_lines[] = '  --tc-radius-lg: ' . $lg . ';';
     }
 
-    if ( ! empty( $font_family ) ) {
-        $lines[] = '    --tc-font-family: ' . esc_attr( $font_family ) . ';';
+    if ( $font_family ) {
+        $root_lines[] = '  --tc-font-family: ' . $font_family . ';';
     }
 
-    if ( ! empty( $custom_css ) ) {
-        foreach ( explode( "\n", $custom_css ) as $css_line ) {
-            $css_line = trim( $css_line );
-            if ( $css_line ) $lines[] = '    ' . $css_line;
-        }
+    foreach ( $dark_map as $key => $prop ) {
+        $val = tc_get_setting( $key, '' );
+        if ( $val ) $dark_lines[] = '  ' . $prop . ': ' . $val . ';';
     }
 
-    if ( empty( $lines ) ) return;
-    ?>
-<style id="tc-design-tokens">
-:root {
-<?php echo implode( "\n", $lines ); ?>
+    $css = '';
+    if ( $root_lines ) {
+        $css .= ":root {\n" . implode( "\n", $root_lines ) . "\n}\n";
+    }
+    if ( $dark_lines ) {
+        $css .= ".tc-dark {\n" . implode( "\n", $dark_lines ) . "\n}\n";
+    }
+    if ( $custom_css ) {
+        $css .= $custom_css . "\n";
+    }
 
+    return $css;
 }
-</style>
-    <?php
-}, 11 );
+
+add_action( 'wp_enqueue_scripts', function () {
+    $css = tc_build_token_css();
+    if ( $css ) {
+        wp_add_inline_style( 'tc-design-system', $css );
+    }
+}, 20 );
 
 // ─────────────────────────────────────────────
 // Settings-Seite rendern
@@ -268,12 +308,21 @@ function tc_render_settings_page() {
     // Aktuelle Werte
     $primary_color           = tc_get_primary_color();
     $calendar_mode           = tc_get_setting( 'calendar_mode', 'light' );
-    $token_bg                = tc_get_setting( 'token_bg',          '' );
-    $token_text              = tc_get_setting( 'token_text',        '' );
-    $token_border            = tc_get_setting( 'token_border',      '' );
-    $token_radius            = tc_get_setting( 'token_radius',      '' );
-    $token_font_family       = tc_get_setting( 'token_font_family', '' );
-    $token_custom_css        = tc_get_setting( 'token_custom_css',  '' );
+    $token_bg_light              = tc_get_setting( 'token_bg_light',              '' );
+    $token_bg_dark               = tc_get_setting( 'token_bg_dark',               '' );
+    $token_bg_secondary_light    = tc_get_setting( 'token_bg_secondary_light',    '' );
+    $token_bg_secondary_dark     = tc_get_setting( 'token_bg_secondary_dark',     '' );
+    $token_surface_light         = tc_get_setting( 'token_surface_light',         '' );
+    $token_surface_dark          = tc_get_setting( 'token_surface_dark',          '' );
+    $token_text_light            = tc_get_setting( 'token_text_light',            '' );
+    $token_text_dark             = tc_get_setting( 'token_text_dark',             '' );
+    $token_text_muted_light      = tc_get_setting( 'token_text_muted_light',      '' );
+    $token_text_muted_dark       = tc_get_setting( 'token_text_muted_dark',       '' );
+    $token_border_light          = tc_get_setting( 'token_border_light',          '' );
+    $token_border_dark           = tc_get_setting( 'token_border_dark',           '' );
+    $token_radius                = tc_get_setting( 'token_radius',                '' );
+    $token_font_family           = tc_get_setting( 'token_font_family',           '' );
+    $token_custom_css            = tc_get_setting( 'token_custom_css',            '' );
     $schema_enabled          = tc_get_setting( 'schema_enabled',    '1' );
     $default_view            = tc_get_setting( 'default_view', 'timeGridWeek' );
     $week_starts_on          = tc_get_setting( 'week_starts_on', 'monday' );
@@ -370,72 +419,80 @@ function tc_render_settings_page() {
                 <!-- ── Design Token Editor ────────────────────── -->
                 <div class="tc-stg-card">
                     <h3 class="tc-stg-section-title">Design Tokens</h3>
+                    <p class="tc-stg-card-desc">
+                        Leer gelassene Felder überschreiben nichts — die Fallback-Werte aus <code>design-system.css</code> gelten dann automatisch.
+                    </p>
 
-                    <div class="tc-stg-row">
-                        <div class="tc-stg-row-left">
-                            <strong>Hintergrundfarbe</strong>
-                            <span>Überschreibt <code>--tc-bg</code>. Standard: <code>#ffffff</code></span>
-                        </div>
-                        <div class="tc-stg-row-right">
-                            <div class="tc-stg-color-wrap">
-                                <input type="color" name="tc_settings[token_bg]"
-                                       id="tc-token-bg"
-                                       value="<?php echo esc_attr( $token_bg ?: '#ffffff' ); ?>">
-                                <code id="tc-token-bg-label"><?php echo esc_html( $token_bg ?: '#ffffff' ); ?></code>
+                    <?php
+                    // Hilfsfunktion für eine Token-Zeile (Light + Dark Picker)
+                    $tc_token_row = function( $label, $css_var, $key_light, $key_dark, $default_light, $default_dark )
+                        use ( $token_bg_light, $token_bg_dark,
+                              $token_bg_secondary_light, $token_bg_secondary_dark,
+                              $token_surface_light, $token_surface_dark,
+                              $token_text_light, $token_text_dark,
+                              $token_text_muted_light, $token_text_muted_dark,
+                              $token_border_light, $token_border_dark ) {
+                        $val_l = $$key_light ?: '';
+                        $val_d = $$key_dark  ?: '';
+                        ?>
+                        <div class="tc-token-grid-row">
+                            <div class="tc-token-label">
+                                <strong><?php echo esc_html( $label ); ?></strong>
+                                <code><?php echo esc_html( $css_var ); ?></code>
                             </div>
-                            <?php if ( ! $token_bg ) : ?>
-                            <p class="tc-stg-hint">Nicht gesetzt — Systemwert aus design-system.css gilt.</p>
-                            <?php endif; ?>
-                        </div>
-                    </div>
-
-                    <div class="tc-stg-divider"></div>
-
-                    <div class="tc-stg-row">
-                        <div class="tc-stg-row-left">
-                            <strong>Textfarbe</strong>
-                            <span>Überschreibt <code>--tc-text</code>. Standard: <code>#0f172a</code></span>
-                        </div>
-                        <div class="tc-stg-row-right">
                             <div class="tc-stg-color-wrap">
-                                <input type="color" name="tc_settings[token_text]"
-                                       id="tc-token-text"
-                                       value="<?php echo esc_attr( $token_text ?: '#0f172a' ); ?>">
-                                <code id="tc-token-text-label"><?php echo esc_html( $token_text ?: '#0f172a' ); ?></code>
+                                <input type="color"
+                                       name="tc_settings[<?php echo esc_attr( $key_light ); ?>]"
+                                       id="tc-<?php echo esc_attr( $key_light ); ?>"
+                                       value="<?php echo esc_attr( $val_l ?: $default_light ); ?>">
+                                <code id="tc-<?php echo esc_attr( $key_light ); ?>-lbl">
+                                    <?php echo esc_html( $val_l ?: $default_light ); ?>
+                                </code>
                             </div>
-                        </div>
-                    </div>
-
-                    <div class="tc-stg-divider"></div>
-
-                    <div class="tc-stg-row">
-                        <div class="tc-stg-row-left">
-                            <strong>Rahmenfarbe</strong>
-                            <span>Überschreibt <code>--tc-border</code>. Standard: <code>#e2e8f0</code></span>
-                        </div>
-                        <div class="tc-stg-row-right">
                             <div class="tc-stg-color-wrap">
-                                <input type="color" name="tc_settings[token_border]"
-                                       id="tc-token-border"
-                                       value="<?php echo esc_attr( $token_border ?: '#e2e8f0' ); ?>">
-                                <code id="tc-token-border-label"><?php echo esc_html( $token_border ?: '#e2e8f0' ); ?></code>
+                                <input type="color"
+                                       name="tc_settings[<?php echo esc_attr( $key_dark ); ?>]"
+                                       id="tc-<?php echo esc_attr( $key_dark ); ?>"
+                                       value="<?php echo esc_attr( $val_d ?: $default_dark ); ?>">
+                                <code id="tc-<?php echo esc_attr( $key_dark ); ?>-lbl">
+                                    <?php echo esc_html( $val_d ?: $default_dark ); ?>
+                                </code>
                             </div>
                         </div>
+                        <?php
+                    };
+                    ?>
+
+                    <!-- Spaltenüberschriften -->
+                    <div class="tc-token-grid-head">
+                        <div class="tc-token-col-head">Token</div>
+                        <div class="tc-token-col-head">&#9728; Light Mode</div>
+                        <div class="tc-token-col-head">&#9790; Dark Mode</div>
                     </div>
+
+                    <?php
+                    $tc_token_row( 'Hintergrund',         '--tc-bg',           'token_bg_light',           'token_bg_dark',           '#ffffff', '#151515' );
+                    $tc_token_row( 'Hintergrund (sek.)',  '--tc-bg-secondary', 'token_bg_secondary_light', 'token_bg_secondary_dark', '#f8fafc', '#1e293b' );
+                    $tc_token_row( 'Fläche',              '--tc-surface',      'token_surface_light',      'token_surface_dark',      '#f1f5f9', '#1a1a1a' );
+                    $tc_token_row( 'Text',                '--tc-text',         'token_text_light',         'token_text_dark',         '#0f172a', '#f1f5f9' );
+                    $tc_token_row( 'Text gedämpft',       '--tc-text-muted',   'token_text_muted_light',   'token_text_muted_dark',   '#64748b', '#8e8e8e' );
+                    $tc_token_row( 'Rahmen',              '--tc-border',       'token_border_light',       'token_border_dark',       '#e2e8f0', '#2d2d2d' );
+                    ?>
 
                     <div class="tc-stg-divider"></div>
 
                     <div class="tc-stg-row">
                         <div class="tc-stg-row-left">
                             <strong>Ecken-Radius</strong>
-                            <span>Überschreibt <code>--tc-radius</code>. Standard: <code>10px</code><br>
+                            <span>Überschreibt <code>--tc-radius</code> (gilt für beide Modi).<br>
                             <code>--tc-radius-sm</code> (60&nbsp;%) und <code>--tc-radius-lg</code> (160&nbsp;%) werden automatisch berechnet.</span>
                         </div>
                         <div class="tc-stg-row-right">
                             <input type="text" name="tc_settings[token_radius]"
                                    value="<?php echo esc_attr( $token_radius ); ?>"
-                                   class="tc-stg-input" placeholder="z.B. 10px" style="max-width:120px;">
-                            <p class="tc-stg-hint">Nur numerischer Wert (px), z.B. <code>10px</code> oder <code>0px</code>.</p>
+                                   class="tc-stg-input tc-stg-input--narrow"
+                                   placeholder="z.B. 10px">
+                            <p class="tc-stg-hint">Standard: <code>10px</code>. Nur numerischer px-Wert.</p>
                         </div>
                     </div>
 
@@ -444,12 +501,13 @@ function tc_render_settings_page() {
                     <div class="tc-stg-row">
                         <div class="tc-stg-row-left">
                             <strong>Schriftfamilie</strong>
-                            <span>Überschreibt <code>--tc-font-family</code>. Leer lassen für Systemschrift.</span>
+                            <span>Überschreibt <code>--tc-font-family</code> (gilt für beide Modi). Leer lassen für Systemschrift.</span>
                         </div>
                         <div class="tc-stg-row-right">
                             <input type="text" name="tc_settings[token_font_family]"
                                    value="<?php echo esc_attr( $token_font_family ); ?>"
-                                   class="tc-stg-input" placeholder="z.B. 'Inter', sans-serif">
+                                   class="tc-stg-input"
+                                   placeholder="'Inter', sans-serif">
                         </div>
                     </div>
 
@@ -457,18 +515,22 @@ function tc_render_settings_page() {
 
                     <div class="tc-stg-row">
                         <div class="tc-stg-row-left">
-                            <strong>Freie CSS Custom Properties</strong>
-                            <span>Beliebige <code>--tc-*</code> Variablen überschreiben.<br>
-                            Nur Zeilen der Form <code>--tc-name: wert;</code> werden gespeichert.</span>
+                            <strong>Experten-CSS</strong>
+                            <span>Freie <code>--tc-*</code> Überschreibungen.<br>
+                            Erlaubt: <code>--tc-name: wert;</code> Deklarationen,<br>
+                            <code>.tc-dark { --tc-name: wert; }</code> Blöcke und <code>/* Kommentare */</code>.</span>
                         </div>
                         <div class="tc-stg-row-right">
                             <textarea name="tc_settings[token_custom_css]"
-                                      class="tc-stg-input" rows="8"
-                                      style="font-family:monospace;font-size:13px;"
-                                      placeholder="--tc-surface: #f8f8f8;
---tc-text-muted: #888888;
---tc-shadow: none;"><?php echo esc_textarea( $token_custom_css ); ?></textarea>
-                            <p class="tc-stg-hint">Kein &lt;style&gt;, kein JavaScript, keine Selektoren. Nur <code>--tc-*</code> Deklarationen.</p>
+                                      class="tc-stg-input tc-stg-input--code"
+                                      rows="8"
+                                      placeholder="/* Light Mode */
+--tc-shadow: none;
+--tc-surface-raised: #ffffff;
+
+/* Dark Mode */
+.tc-dark { --tc-shadow: none; }"><?php echo esc_textarea( $token_custom_css ); ?></textarea>
+                            <p class="tc-stg-hint">Kein <code>&lt;style&gt;</code>, kein JavaScript, keine anderen Selektoren.</p>
                         </div>
                     </div>
 
@@ -828,9 +890,18 @@ function tc_render_settings_page() {
                 }
             }
             bindColorPicker('tc-primary-color-input', 'tc-primary-color-label');
-            bindColorPicker('tc-token-bg',     'tc-token-bg-label');
-            bindColorPicker('tc-token-text',   'tc-token-text-label');
-            bindColorPicker('tc-token-border', 'tc-token-border-label');
+            // Design Token Farbpaare
+            var tokenColorIds = [
+                'token_bg_light',          'token_bg_dark',
+                'token_bg_secondary_light','token_bg_secondary_dark',
+                'token_surface_light',     'token_surface_dark',
+                'token_text_light',        'token_text_dark',
+                'token_text_muted_light',  'token_text_muted_dark',
+                'token_border_light',      'token_border_dark'
+            ];
+            tokenColorIds.forEach(function(id) {
+                bindColorPicker('tc-' + id, 'tc-' + id + '-lbl');
+            });
 
             // ── Dark-Mode Label ────────────────────────────────
             var modeCb    = document.querySelector('input[name="tc_settings[calendar_mode]"]');

@@ -76,6 +76,16 @@ add_action( 'wp_enqueue_scripts', function () {
         [],
         TC_VERSION
     );
+
+    // Single-Event-Template-Styles (nur auf Detailseiten)
+    if ( is_singular( 'time_event' ) ) {
+        wp_enqueue_style(
+            'tc-single-event',
+            TC_URL . 'assets/css/frontend/single-event.css',
+            [ 'tc-design-system' ],
+            TC_VERSION
+        );
+    }
 }, 5 ); // Priorität 5 = vor allen anderen Plugin-Styles
 
 // ── Tabelle beim Aktivieren des Plugins anlegen ────────────────

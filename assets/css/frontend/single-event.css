@@ -1,0 +1,261 @@
+/**
+ * Time Calendar – Single Event Template
+ * ─────────────────────────────────────────────────────────────────
+ * Ausschließlich var(--tc-*) Tokens — kein hardcodiertes Inline-CSS.
+ * Dark Mode: .tc-dark auf .tc-single-event aktiviert automatisch
+ * alle Dark-Mode-Tokens aus design-system.css.
+ */
+
+/* ── Reset / Box-Sizing ────────────────────────────────────────── */
+.tc-single-event *,
+.tc-single-event *::before,
+.tc-single-event *::after {
+  box-sizing: border-box;
+}
+
+/* ── Wrapper ───────────────────────────────────────────────────── */
+.tc-single-event {
+  color: var(--tc-text);
+  font-family: var(--tc-font-family, inherit);
+  background: var(--tc-bg);
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 32px 24px 64px;
+}
+
+/* ── Hero ──────────────────────────────────────────────────────── */
+.tc-se-hero {
+  position: relative;
+  border-radius: var(--tc-radius-lg);
+  overflow: hidden;
+  background: var(--tc-surface);
+  margin-bottom: 40px;
+}
+
+.tc-se-hero-image {
+  width: 100%;
+  max-height: 420px;
+  overflow: hidden;
+}
+
+.tc-se-hero-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tc-se-hero-content {
+  padding: 28px 32px;
+}
+
+/* ── Kategorie-Badge ───────────────────────────────────────────── */
+.tc-se-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 999px;
+  margin-bottom: 12px;
+  letter-spacing: .02em;
+  text-transform: uppercase;
+}
+
+.tc-se-badge-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+/* ── Titel ─────────────────────────────────────────────────────── */
+.tc-se-title {
+  font-size: clamp(1.5rem, 3vw, 2.25rem);
+  font-weight: 800;
+  line-height: 1.2;
+  color: var(--tc-text);
+  margin: 0 0 8px;
+}
+
+.tc-se-difficulty {
+  font-size: 14px;
+  color: var(--tc-text-muted);
+  margin: 0;
+}
+
+/* ── Body (2-Spalten) ──────────────────────────────────────────── */
+.tc-se-body {
+  display: grid;
+  grid-template-columns: 1fr 340px;
+  gap: 40px;
+  align-items: start;
+}
+
+/* ── Hauptinhalt ───────────────────────────────────────────────── */
+.tc-se-intro {
+  font-size: 17px;
+  line-height: 1.75;
+  color: var(--tc-text);
+  margin-bottom: 28px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid var(--tc-border);
+}
+
+.tc-se-content {
+  font-size: 15px;
+  line-height: 1.8;
+  color: var(--tc-text);
+  margin-bottom: 36px;
+}
+
+.tc-se-content h2,
+.tc-se-content h3,
+.tc-se-content h4 {
+  color: var(--tc-text);
+  margin-top: 1.75em;
+}
+
+.tc-se-content a {
+  color: var(--tc-primary);
+  text-decoration: underline;
+}
+
+.tc-se-registration {
+  margin-top: 40px;
+  padding-top: 40px;
+  border-top: 1px solid var(--tc-border);
+}
+
+/* ── Sidebar / Info-Box ────────────────────────────────────────── */
+.tc-se-sidebar {
+  position: sticky;
+  top: 24px;
+}
+
+.tc-se-info-box {
+  background: var(--tc-bg-secondary);
+  border: 1px solid var(--tc-border);
+  border-radius: var(--tc-radius-lg);
+  padding: 24px;
+  box-shadow: var(--tc-shadow);
+}
+
+/* ── Info-Zeile ────────────────────────────────────────────────── */
+.tc-se-info-section {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--tc-border);
+}
+
+.tc-se-info-section:first-child {
+  padding-top: 0;
+}
+
+.tc-se-info-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.tc-se-info-icon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--tc-primary);
+  width: 16px;
+  height: 16px;
+}
+
+.tc-se-info-content {
+  min-width: 0;
+}
+
+.tc-se-info-content strong {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  color: var(--tc-text-muted);
+  margin-bottom: 4px;
+}
+
+.tc-se-info-content p {
+  margin: 0 0 2px;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--tc-text);
+}
+
+.tc-se-location {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--tc-text);
+}
+
+/* ── Preis ─────────────────────────────────────────────────────── */
+.tc-se-price-regular {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--tc-text);
+}
+
+.tc-se-price-eb {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--tc-success);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.tc-se-price-eb-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--tc-success-bg);
+  color: var(--tc-success);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.tc-se-price-struck {
+  text-decoration: line-through;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--tc-text-muted);
+}
+
+.tc-se-price-hint {
+  font-size: 12px;
+  color: var(--tc-text-subtle, var(--tc-text-muted));
+  margin-top: 2px;
+}
+
+/* ── Responsive ────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .tc-single-event {
+    padding: 20px 16px 48px;
+  }
+
+  .tc-se-hero-content {
+    padding: 20px;
+  }
+
+  .tc-se-body {
+    grid-template-columns: 1fr;
+    gap: 28px;
+  }
+
+  .tc-se-sidebar {
+    position: static;
+  }
+
+  /* Sidebar vor dem Content auf Mobile */
+  .tc-se-sidebar {
+    order: -1;
+  }
+}

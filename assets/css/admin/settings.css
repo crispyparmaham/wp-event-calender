@@ -417,12 +417,118 @@
     flex-shrink: 0;
 }
 
+/* ── Design Token Grid ───────────────────────────────────────────── */
+.tc-token-grid-head,
+.tc-token-grid-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 1fr;
+    gap: 0 24px;
+    align-items: center;
+    padding: 12px 28px;
+}
+
+.tc-token-grid-head {
+    background: #f9fafb;
+    border-bottom: 2px solid #e5e7eb;
+    border-radius: 0;
+}
+
+.tc-token-grid-row {
+    padding-top: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background .12s;
+}
+
+.tc-token-grid-row:last-of-type {
+    border-bottom: none;
+}
+
+.tc-token-grid-row:hover {
+    background: #fafbff;
+}
+
+.tc-token-col-head {
+    font-size: 11px;
+    font-weight: 700;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+}
+
+.tc-token-label strong {
+    display: block;
+    font-size: 13px;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 3px;
+}
+
+.tc-token-label code {
+    font-size: 11px;
+    color: #6b7280;
+    background: #f0f0f5;
+    padding: 1px 6px;
+    border-radius: 4px;
+}
+
+/* ── Card-Beschreibungstext (unterhalb h3) ───────────────────────── */
+.tc-stg-card-desc {
+    padding: 0 28px 16px;
+    margin: 0;
+    font-size: 12px;
+    color: #9ca3af;
+    line-height: 1.55;
+}
+
+.tc-stg-card-desc code {
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 4px;
+    font-size: 11px;
+    color: #4f46e5;
+}
+
+/* ── Input-Varianten ─────────────────────────────────────────────── */
+.tc-stg-input--narrow {
+    max-width: 120px;
+}
+
+.tc-stg-input--code {
+    font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    max-width: 100%;
+}
+
+/* ── Radio-Label ─────────────────────────────────────────────────── */
+.tc-stg-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: #374151;
+    cursor: pointer;
+    margin-bottom: 2px;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 700px) {
     .tc-stg-row {
         grid-template-columns: 1fr;
         gap: 10px;
         padding: 18px 20px;
+    }
+
+    .tc-token-grid-head,
+    .tc-token-grid-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+        padding: 14px 20px;
+    }
+
+    .tc-token-grid-head {
+        display: none; /* Spaltenköpfe auf Mobile ausblenden */
     }
 
     .tc-stg-tabs {
@@ -435,7 +541,8 @@
         font-size: 12px;
     }
 
-    .tc-stg-input {
+    .tc-stg-input,
+    .tc-stg-input--narrow {
         max-width: 100%;
     }
 }
