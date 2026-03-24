@@ -132,7 +132,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
 
     // Preistyp ermitteln (request → Probetraining-Modus)
     $price_type = $event_id ? ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) : 'fixed';
-    $is_trial   = ( $price_type === 'request' );
+    $is_trial   = in_array( $price_type, array( 'request', 'free' ), true );
 
     // Formulartitel: bei Probetraining angepasst, sonst Shortcode-Attribut
     $form_title = $is_trial

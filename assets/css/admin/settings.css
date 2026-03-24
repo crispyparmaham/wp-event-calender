@@ -30,7 +30,7 @@
 .tc-stg-header h1 {
     margin: 0 0 2px;
     padding: 0;
-    font-size: 1.5rem;
+    font-size: 21px;
     font-weight: 700;
     color: #111827;
     line-height: 1.2;
@@ -97,21 +97,24 @@
 .tc-stg-card {
     background: #ffffff;
     border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,.05);
+    border-radius: 10px;
+    box-shadow: 0 1px 3px rgba(0,0,0,.06);
     overflow: hidden;
     margin-bottom: 20px;
 }
 
 .tc-stg-section-title {
+    display: flex;
+    align-items: center;
     font-size: 14px;
     font-weight: 700;
-    color: #374151;
-    text-transform: uppercase;
-    letter-spacing: 0.04em;
-    padding: 14px 24px 0;
-    margin: 0 0 4px;
-    border-bottom: none;
+    color: #111827;
+    padding: 13px 18px;
+    margin: 0;
+    border-bottom: 1px solid #f3f4f6;
+    background: #fafafa;
+    letter-spacing: 0;
+    text-transform: none;
 }
 
 .tc-stg-select {
@@ -119,8 +122,8 @@
     width: 100%;
     max-width: 260px;
     padding: 8px 12px;
-    font-size: 14px;
-    border: 1px solid #d1d5db;
+    font-size: 13px;
+    border: 1px solid #e5e7eb;
     border-radius: 8px;
     background: #fff;
     color: #374151;
@@ -131,7 +134,7 @@
 .tc-stg-select:focus {
     outline: none;
     border-color: #4f46e5;
-    box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.18);
 }
 
 /* ── Zeile (2-spaltig: Label + Control) ──────────────────────────── */
@@ -140,7 +143,7 @@
     grid-template-columns: 1fr 1fr;
     gap: 24px;
     align-items: center;
-    padding: 22px 28px;
+    padding: 13px 18px;
 }
 
 .tc-stg-row-left {
@@ -218,7 +221,7 @@
     color: #fff;
     border: none;
     border-radius: 8px;
-    padding: 10px 24px;
+    padding: 9px 18px;
     font-size: 14px;
     font-weight: 600;
     cursor: pointer;
@@ -325,8 +328,8 @@
     width: 100%;
     max-width: 340px;
     padding: 8px 12px;
-    border: 1px solid #d1d5db;
-    border-radius: 7px;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
     font-size: 13px;
     color: #111827;
     background: #fff;
@@ -424,7 +427,7 @@
     grid-template-columns: 200px 1fr 1fr;
     gap: 0 24px;
     align-items: center;
-    padding: 12px 28px;
+    padding: 12px 18px;
 }
 
 .tc-token-grid-head {
@@ -474,7 +477,7 @@
 
 /* ── Card-Beschreibungstext (unterhalb h3) ───────────────────────── */
 .tc-stg-card-desc {
-    padding: 0 28px 16px;
+    padding: 10px 18px 6px;
     margin: 0;
     font-size: 12px;
     color: #9ca3af;
@@ -565,7 +568,7 @@
 
 /* ── Sub-Section-Label (innerhalb einer Card) ────────────────────── */
 .tc-stg-sub-label {
-    padding: 16px 28px 0;
+    padding: 13px 18px 0;
     font-size: 11px;
     font-weight: 700;
     color: #9ca3af;
@@ -573,19 +576,193 @@
     letter-spacing: .06em;
 }
 
+/* ── Main-Tab-Navigation ──────────────────────────────────── */
+.tc-stg-tabs--main {
+    gap: 2px;
+}
+.tc-stg-tabs--main .tc-stg-tab {
+    font-size: 14px;
+    font-weight: 600;
+    padding: 12px 22px;
+}
+.tc-stg-tabs--main .tc-stg-tab.is-active {
+    border-bottom-width: 3px;
+    font-weight: 700;
+}
+
+/* ── Sub-Tab-Navigation ───────────────────────────────────── */
+.tc-stg-tabs--sub {
+    margin-top: 20px;
+    margin-bottom: 0;
+    border-bottom-color: #e5e7eb;
+    gap: 2px;
+}
+.tc-stg-tabs--sub .tc-stg-tab {
+    font-size: 12px;
+    font-weight: 500;
+    padding: 8px 14px;
+    color: #9ca3af;
+    border-radius: 6px 6px 0 0;
+}
+.tc-stg-tabs--sub .tc-stg-tab:hover {
+    color: #374151;
+    background: #f3f4f6;
+}
+.tc-stg-tabs--sub .tc-stg-tab.is-active {
+    color: #374151;
+    border-bottom-color: #374151;
+    font-weight: 600;
+    background: none;
+}
+
+/* ── Main Panes (show/hide) ───────────────────────────────── */
+.tc-stg-main-pane {
+    display: none;
+}
+.tc-stg-main-pane.is-active {
+    display: block;
+}
+
+/* ── Sticky Save Bar (top, außerhalb des Formulars) ──────── */
+.tc-stg-save-bar {
+    position: sticky;
+    top: 32px; /* unterhalb der WP-Admin-Bar */
+    z-index: 100;
+    background: #1d2327;
+    border-radius: 0 0 12px 12px;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 12px;
+    box-shadow: 0 4px 20px rgba(0,0,0,.3);
+    margin-bottom: 24px;
+}
+.tc-stg-save-bar .tc-stg-save {
+    box-shadow: none;
+}
+.tc-stg-save-bar .tc-stg-save:hover {
+    background: #4338ca;
+}
+
+/* ── Unsaved-Changes Badge ────────────────────────────────── */
+.tc-stg-unsaved-badge {
+    font-size: 12px;
+    font-weight: 500;
+    color: #fbbf24;
+    letter-spacing: .01em;
+    animation: tc-badge-fade-in .2s ease;
+}
+
+@keyframes tc-badge-fade-in {
+    from { opacity: 0; transform: translateX(-6px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Mail-Template-Editor ────────────────────────────────────── */
+.tc-mail-expert-toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 13px 18px;
+}
+
+.tc-mail-expert-btn {
+    background: transparent;
+    border: 1px solid #9ca3af;
+    color: #6b7280;
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all .15s;
+    line-height: 1.4;
+}
+.tc-mail-expert-btn:hover {
+    border-color: #4f46e5;
+    color: #4f46e5;
+    background: #eef2ff;
+}
+.tc-mail-expert-btn--deactivate {
+    border-color: #dc2626;
+    color: #dc2626;
+}
+.tc-mail-expert-btn--deactivate:hover {
+    background: #fef2f2;
+}
+
+.tc-mail-expert-hint {
+    font-size: 11px;
+    color: #9ca3af;
+}
+
+.tc-mail-expert-notice {
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    padding: 10px 16px;
+    border-radius: 4px;
+    margin: 13px 18px 0;
+    font-size: 13px;
+    line-height: 1.5;
+    color: #92400e;
+}
+.tc-mail-expert-notice code {
+    background: rgba(0,0,0,.07);
+    padding: 1px 4px;
+    border-radius: 3px;
+}
+
+.tc-mail-ph-details {
+    margin: 13px 18px 0;
+    padding-bottom: 13px;
+}
+.tc-mail-ph-details summary {
+    font-size: 12px;
+    color: #6b7280;
+    cursor: pointer;
+    user-select: none;
+}
+.tc-mail-ph-details summary:hover {
+    color: #374151;
+}
+
+.tc-mail-ph-table {
+    margin-top: 8px;
+    border-collapse: collapse;
+    font-size: 12px;
+    width: 100%;
+}
+.tc-mail-ph-table td {
+    padding: 3px 8px 3px 0;
+    vertical-align: top;
+    color: #374151;
+}
+.tc-mail-ph-table td:first-child {
+    width: 180px;
+    white-space: nowrap;
+}
+.tc-mail-ph-table code {
+    background: #f3f4f6;
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-family: monospace;
+    font-size: 11px;
+}
+
 /* ── Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 700px) {
     .tc-stg-row {
         grid-template-columns: 1fr;
         gap: 10px;
-        padding: 18px 20px;
+        padding: 13px 14px;
     }
 
     .tc-token-grid-head,
     .tc-token-grid-row {
         grid-template-columns: 1fr;
         gap: 12px;
-        padding: 14px 20px;
+        padding: 12px 14px;
     }
 
     .tc-token-grid-head {
@@ -595,6 +772,10 @@
     .tc-stg-tabs {
         flex-wrap: wrap;
         gap: 2px;
+    }
+
+    .tc-stg-tabs--sub {
+        flex-wrap: wrap;
     }
 
     .tc-stg-tab {

@@ -96,27 +96,11 @@ function tc_send_waitlist_confirmation_mail( $registration_id ) {
 
     $event_id   = (int) $reg['event_id'];
     $event_date = $reg['event_date'] ?? '';
-    $info       = tc_get_event_mail_info( $event_id, $event_date );
-    $blogname   = get_option( 'blogname' );
     $headers    = [ 'Content-Type: text/html; charset=UTF-8' ];
 
-    $subject_tpl = tc_get_setting( 'mail_waitlist_subject', '{{anrede}} stehen auf der Warteliste – {{event_title}}' );
+    $subject_tpl = tc_get_mail_setting( 'waitlist', 'subject' );
     $subject     = tc_resolve_placeholders( $subject_tpl, $reg, $event_id, $event_date );
-
-    $body_tpl = tc_get_setting( 'mail_waitlist_body', '' );
-    if ( $body_tpl ) {
-        $resolved = tc_resolve_placeholders( $body_tpl, $reg, $event_id, $event_date );
-        $msg = tc_mail_wrapper_open( $blogname ) . $resolved . tc_mail_wrapper_close();
-    } else {
-        $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#d97706;margin-top:0;">Sie stehen auf der Warteliste</h2>';
-        $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
-        $msg .= '<p>vielen Dank für Ihr Interesse! Sie wurden auf die Warteliste für folgende Veranstaltung eingetragen:</p>';
-        $msg .= tc_event_info_block( $info );
-        $msg .= '<p>Wir benachrichtigen Sie umgehend, sobald ein Platz frei wird.</p>';
-        $msg .= tc_mail_signature( $blogname );
-        $msg .= tc_mail_wrapper_close();
-    }
+    $msg         = tc_build_mail_body( 'waitlist', $reg, $event_id, $event_date );
 
     wp_mail( $reg['email'], $subject, $msg, $headers );
 }
@@ -124,27 +108,11 @@ function tc_send_waitlist_confirmation_mail( $registration_id ) {
 function tc_send_waitlist_slot_available_mail( $reg ) {
     $event_id   = (int) $reg['event_id'];
     $event_date = $reg['event_date'] ?? '';
-    $info       = tc_get_event_mail_info( $event_id, $event_date );
-    $blogname   = get_option( 'blogname' );
     $headers    = [ 'Content-Type: text/html; charset=UTF-8' ];
 
-    $subject_tpl = tc_get_setting( 'mail_waitlist_slot_subject', 'Ein Platz ist frei geworden – {{event_title}}' );
+    $subject_tpl = tc_get_mail_setting( 'waitlist_slot', 'subject' );
     $subject     = tc_resolve_placeholders( $subject_tpl, $reg, $event_id, $event_date );
-
-    $body_tpl = tc_get_setting( 'mail_waitlist_slot_body', '' );
-    if ( $body_tpl ) {
-        $resolved = tc_resolve_placeholders( $body_tpl, $reg, $event_id, $event_date );
-        $msg = tc_mail_wrapper_open( $blogname ) . $resolved . tc_mail_wrapper_close();
-    } else {
-        $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#059669;margin-top:0;">Ein Platz ist frei geworden!</h2>';
-        $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
-        $msg .= '<p>gute Neuigkeit! Für folgende Veranstaltung ist ein Platz frei geworden:</p>';
-        $msg .= tc_event_info_block( $info );
-        $msg .= '<p>Ihre Anfrage wird nun bearbeitet. Sie erhalten zeitnah eine Bestätigung von uns.</p>';
-        $msg .= tc_mail_signature( $blogname );
-        $msg .= tc_mail_wrapper_close();
-    }
+    $msg         = tc_build_mail_body( 'waitlist_slot', $reg, $event_id, $event_date );
 
     wp_mail( $reg['email'], $subject, $msg, $headers );
 }
