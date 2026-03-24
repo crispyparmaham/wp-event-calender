@@ -50,6 +50,7 @@ add_action( 'admin_init', function () {
             'default_view'            => 'timeGridWeek',
             'week_starts_on'          => 'monday',
             'frontend_week_only'      => '0',
+            'show_week_number'        => '0',
             'show_event_list'         => '0',
             'event_list_title'        => 'Unsere Events',
             'mobile_calendar_view'    => 'optimized',
@@ -97,6 +98,7 @@ add_action( 'admin_init', function () {
             'label_price_bar_request_teaser'   => 'Dann melde dich jetzt für ein kostenloses Probetraining an.',
             'label_price_bar_cta_full'       => 'Ausgebucht',
             'label_price_bar_cta_request'    => 'Probetraining anfragen',
+            'label_action_price_badge'       => 'Aktionspreis',
             // Mail-Templates
             'mail_thankyou_subject'          => 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}',
             'mail_thankyou_preview'          => 'Wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah.',
@@ -245,6 +247,7 @@ function tc_sanitize_settings( $input ) {
 
     $clean['reminder_enabled']   = ! empty( $input['reminder_enabled'] )   ? '1' : '0';
     $clean['frontend_week_only'] = ! empty( $input['frontend_week_only'] ) ? '1' : '0';
+    $clean['show_week_number']   = ! empty( $input['show_week_number'] )   ? '1' : '0';
     $clean['show_event_list']    = ! empty( $input['show_event_list'] )    ? '1' : '0';
     $clean['mobile_hint_box']    = ! empty( $input['mobile_hint_box'] )    ? '1' : '0';
 
@@ -330,6 +333,7 @@ function tc_sanitize_settings( $input ) {
         'label_duplicate_msg', 'label_duplicate_msg_trial',
         'label_price_bar_full', 'label_price_bar_full_sub', 'label_price_bar_free',
         'label_price_bar_request_headline', 'label_price_bar_request_teaser', 'label_price_bar_cta_full', 'label_price_bar_cta_request',
+        'label_action_price_badge',
     );
     foreach ( $label_keys as $k ) {
         $clean[ $k ] = isset( $input[ $k ] ) ? sanitize_text_field( wp_unslash( $input[ $k ] ) ) : '';
@@ -529,6 +533,7 @@ function tc_render_settings_page() {
     $default_view            = tc_get_setting( 'default_view', 'timeGridWeek' );
     $week_starts_on          = tc_get_setting( 'week_starts_on', 'monday' );
     $week_only               = tc_get_setting( 'frontend_week_only', '0' );
+    $show_week_number        = tc_get_setting( 'show_week_number', '0' );
     $show_event_list         = tc_get_setting( 'show_event_list', '0' );
     $event_list_title        = tc_get_setting( 'event_list_title', 'Unsere Events' ) ?: 'Unsere Events';
     $reg_email               = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
@@ -823,6 +828,22 @@ function tc_render_settings_page() {
                                 <label class="tc-toggle">
                                     <input type="checkbox" name="tc_settings[frontend_week_only]" value="1"
                                         <?php checked( $week_only, '1' ); ?>>
+                                    <span class="tc-toggle-track"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="tc-stg-divider"></div>
+
+                        <div class="tc-stg-row">
+                            <div class="tc-stg-row-left">
+                                <strong>Kalenderwoche anzeigen</strong>
+                                <span>Zeigt „KW XX" über dem Kalender im Nur-Wochenansicht-Modus.</span>
+                            </div>
+                            <div class="tc-stg-row-right">
+                                <label class="tc-toggle">
+                                    <input type="checkbox" name="tc_settings[show_week_number]" value="1"
+                                        <?php checked( $show_week_number, '1' ); ?>>
                                     <span class="tc-toggle-track"></span>
                                 </label>
                             </div>
@@ -1129,6 +1150,7 @@ function tc_render_settings_page() {
                         $tc_text_row( 'Probetraining – Teaser-Text', 'Erscheint nach der Headline.', 'label_price_bar_request_teaser', 'Dann melde dich jetzt für ein kostenloses Probetraining an.' );
                         $tc_text_row( 'CTA-Button – Ausgebucht', '', 'label_price_bar_cta_full', 'Ausgebucht' );
                         $tc_text_row( 'CTA-Button – Probetraining', '', 'label_price_bar_cta_request', 'Probetraining anfragen' );
+                        $tc_text_row( 'Aktionspreis – Badge-Text', 'Text des farbigen Badges über dem Aktionspreis.', 'label_action_price_badge', 'Aktionspreis' );
                         ?>
                     </div><!-- .tc-stg-card Buttons & Status-Texte -->
 

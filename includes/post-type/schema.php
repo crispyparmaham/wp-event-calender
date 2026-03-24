@@ -93,33 +93,40 @@ function tc_output_schema_json_ld() {
     $offers     = null;
 
     if ( $price_type === 'fixed' ) {
-        $normal_price = (float) get_field( 'event_price', $post_id );
-        $eb_group     = get_field( 'early_bird', $post_id );
-        $eb_price     = $eb_group ? (float) ( $eb_group['early_bird_preis'] ?? 0 ) : 0;
-        $eb_deadline  = $eb_group ? ( $eb_group['anmeldung'] ?? '' ) : '';
+        $normal_price  = (float) get_field( 'event_price', $post_id );
+        $ap_group      = get_field( 'action_price', $post_id );
+        $ap_price      = $ap_group ? (float) ( $ap_group['action_price_value'] ?? 0 ) : 0;
+        $ap_deadline   = $ap_group ? ( $ap_group['action_price_until'] ?? '' ) : '';
+        $price_period  = get_field( 'price_period', $post_id ) ?: 'once';
+
+        static $period_desc = array( 'monthly' => 'pro Monat', 'yearly' => 'pro Jahr', 'once' => '' );
+        $period_str = $period_desc[ $price_period ] ?? '';
 
         $today     = current_time( 'Y-m-d' );
-        $eb_active = $eb_price > 0 && $eb_deadline && $today <= $eb_deadline;
+        $ap_active = $ap_price > 0 && $ap_deadline && $today <= $ap_deadline;
 
-        if ( $eb_active ) {
-            // Early Bird aktiv → Early-Bird-Preis als primäres Angebot
-            $offers = array(
+        if ( $ap_active ) {
+            $offer = array(
                 '@type'         => 'Offer',
-                'name'          => 'Early Bird',
-                'price'         => number_format( $eb_price, 2, '.', '' ),
+                'name'          => 'Aktionspreis',
+                'price'         => number_format( $ap_price, 2, '.', '' ),
                 'priceCurrency' => 'EUR',
-                'validThrough'  => $eb_deadline . 'T23:59:59',
+                'validThrough'  => $ap_deadline . 'T23:59:59',
                 'availability'  => 'https://schema.org/InStock',
                 'url'           => $url,
             );
+            if ( $period_str ) $offer['description'] = $period_str;
+            $offers = $offer;
         } elseif ( $normal_price > 0 ) {
-            $offers = array(
+            $offer = array(
                 '@type'         => 'Offer',
                 'price'         => number_format( $normal_price, 2, '.', '' ),
                 'priceCurrency' => 'EUR',
                 'availability'  => 'https://schema.org/InStock',
                 'url'           => $url,
             );
+            if ( $period_str ) $offer['description'] = $period_str;
+            $offers = $offer;
         }
     }
 

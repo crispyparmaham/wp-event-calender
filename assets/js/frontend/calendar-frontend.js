@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalWeekStart        = TF.weekStartsOn        || 'monday';
   const globalTimeColumnLabel  = TF.timeColumnLabel      || 'hours';
   const globalEventTimeDisplay = TF.eventTimeDisplay     || 'none';
+  const globalShowWeekNumber   = TF.showWeekNumber      || false;
 
   // ── Debug: Einstellungen im Browser prüfbar machen ────────────
   console.log('[TimeCalendar] Settings:', {
@@ -185,7 +186,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const popover = document.getElementById(uid + '-popover');
     const popBody = popover.querySelector('.tc-popover-body');
     const popBack = document.getElementById(uid + '-backdrop');
-    const loader  = document.getElementById(uid + '-loader');
+    const loader     = document.getElementById(uid + '-loader');
+    const weekLabel  = document.getElementById(uid + '-week-label');
 
     const weekOnly       = el.dataset.weekOnly       === '1';
     const showEventList  = el.dataset.showEventList  === '1';
@@ -560,6 +562,16 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
+    // Scroll zum Montag der aktuellen Woche (Mobile Slider)
+    const scrollToMonday = () => {
+      if (!useMobileSlider()) return;
+      requestAnimationFrame(() => {
+        const cols = el.querySelectorAll('.fc-col-header-cell[data-date]');
+        const monday = Array.from(cols).find(c => new Date(c.dataset.date).getDay() === 1);
+        if (monday) monday.scrollIntoView({ block: 'nearest', inline: 'start' });
+      });
+    };
+
     const initSliderScrollSync = () => {
       if (!useMobileSlider()) return;
       const bodyScroller  = el.querySelector('.fc-scroller-liquid-absolute');
@@ -664,9 +676,16 @@ document.addEventListener('DOMContentLoaded', () => {
       slotDuration:  '00:30:00',
       slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
 
-      datesSet() {
+      datesSet({ start }) {
         updateVisibleTimeRange();
         initSliderScrollSync();
+        scrollToMonday();
+        // KW-Label aktualisieren
+        if (weekOnly && globalShowWeekNumber && weekLabel) {
+          const kw = getISOWeek(start);
+          weekLabel.textContent = `KW ${kw}`;
+          weekLabel.style.display = '';
+        }
       },
       eventsSet()  { updateVisibleTimeRange(); },
 
@@ -683,7 +702,7 @@ document.addEventListener('DOMContentLoaded', () => {
           calendar.changeView(targetView);
         }
         calendar.updateSize();
-        scrollSliderToToday();
+        scrollToMonday();
       },
 
       eventDidMount({ event, el: evEl }) {
@@ -777,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
       } else {
         calendar.addEventSource(getFiltered());
         updateVisibleTimeRange();
-        scrollSliderToToday();
+        scrollToMonday();
       }
 
       if (showEventList) tcRenderEventOverview(overviewEl, getFiltered(), eventListTitle);

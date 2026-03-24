@@ -30,12 +30,13 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
     $today        = date( 'Y-m-d' );
     $price_type   = get_field( 'event_price_type', $post_id ) ?: 'fixed';
     $normal_price = get_field( 'event_price',      $post_id );
-    $early_bird   = get_field( 'early_bird',       $post_id );
-    $early_price  = $early_bird['early_bird_preis'] ?? null;
-    $price_date_str = $early_bird['anmeldung']      ?? null;
+    $action_price = get_field( 'action_price',     $post_id );
+    $early_price  = $action_price['action_price_value'] ?? null;
+    $price_date_str = $action_price['action_price_until'] ?? null;
     $price_date     = $price_date_str
         ? date_create_from_format( 'Y-m-d', $price_date_str )
         : null;
+    $period_suffix  = tc_price_period_suffix( $post_id );
 
     // Kapazitaetspruefung
     $track_participants = get_field( 'registration_limit', $post_id );
@@ -87,21 +88,21 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 
                     <?php elseif ( $show_early ) : ?>
 
-                        <div class="tc-price-bar-badge">Early Bird</div>
+                        <div class="tc-price-bar-badge"><?php echo esc_html( tc_get_setting( 'label_action_price_badge', 'Aktionspreis' ) ); ?></div>
                         <div class="tc-price-bar-amount tc-price-bar-amount--early">
-                            <?php echo esc_html( $early_price ); ?>&euro;
+                            <?php echo esc_html( $early_price ); ?>&euro;<?php echo esc_html( $period_suffix ); ?>
                             <span>inkl. MwSt.</span>
                         </div>
                         <div class="tc-price-bar-deadline">
                             Anmeldung bis <strong><?php echo date_format( $price_date, 'd.m.Y' ); ?></strong>
-                            &mdash; danach <?php echo esc_html( $normal_price ); ?>&euro;
+                            &mdash; danach <?php echo esc_html( $normal_price ); ?>&euro;<?php echo esc_html( $period_suffix ); ?>
                         </div>
 
                     <?php else : ?>
 
                         <div class="tc-price-bar-label">Regul&auml;rer Preis</div>
                         <div class="tc-price-bar-amount">
-                            <?php echo esc_html( $normal_price ); ?>&euro;
+                            <?php echo esc_html( $normal_price ); ?>&euro;<?php echo esc_html( $period_suffix ); ?>
                             <span>inkl. MwSt.</span>
                         </div>
 

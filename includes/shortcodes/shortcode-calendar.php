@@ -154,6 +154,8 @@ add_shortcode( 'time_calendar', function ( $atts ) {
         </div>
         <?php endif; ?>
 
+        <div class="tc-week-label" id="<?php echo esc_attr( $uid ); ?>-week-label" style="display:none;" aria-live="polite"></div>
+
         <div class="tc-frontend-calendar"
              id="<?php echo esc_attr( $uid ); ?>"
              data-type="<?php echo esc_attr( $active_type ); ?>"
@@ -243,5 +245,6 @@ function tc_enqueue_calendar_assets() {
         'defaultView'      => tc_get_setting( 'default_view', 'timeGridWeek' ),
         'weekStartsOn'     => tc_get_setting( 'week_starts_on', 'monday' ),
         'mobileHintBox'    => tc_get_setting( 'mobile_hint_box', '1' ) === '1',
+        'showWeekNumber'   => tc_get_setting( 'show_week_number', '0' ) === '1',
     ) );
 }

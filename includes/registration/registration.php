@@ -133,8 +133,8 @@ function tc_get_event_mail_info( $event_id, $event_date = '' ) {
     $date_type = get_field( 'event_date_type', $event_id );
 
     if ( $date_type === 'recurring' ) {
-        $start_date = get_field( 'start_date', $event_id );
-        $start_time = get_field( 'start_time', $event_id );
+        $start_date = wp_date( 'Y-m-d' ); // nächste Occurrence als Referenz
+        $start_time = get_field( 'recurring_time_start', $event_id );
         $end_date   = '';
     } else {
         $first      = tc_get_first_event_date( $event_id );
@@ -164,6 +164,18 @@ function tc_get_event_mail_info( $event_id, $event_date = '' ) {
         'date'     => $date_str,
         'location' => $location ?: '-',
     );
+}
+
+// ---------------------------------------------
+// Helper: Preis-Suffix für Abrechnungszeitraum
+// ---------------------------------------------
+function tc_price_period_suffix( int $event_id ): string {
+    $period = get_field( 'price_period', $event_id ) ?: 'once';
+    switch ( $period ) {
+        case 'monthly': return ' / Monat';
+        case 'yearly':  return ' / Jahr';
+        default:        return '';
+    }
 }
 
 // ---------------------------------------------
@@ -603,27 +615,28 @@ function tc_get_event_details_ajax() {
     $start_date = null; $start_time = null;
 
     if ( $date_type === 'recurring' ) {
-        $start_date        = $fields['start_date']        ?? null;
-        $start_time        = $fields['start_time']        ?? null;
-        $recurring_weekday = $fields['recurring_weekday'] ?? null;
-        $recurring_until   = $fields['recurring_until']   ?? null;
+        $start_time        = $fields['recurring_time_start'] ?? null;
+        $recurring_weekday = $fields['recurring_weekday']    ?? null;
+        $interval          = max( 1, min( 3, (int) ( $fields['recurring_interval'] ?? 1 ) ) );
 
-        if ( $start_date && $recurring_weekday !== '' && $recurring_until ) {
+        if ( $recurring_weekday !== '' && $recurring_weekday !== null ) {
             $is_recurring_event = true;
+            $start_date         = wp_date( 'Y-m-d' ); // rolling window: use today
             try {
                 $target   = (int) $recurring_weekday;
-                $cur      = new DateTime( $start_date );
-                $until_dt = new DateTime( $recurring_until . ' 23:59:59' );
+                $today    = new DateTime( 'today' );
+                $until_dt = new DateTime( '+52 weeks 23:59:59' );
+                $cur      = clone $today;
                 $diff     = ( $target - (int) $cur->format('w') + 7 ) % 7;
-                if ( $diff > 0 ) $cur->modify( "+{$diff} days" );
+                $cur->modify( "+{$diff} days" );
                 $limit = 0;
                 while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
                     $dates[] = $cur->format('Y-m-d');
-                    $cur->modify('+7 days');
+                    $cur->modify( "+{$interval} weeks" );
                     $limit++;
                 }
             } catch ( Exception $e ) {
-                if ( $start_date ) $dates = array( $start_date );
+                // ignore
             }
         }
     } else {

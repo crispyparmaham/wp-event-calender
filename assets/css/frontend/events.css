@@ -59,6 +59,20 @@
   background: var(--tc-border);
 }
 
+/* ── Month inline grouping ──────────────────────────────────────────────── */
+.tc-events-group-inline + .tc-events-group-inline {
+  margin-top: 40px;
+}
+
+.tc-events-month-header {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--tc-primary);
+  margin: 0 0 16px;
+  padding-bottom: 8px;
+  border-bottom: 2px solid var(--tc-primary);
+}
+
 /* ── Card (base — all layouts) ──────────────────────────────────────────── */
 .tc-events-card {
   position: relative;

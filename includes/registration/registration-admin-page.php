@@ -94,10 +94,16 @@ function tc_render_registrations_page() {
                         $d = DateTime::createFromFormat( 'Y-m-d', $reg['event_date'] );
                         $date_str = $d ? $d->format( 'd.m.Y' ) : $reg['event_date'];
                     } elseif ( $reg['event_id'] ) {
-                        $sd = get_field( 'start_date', $reg['event_id'] );
-                        if ( $sd ) {
-                            $d = DateTime::createFromFormat( 'Y-m-d', $sd );
-                            $date_str = $d ? $d->format( 'd.m.Y' ) : $sd;
+                        $ev_date_type = get_field( 'event_date_type', $reg['event_id'] );
+                        if ( $ev_date_type === 'recurring' ) {
+                            $date_str = '🔁 Wiederkehrend';
+                        } else {
+                            $first = tc_get_first_event_date( $reg['event_id'] );
+                            $sd    = $first['date_start'] ?? '';
+                            if ( $sd ) {
+                                $d        = DateTime::createFromFormat( 'Y-m-d', $sd );
+                                $date_str = $d ? $d->format( 'd.m.Y' ) : $sd;
+                            }
                         }
                     }
                 ?>

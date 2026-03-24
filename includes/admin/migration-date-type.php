@@ -232,3 +232,105 @@ function tc_migrate_generalize_v1() {
     update_option( 'tc_generalize_v1_migrated', '1', true );
     tc_clear_events_cache();
 }
+
+// ── Phase 5: Abrechnungszeitraum – alle Events auf 'once' setzen ──────────
+add_action( 'admin_init', 'tc_migrate_price_period' );
+
+function tc_migrate_price_period() {
+    if ( get_option( 'tc_price_period_migrated' ) ) {
+        return;
+    }
+
+    $posts = get_posts( array(
+        'post_type'      => 'time_event',
+        'posts_per_page' => -1,
+        'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+        'fields'         => 'ids',
+    ) );
+
+    foreach ( $posts as $post_id ) {
+        $existing = get_post_meta( $post_id, 'price_period', true );
+        if ( $existing === '' || $existing === false ) {
+            update_field( 'price_period', 'once', $post_id );
+        }
+    }
+
+    update_option( 'tc_price_period_migrated', '1', true );
+    tc_clear_events_cache();
+}
+
+// ── Phase 6: Early Bird → Aktionspreis ───────────────────────────────────
+add_action( 'admin_init', 'tc_migrate_action_price' );
+
+function tc_migrate_action_price() {
+    if ( get_option( 'tc_action_price_migrated' ) ) {
+        return;
+    }
+
+    $posts = get_posts( array(
+        'post_type'      => 'time_event',
+        'posts_per_page' => -1,
+        'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+        'fields'         => 'ids',
+    ) );
+
+    foreach ( $posts as $post_id ) {
+        // Alte early_bird Gruppe aus DB lesen (unabhängig vom ACF-Register)
+        $eb_preis    = get_post_meta( $post_id, 'early_bird_early_bird_preis', true );
+        $eb_deadline = get_post_meta( $post_id, 'early_bird_anmeldung', true );
+
+        if ( $eb_preis !== '' && $eb_preis !== false ) {
+            update_post_meta( $post_id, 'action_price_action_price_value', $eb_preis );
+        }
+        if ( $eb_deadline !== '' && $eb_deadline !== false ) {
+            update_post_meta( $post_id, 'action_price_action_price_until', $eb_deadline );
+        }
+    }
+
+    update_option( 'tc_action_price_migrated', '1', true );
+    tc_clear_events_cache();
+}
+
+// ── Phase 7: Wiederkehrend v2 – Zeitfelder + Intervall ───────────────────
+add_action( 'admin_init', 'tc_migrate_recurring_v2' );
+
+function tc_migrate_recurring_v2() {
+    if ( get_option( 'tc_recurring_v2_migrated' ) ) {
+        return;
+    }
+
+    $posts = get_posts( array(
+        'post_type'      => 'time_event',
+        'posts_per_page' => -1,
+        'post_status'    => array( 'publish', 'draft', 'pending', 'private' ),
+        'fields'         => 'ids',
+    ) );
+
+    foreach ( $posts as $post_id ) {
+        $date_type = get_field( 'event_date_type', $post_id );
+        if ( $date_type !== 'recurring' ) {
+            continue;
+        }
+
+        // start_time → recurring_time_start
+        $start_time = get_post_meta( $post_id, 'start_time', true );
+        if ( $start_time !== '' && $start_time !== false ) {
+            update_field( 'recurring_time_start', $start_time, $post_id );
+        }
+
+        // end_time → recurring_time_end
+        $end_time = get_post_meta( $post_id, 'end_time', true );
+        if ( $end_time !== '' && $end_time !== false ) {
+            update_field( 'recurring_time_end', $end_time, $post_id );
+        }
+
+        // recurring_interval default: 1 (jede Woche)
+        $existing_interval = get_post_meta( $post_id, 'recurring_interval', true );
+        if ( $existing_interval === '' || $existing_interval === false ) {
+            update_field( 'recurring_interval', '1', $post_id );
+        }
+    }
+
+    update_option( 'tc_recurring_v2_migrated', '1', true );
+    tc_clear_events_cache();
+}

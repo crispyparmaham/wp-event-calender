@@ -41,32 +41,28 @@ function tc_get_repeater_dates_for_registration( $event_id ) {
 // Gibt nur Termine >= heute zurueck.
 // ─────────────────────────────────────────────
 function tc_get_upcoming_occurrences( $event_id ) {
-    $start_date        = get_field( 'start_date',        $event_id ); // Y-m-d
     $recurring_weekday = get_field( 'recurring_weekday', $event_id ); // '0'-'6'
-    $recurring_until   = get_field( 'recurring_until',   $event_id ); // Y-m-d
-
-    if ( ! $start_date || $recurring_weekday === '' || ! $recurring_until ) {
+    if ( $recurring_weekday === '' || $recurring_weekday === false ) {
         return array();
     }
 
-    $today    = new DateTime( 'today' );
-    $target   = (int) $recurring_weekday; // 0=So ... 6=Sa
-    $cur      = new DateTime( $start_date );
-    $until_dt = new DateTime( $recurring_until . ' 23:59:59' );
+    $interval = max( 1, min( 3, (int) ( get_field( 'recurring_interval', $event_id ) ?: 1 ) ) );
+    $target   = (int) $recurring_weekday;
 
-    // Zum ersten passenden Wochentag ab Startdatum spulen
+    $today    = new DateTime( 'today' );
+    $until_dt = new DateTime( '+52 weeks 23:59:59' );
+
+    // Ersten passenden Wochentag ab heute ermitteln
+    $cur  = clone $today;
     $diff = ( $target - (int) $cur->format( 'w' ) + 7 ) % 7;
-    if ( $diff > 0 ) $cur->modify( "+{$diff} days" );
+    $cur->modify( "+{$diff} days" );
 
     $dates = array();
     $limit = 0;
 
     while ( $cur <= $until_dt && $limit < 260 ) {
-        // Nur zukuenftige Termine
-        if ( $cur >= $today ) {
-            $dates[] = $cur->format( 'Y-m-d' );
-        }
-        $cur->modify( '+7 days' );
+        $dates[] = $cur->format( 'Y-m-d' );
+        $cur->modify( "+{$interval} weeks" );
         $limit++;
     }
 

@@ -159,50 +159,7 @@ add_action( 'acf/include_fields', function () {
                 'required'      => 1,
             ),
 
-            // ── Nur Wiederkehrend: Startdatum + Uhrzeiten ──
-            array(
-                'key'            => 'field_tc_start_date',
-                'label'          => 'Startdatum',
-                'name'           => 'start_date',
-                'type'           => 'date_picker',
-                'display_format' => 'd.m.Y',
-                'return_format'  => 'Y-m-d',
-                'first_day'      => 1,
-                'required'       => 1,
-                'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_event_date_type',
-                    'operator' => '==',
-                    'value'    => 'recurring',
-                ) ) ),
-            ),
-            array(
-                'key'            => 'field_tc_start_time',
-                'label'          => 'Uhrzeit von',
-                'name'           => 'start_time',
-                'type'           => 'time_picker',
-                'display_format' => 'H:i',
-                'return_format'  => 'H:i',
-                'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_event_date_type',
-                    'operator' => '==',
-                    'value'    => 'recurring',
-                ) ) ),
-            ),
-            array(
-                'key'            => 'field_tc_end_time',
-                'label'          => 'Uhrzeit bis',
-                'name'           => 'end_time',
-                'type'           => 'time_picker',
-                'display_format' => 'H:i',
-                'return_format'  => 'H:i',
-                'conditional_logic' => array( array( array(
-                    'field'    => 'field_tc_event_date_type',
-                    'operator' => '==',
-                    'value'    => 'recurring',
-                ) ) ),
-            ),
-
-            // ── Nur Wiederkehrend: Wochentag + Bis-Datum ──
+            // ── Nur Wiederkehrend: Wochentag + Zeiten + Turnus ──
             array(
                 'key'           => 'field_tc_recurring_weekday',
                 'label'         => 'Wochentag der Wiederholung',
@@ -227,15 +184,44 @@ add_action( 'acf/include_fields', function () {
                 ) ) ),
             ),
             array(
-                'key'            => 'field_tc_recurring_until',
-                'label'          => 'Wiederholen bis',
-                'name'           => 'recurring_until',
-                'type'           => 'date_picker',
-                'instructions'   => 'Letzter möglicher Termin der Serie.',
-                'display_format' => 'd.m.Y',
-                'return_format'  => 'Y-m-d',
-                'first_day'      => 1,
-                'required'       => 1,
+                'key'            => 'field_tc_recurring_time_start',
+                'label'          => 'Uhrzeit von',
+                'name'           => 'recurring_time_start',
+                'type'           => 'time_picker',
+                'display_format' => 'H:i',
+                'return_format'  => 'H:i',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_event_date_type',
+                    'operator' => '==',
+                    'value'    => 'recurring',
+                ) ) ),
+            ),
+            array(
+                'key'            => 'field_tc_recurring_time_end',
+                'label'          => 'Uhrzeit bis',
+                'name'           => 'recurring_time_end',
+                'type'           => 'time_picker',
+                'display_format' => 'H:i',
+                'return_format'  => 'H:i',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_event_date_type',
+                    'operator' => '==',
+                    'value'    => 'recurring',
+                ) ) ),
+            ),
+            array(
+                'key'           => 'field_tc_recurring_interval',
+                'label'         => 'Turnus',
+                'name'          => 'recurring_interval',
+                'type'          => 'select',
+                'instructions'  => 'In welchem Rhythmus findet das Event statt?',
+                'choices'       => array(
+                    '1' => 'Jede Woche',
+                    '2' => 'Jede 2. Woche',
+                    '3' => 'Jede 3. Woche',
+                ),
+                'default_value' => '1',
+                'return_format' => 'value',
                 'conditional_logic' => array( array( array(
                     'field'    => 'field_tc_event_date_type',
                     'operator' => '==',
@@ -358,11 +344,31 @@ add_action( 'acf/include_fields', function () {
                 ) ) ),
             ),
 
-            // Early Bird — nur sichtbar bei Fixpreis
+            // Abrechnungszeitraum — nur sichtbar bei Fixpreis
             array(
-                'key'        => 'field_tc_early_bird',
-                'label'      => 'Early Bird',
-                'name'       => 'early_bird',
+                'key'           => 'field_tc_price_period',
+                'label'         => 'Abrechnungszeitraum',
+                'name'          => 'price_period',
+                'type'          => 'select',
+                'choices'       => array(
+                    'once'    => 'Einmalig',
+                    'monthly' => 'Monatlich',
+                    'yearly'  => 'Jährlich',
+                ),
+                'default_value' => 'once',
+                'return_format' => 'value',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_event_price_type',
+                    'operator' => '==',
+                    'value'    => 'fixed',
+                ) ) ),
+            ),
+
+            // Aktionspreis — nur sichtbar bei Fixpreis
+            array(
+                'key'        => 'field_tc_action_price',
+                'label'      => 'Aktionspreis',
+                'name'       => 'action_price',
                 'type'       => 'group',
                 'layout'     => 'row',
                 'conditional_logic' => array( array( array(
@@ -372,18 +378,18 @@ add_action( 'acf/include_fields', function () {
                 ) ) ),
                 'sub_fields' => array(
                     array(
-                        'key'     => 'field_tc_eb_price',
-                        'label'   => 'Early-Bird-Preis (€)',
-                        'name'    => 'early_bird_preis',
+                        'key'     => 'field_tc_ap_price',
+                        'label'   => 'Aktionspreis (€)',
+                        'name'    => 'action_price_value',
                         'type'    => 'number',
                         'min'     => 0,
                         'step'    => 0.01,
                         'prepend' => '€',
                     ),
                     array(
-                        'key'            => 'field_tc_eb_deadline',
-                        'label'          => 'Anmeldung bis',
-                        'name'           => 'anmeldung',
+                        'key'            => 'field_tc_ap_deadline',
+                        'label'          => 'Aktionspreis gültig bis',
+                        'name'           => 'action_price_until',
                         'type'           => 'date_picker',
                         'instructions'   => 'Muss vor dem Startdatum liegen.',
                         'display_format' => 'd.m.Y',

@@ -14,53 +14,35 @@ function tc_build_iso( $date, $time = '' ) {
 // ─────────────────────────────────────────────
 // Helper: Wiederholungs-Occurrences generieren
 //
-// Gibt alle wöchentlichen Termine NACH dem
-// Startdatum zurück (Startdatum selbst wird
-// als Haupt-Post ausgegeben, nicht hier).
+// Rollierendes 52-Wochen-Fenster ab heute.
+// Kein Startdatum, kein Enddatum nötig.
+// $interval = 1|2|3 Wochen
 // ─────────────────────────────────────────────
-function tc_get_occurrences( $start_date, $start_time, $end_date, $end_time, $weekday_int, $until ) {
+function tc_get_occurrences( string $weekday, string $time_start, string $time_end, int $interval = 1 ): array {
     $occurrences = array();
+    $weekday_int = (int) $weekday;
+    $interval    = max( 1, min( 3, $interval ) );
 
     try {
-        $start_dt = new DateTime( $start_date );
-        $until_dt = new DateTime( $until . ' 23:59:59' );
+        $today    = new DateTime( 'today' );
+        $until_dt = new DateTime( '+52 weeks 23:59:59' );
     } catch ( Exception $e ) {
         return $occurrences;
     }
 
-    $duration = null;
-    if ( $end_date ) {
-        try {
-            $end_dt   = new DateTime( $end_date );
-            $duration = $start_dt->diff( $end_dt );
-        } catch ( Exception $e ) {
-            // Enddatum ungültig – ignorieren
-        }
-    }
-
-    $cur     = clone $start_dt;
-    $cur->modify( '+1 day' );
-    $cur_dow = (int) $cur->format('w');
+    // Ersten passenden Wochentag ab heute ermitteln
+    $cur     = clone $today;
+    $cur_dow = (int) $cur->format( 'w' );
     $diff    = ( $weekday_int - $cur_dow + 7 ) % 7;
     $cur->modify( "+{$diff} days" );
 
     $limit = 0;
     while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
-        $occ_start = $cur->format('Y-m-d');
-        $occ_end   = null;
-
-        if ( $duration ) {
-            $occ_end_dt = clone $cur;
-            $occ_end_dt->add( $duration );
-            $occ_end = $occ_end_dt->format('Y-m-d');
-        }
-
         $occurrences[] = array(
-            'start' => tc_build_iso( $occ_start, $start_time ),
-            'end'   => $occ_end ? tc_build_iso( $occ_end, $end_time ) : tc_build_iso( $occ_start, $end_time ),
+            'start' => tc_build_iso( $cur->format( 'Y-m-d' ), $time_start ),
+            'end'   => tc_build_iso( $cur->format( 'Y-m-d' ), $time_end ),
         );
-
-        $cur->modify( '+7 days' );
+        $cur->modify( "+{$interval} weeks" );
         $limit++;
     }
 
@@ -102,7 +84,6 @@ function tc_handle_get_events() {
 
         $intro_text      = get_field( 'event_description', $post->ID );
         $recurring_day   = get_field( 'recurring_weekday', $post->ID );
-        $recurring_until = get_field( 'recurring_until',   $post->ID );
         $event_dates_raw = get_field( 'event_dates',       $post->ID );
 
         // ── Termintyp bestimmen ──────────────────────────────────
@@ -163,47 +144,28 @@ function tc_handle_get_events() {
 
         // ── Wiederkehrend ──────────────────────────────────────────
         if ( $is_recurring_type ) {
-            $start_date = get_field( 'start_date', $post->ID );
-            $start_time = get_field( 'start_time', $post->ID );
-            $end_time   = get_field( 'end_time',   $post->ID );
-
-            if ( ! $start_date || $recurring_day === false || ! $recurring_until ) {
+            if ( $recurring_day === false ) {
                 continue;
             }
 
-            $main_start = tc_build_iso( $start_date, $start_time );
-            $main_end   = $end_time ? tc_build_iso( $start_date, $end_time ) : null;
+            $time_start = get_field( 'recurring_time_start', $post->ID ) ?: '';
+            $time_end   = get_field( 'recurring_time_end',   $post->ID ) ?: '';
+            $interval   = (int) ( get_field( 'recurring_interval', $post->ID ) ?: 1 );
 
-            $ep              = $shared_props['extendedProps'];
-            $ep['startTime'] = $start_time ?: '';
-            $ep['endTime']   = $end_time   ?: '';
-            $ep['dateIndex'] = -1;
+            $occurrences = tc_get_occurrences( (string) $recurring_day, $time_start, $time_end, $interval );
 
-            $events[] = array_merge( $shared_props, array(
-                'start'         => $main_start,
-                'end'           => $main_end,
-                'title'         => '🔁 ' . $post->post_title,
-                'editable'      => true,
-                'extendedProps' => $ep,
-            ) );
-
-            $occurrences = tc_get_occurrences(
-                $start_date, $start_time, '', $end_time,
-                (int) $recurring_day, $recurring_until
-            );
-
-            foreach ( $occurrences as $occ ) {
+            foreach ( $occurrences as $idx => $occ ) {
                 $ep_occ              = $shared_props['extendedProps'];
-                $ep_occ['startTime'] = $start_time ?: '';
-                $ep_occ['endTime']   = $end_time   ?: '';
-                $ep_occ['dateIndex'] = -2;
+                $ep_occ['startTime'] = $time_start;
+                $ep_occ['endTime']   = $time_end;
+                $ep_occ['dateIndex'] = $idx === 0 ? -1 : -2;
 
                 $events[] = array_merge( $shared_props, array(
                     'start'         => $occ['start'],
-                    'end'           => $occ['end'],
+                    'end'           => $occ['end'] ?: null,
                     'title'         => '🔁 ' . $post->post_title,
-                    'editable'      => false,
-                    'color'         => $color . 'bb',
+                    'editable'      => $idx === 0,
+                    'color'         => $idx === 0 ? $color : $color . 'bb',
                     'extendedProps' => $ep_occ,
                 ) );
             }
@@ -266,8 +228,8 @@ add_action( 'wp_ajax_' . TC_AJAX_CREATE_EVENT, function () {
     $end          = sanitize_text_field( $_POST['end']               ?? '' );
     $type         = sanitize_text_field( $_POST['type']              ?? 'training' );
     $date_type    = sanitize_text_field( $_POST['date_type']         ?? 'single' );
-    $rec_weekday  = sanitize_text_field( $_POST['recurring_weekday'] ?? '' );
-    $rec_until    = sanitize_text_field( $_POST['recurring_until']   ?? '' );
+    $rec_weekday  = sanitize_text_field( $_POST['recurring_weekday']  ?? '' );
+    $rec_interval = max( 1, min( 3, (int) ( $_POST['recurring_interval'] ?? 1 ) ) );
 
     if ( ! $title || ! $start ) {
         wp_send_json_error( array( 'message' => 'Titel und Startdatum sind Pflichtfelder.' ) );
@@ -303,13 +265,12 @@ add_action( 'wp_ajax_' . TC_AJAX_CREATE_EVENT, function () {
     update_field( 'event_type',      $type,      $post_id );
 
     if ( $date_type === 'recurring' ) {
-        // Wiederkehrend: klassische Felder setzen
-        update_field( 'start_date', $start_date, $post_id );
-        if ( $start_time ) update_field( 'start_time', $start_time, $post_id );
-        if ( $end_time )   update_field( 'end_time',   $end_time,   $post_id );
-        if ( $rec_weekday !== '' && $rec_until ) {
-            update_field( 'recurring_weekday', $rec_weekday, $post_id );
-            update_field( 'recurring_until',   $rec_until,   $post_id );
+        // Wiederkehrend: neue Felder setzen
+        if ( $start_time ) update_field( 'recurring_time_start', $start_time, $post_id );
+        if ( $end_time )   update_field( 'recurring_time_end',   $end_time,   $post_id );
+        if ( $rec_weekday !== '' ) {
+            update_field( 'recurring_weekday',  $rec_weekday,  $post_id );
+            update_field( 'recurring_interval', (string) $rec_interval, $post_id );
         }
     } else {
         // Einzeltermin: Hauptdatum als ersten Repeater-Eintrag speichern

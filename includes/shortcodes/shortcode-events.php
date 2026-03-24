@@ -61,7 +61,7 @@ function tc_time_events_shortcode( $atts ): string {
 	$columns   = max( 1, min( 3, (int) $atts['columns'] ) );
 	$layout    = in_array( $atts['layout'], [ 'grid', 'list', 'cards' ], true )
 		? $atts['layout'] : 'grid';
-	$group_by  = $atts['group_by'] === 'month' ? 'month' : 'none';
+	$group_by  = in_array( $atts['group_by'], array( 'month', 'month_inline' ), true ) ? $atts['group_by'] : 'none';
 	$category  = sanitize_key( $atts['category'] );
 
 	// Keep normalized values back in $atts so the card renderer can read them
@@ -126,6 +126,8 @@ function tc_time_events_shortcode( $atts ): string {
 
 	if ( $group_by === 'month' ) {
 		tc_events_render_grouped( $posts, $atts );
+	} elseif ( $group_by === 'month_inline' ) {
+		tc_events_render_grouped_inline( $posts, $atts );
 	} else {
 		echo '<div class="tc-events-grid">';
 		foreach ( $posts as $post ) {
@@ -174,6 +176,47 @@ function tc_events_render_grouped( array $posts, array $atts ): void {
 		echo '<div class="tc-events-group">';
 		echo '<h3 class="tc-events-month-heading"><span>'
 			. esc_html( $group['label'] ) . '</span></h3>';
+		echo '<div class="tc-events-grid">';
+		foreach ( $group['posts'] as $post ) {
+			tc_render_event_card( $post, $atts );
+		}
+		echo '</div>';
+		echo '</div>';
+	}
+}
+
+// ── Grouped inline rendering (month_inline) ───────────────────────────────
+function tc_events_render_grouped_inline( array $posts, array $atts ): void {
+	static $month_names = [
+		'01' => 'Januar',    '02' => 'Februar', '03' => 'März',
+		'04' => 'April',     '05' => 'Mai',      '06' => 'Juni',
+		'07' => 'Juli',      '08' => 'August',   '09' => 'September',
+		'10' => 'Oktober',   '11' => 'November', '12' => 'Dezember',
+	];
+
+	$groups = [];
+
+	foreach ( $posts as $post ) {
+		$first = tc_get_first_event_date( $post->ID );
+		$date  = $first['date_start'] ?? '';
+		if ( ! $date ) continue;
+		try {
+			$dt    = new DateTime( $date );
+			$key   = $dt->format( 'Y-m' );
+			$label = ( $month_names[ $dt->format( 'm' ) ] ?? $dt->format( 'F' ) )
+				. ' ' . $dt->format( 'Y' );
+		} catch ( Exception $e ) {
+			continue;
+		}
+		if ( ! isset( $groups[ $key ] ) ) {
+			$groups[ $key ] = [ 'label' => $label, 'posts' => [] ];
+		}
+		$groups[ $key ]['posts'][] = $post;
+	}
+
+	foreach ( $groups as $group ) {
+		echo '<div class="tc-events-group-inline">';
+		echo '<div class="tc-events-month-header">' . esc_html( $group['label'] ) . '</div>';
 		echo '<div class="tc-events-grid">';
 		foreach ( $group['posts'] as $post ) {
 			tc_render_event_card( $post, $atts );
@@ -377,7 +420,8 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 					. '<span>Kostenlos</span>'
 					. '</li>';
 			} elseif ( $price_raw !== '' && $price_raw !== false ) {
-				$price_fmt = number_format( (float) $price_raw, 2, ',', '.' ) . ' €';
+				$period_suffix = tc_price_period_suffix( $post->ID );
+				$price_fmt     = number_format( (float) $price_raw, 2, ',', '.' ) . ' €' . $period_suffix;
 				echo '<li class="tc-events-meta-item tc-events-meta--price">'
 					. $price_icon
 					. '<span>' . esc_html( $price_fmt ) . '</span>'
