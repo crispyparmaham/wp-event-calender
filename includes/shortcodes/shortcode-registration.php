@@ -104,19 +104,20 @@ add_shortcode( 'time_registration', function ( $atts ) {
             return '';
         }
         if ( $reg_mode === 'request' ) {
-            $contact_email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
-            $event_title   = get_the_title( $event_id );
-            $subject       = rawurlencode( 'Anfrage: ' . $event_title );
-            $dark_class    = tc_dark_class();
+            $contact_email  = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
+            $event_title    = get_the_title( $event_id );
+            $subject        = rawurlencode( 'Anfrage: ' . $event_title );
+            $dark_class     = tc_dark_class();
+            $request_btn    = tc_get_setting( 'label_request_btn',    'Jetzt anfragen' );
+            $request_notice = tc_get_setting( 'label_request_notice', 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.' );
             ob_start(); ?>
             <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
                 <div class="tc-trial-notice">
-                    <strong>Interesse?</strong>
-                    F&uuml;r weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.
+                    <?php echo esc_html( $request_notice ); ?>
                 </div>
                 <a href="mailto:<?php echo esc_attr( $contact_email ); ?>?subject=<?php echo $subject; ?>"
                    class="tc-btn tc-btn-primary">
-                    Jetzt anfragen
+                    <?php echo esc_html( $request_btn ); ?>
                 </a>
             </div>
             <?php
@@ -134,7 +135,9 @@ add_shortcode( 'time_registration', function ( $atts ) {
     $is_trial   = ( $price_type === 'request' );
 
     // Formulartitel: bei Probetraining angepasst, sonst Shortcode-Attribut
-    $form_title = $is_trial ? 'Kostenloses Probetraining anfragen' : esc_html( $atts['title'] );
+    $form_title = $is_trial
+        ? tc_get_setting( 'label_form_title_trial', 'Kostenloses Probetraining anfragen' )
+        : ( $atts['title'] !== 'Anmelden' ? esc_html( $atts['title'] ) : tc_get_setting( 'label_form_title', 'Anmelden' ) );
 
     // Termine aufbereiten: Repeater-Termine haben Vorrang vor Wiederholungen
     $date_type_val  = $event_id ? ( get_field( 'event_date_type', $event_id ) ?: 'single' ) : 'single';
@@ -172,8 +175,8 @@ add_shortcode( 'time_registration', function ( $atts ) {
             <form id="<?php echo esc_attr( $wl_form_id ); ?>" class="tc-registration-form tc-waitlist-form" method="POST">
                 <h2>Warteliste – <?php echo esc_html( get_the_title( $event_id ) ); ?></h2>
                 <div class="tc-waitlist-notice">
-                    <strong>Diese Veranstaltung ist leider ausgebucht.</strong><br>
-                    Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.
+                    <strong><?php echo esc_html( tc_get_setting( 'label_full_notice', 'Diese Veranstaltung ist leider ausgebucht.' ) ); ?></strong><br>
+                    <?php echo esc_html( tc_get_setting( 'label_full_subtext', 'Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.' ) ); ?>
                 </div>
                 <div class="tc-form-messages" style="display:none;"></div>
                 <input type="hidden" name="event_id" value="<?php echo esc_attr( $event_id ); ?>">
@@ -219,7 +222,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
                 </div>
                 <div class="tc-form-group">
                     <button type="submit" class="tc-btn tc-btn-primary tc-submit-btn">
-                        <span class="tc-btn-text">Auf Warteliste eintragen</span>
+                        <span class="tc-btn-text"><?php echo esc_html( tc_get_setting( 'label_waitlist_btn', 'Auf Warteliste eintragen' ) ); ?></span>
                         <span class="tc-btn-loader" style="display:none;"><span class="tc-spinner"></span> Wird verarbeitet...</span>
                     </button>
                 </div>
@@ -422,7 +425,9 @@ add_shortcode( 'time_registration', function ( $atts ) {
             <div class="tc-form-group">
                 <button type="submit" class="tc-btn tc-btn-primary tc-submit-btn">
                     <span class="tc-btn-text">
-                        <?php echo $is_trial ? 'Probetraining anfragen' : 'Anmeldung absenden'; ?>
+                        <?php echo $is_trial
+                            ? esc_html( tc_get_setting( 'label_submit_btn_trial', 'Probetraining anfragen' ) )
+                            : esc_html( tc_get_setting( 'label_submit_btn', 'Anmeldung absenden' ) ); ?>
                     </span>
                     <span class="tc-btn-loader" style="display:none;">
                         <span class="tc-spinner"></span> Wird verarbeitet...

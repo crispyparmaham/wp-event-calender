@@ -68,21 +68,21 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
                 <div class="tc-price-bar-info">
                     <?php if ( $is_full ) : ?>
 
-                        <div class="tc-price-bar-label tc-price-bar-label--full">Ausgebucht</div>
+                        <div class="tc-price-bar-label tc-price-bar-label--full"><?php echo esc_html( tc_get_setting( 'label_price_bar_full', 'Ausgebucht' ) ); ?></div>
                         <div class="tc-price-bar-amount tc-price-bar-amount--full">
-                            Leider keine Pl&auml;tze mehr verf&uuml;gbar.
+                            <?php echo esc_html( tc_get_setting( 'label_price_bar_full_sub', 'Leider keine Plätze mehr verfügbar.' ) ); ?>
                         </div>
 
                     <?php elseif ( $price_type === 'free' ) : ?>
 
                         <div class="tc-price-bar-label">Preis</div>
-                        <div class="tc-price-bar-amount">Kostenlos</div>
+                        <div class="tc-price-bar-amount"><?php echo esc_html( tc_get_setting( 'label_price_bar_free', 'Kostenlos' ) ); ?></div>
 
                     <?php elseif ( $price_type === 'request' ) : ?>
 
                         <div class="tc-price-bar-teaser">
-                            <strong>Neugierig geworden?</strong>
-                            Dann melde dich jetzt f&uuml;r ein kostenloses Probetraining an.
+                            <strong style="color:<?php echo esc_attr( tc_get_primary_color() ); ?>;"><?php echo esc_html( tc_get_setting( 'label_price_bar_request_headline', 'Neugierig geworden?' ) ); ?></strong>
+                            <?php echo esc_html( tc_get_setting( 'label_price_bar_request_teaser', 'Dann melde dich jetzt für ein kostenloses Probetraining an.' ) ); ?>
                         </div>
 
                     <?php elseif ( $show_early ) : ?>
@@ -112,9 +112,12 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
                    class="tc-price-bar-btn <?php echo ( $show_early && $has_price ) ? 'tc-price-bar-btn--early' : ''; ?>"
                    <?php echo $is_full ? 'style="pointer-events:none;opacity:.5;cursor:not-allowed;"' : ''; ?>>
                     <?php
-                    if ( $is_full )                        echo 'Ausgebucht';
-                    elseif ( $price_type === 'request' )   echo 'Probetraining anfragen';
-                    else                                   echo $link_text;
+                    if ( $is_full )
+                        echo esc_html( tc_get_setting( 'label_price_bar_cta_full', 'Ausgebucht' ) );
+                    elseif ( $price_type === 'request' )
+                        echo esc_html( tc_get_setting( 'label_price_bar_cta_request', 'Probetraining anfragen' ) );
+                    else
+                        echo $link_text;
                     ?>
                 </a>
 

@@ -74,6 +74,55 @@ function tc_delete_registration( $id ) {
 }
 
 // ---------------------------------------------
+// Placeholder-Engine für Mail-Templates
+// ---------------------------------------------
+function tc_resolve_placeholders( string $text, array $data, int $event_id = 0, string $event_date = '' ): string {
+    $mode = tc_get_setting( 'anrede_mode', 'sie' );
+    if ( $mode === 'du' ) {
+        $anrede_vals = array(
+            'anrede'           => 'du',
+            'anrede_possessiv' => 'deine',
+            'anrede_akkusativ' => 'dich',
+            'anrede_dativ'     => 'dir',
+            'anrede_imperativ' => 'Bitte melde dich',
+        );
+    } else {
+        $anrede_vals = array(
+            'anrede'           => 'Sie',
+            'anrede_possessiv' => 'Ihre',
+            'anrede_akkusativ' => 'Sie',
+            'anrede_dativ'     => 'Ihnen',
+            'anrede_imperativ' => 'Bitte melden Sie sich',
+        );
+    }
+
+    $info = $event_id
+        ? tc_get_event_mail_info( $event_id, $event_date )
+        : array( 'title' => '', 'date' => $event_date, 'location' => '' );
+
+    $storno_url = ! empty( $data['cancel_token'] )
+        ? esc_url( add_query_arg( 'tc_cancel', $data['cancel_token'], home_url( '/' ) ) )
+        : '';
+
+    $pairs = array(
+        '{{anrede}}'           => esc_html( $anrede_vals['anrede'] ),
+        '{{anrede_possessiv}}' => esc_html( $anrede_vals['anrede_possessiv'] ),
+        '{{anrede_akkusativ}}' => esc_html( $anrede_vals['anrede_akkusativ'] ),
+        '{{anrede_dativ}}'     => esc_html( $anrede_vals['anrede_dativ'] ),
+        '{{anrede_imperativ}}' => esc_html( $anrede_vals['anrede_imperativ'] ),
+        '{{firstname}}'        => esc_html( $data['firstname'] ?? '' ),
+        '{{lastname}}'         => esc_html( $data['lastname']  ?? '' ),
+        '{{event_title}}'      => esc_html( $info['title'] ),
+        '{{event_date}}'       => esc_html( $info['date'] ),
+        '{{event_location}}'   => esc_html( $info['location'] ),
+        '{{storno_url}}'       => $storno_url,
+        '{{blogname}}'         => esc_html( get_option( 'blogname' ) ),
+    );
+
+    return str_replace( array_keys( $pairs ), array_values( $pairs ), $text );
+}
+
+// ---------------------------------------------
 // Helper: Event-Infos für Mails aufbereiten
 // ---------------------------------------------
 function tc_get_event_mail_info( $event_id, $event_date = '' ) {
@@ -121,16 +170,31 @@ function tc_get_event_mail_info( $event_id, $event_date = '' ) {
 // Mail 1: Dankes-Mail direkt nach Anmeldung
 // ---------------------------------------------
 function tc_send_thank_you_mail( $data ) {
-    $info        = tc_get_event_mail_info( $data['event_id'], $data['event_date'] ?? '' );
-    $is_trial    = ( get_field( 'event_price_type', $data['event_id'] ) ?: 'fixed' ) === 'request';
-    $blogname    = get_option( 'blogname' );
-    $headers     = array( 'Content-Type: text/html; charset=UTF-8' );
-    $cancel_url  = ! empty( $data['cancel_token'] )
+    $event_id   = (int) ( $data['event_id'] ?? 0 );
+    $event_date = $data['event_date'] ?? '';
+    $info       = tc_get_event_mail_info( $event_id, $event_date );
+    $is_trial   = ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) === 'request';
+    $blogname   = get_option( 'blogname' );
+    $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
+    $cancel_url = ! empty( $data['cancel_token'] )
         ? add_query_arg( 'tc_cancel', $data['cancel_token'], home_url( '/' ) )
         : '';
 
-    if ( $is_trial ) {
-        $subject = 'Deine Probetraining-Anfrage ist eingegangen - ' . $info['title'];
+    // Betreff aus Einstellungen (mit Fallback)
+    $subject_tpl = tc_get_setting(
+        'mail_thankyou_subject',
+        $is_trial
+            ? 'Deine Probetraining-Anfrage ist eingegangen – {{event_title}}'
+            : 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}'
+    );
+    $subject = tc_resolve_placeholders( $subject_tpl, $data, $event_id, $event_date );
+
+    // Body aus Einstellungen?
+    $body_tpl = tc_get_setting( 'mail_thankyou_body', '' );
+    if ( $body_tpl ) {
+        $resolved = tc_resolve_placeholders( $body_tpl, $data, $event_id, $event_date );
+        $msg = tc_mail_wrapper_open( $blogname ) . $resolved . tc_mail_wrapper_close();
+    } elseif ( $is_trial ) {
         $msg  = tc_mail_wrapper_open( $blogname );
         $msg .= '<h2 style="color:#5a7a00;margin-top:0;">Deine Anfrage ist bei uns eingegangen!</h2>';
         $msg .= '<p>Hallo ' . esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) . ',</p>';
@@ -142,7 +206,6 @@ function tc_send_thank_you_mail( $data ) {
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
-        $subject = 'Vielen Dank für Ihre Anmeldung - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
         $msg .= '<h2 style="color:#0066cc;margin-top:0;">Vielen Dank für Ihre Anmeldung!</h2>';
         $msg .= '<p>Hallo ' . esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) . ',</p>';
@@ -164,16 +227,29 @@ function tc_send_confirmation_mail( $registration_id ) {
     $reg = tc_get_registration( $registration_id );
     if ( ! $reg ) return;
 
-    $info       = tc_get_event_mail_info( $reg['event_id'], $reg['event_date'] ?? '' );
-    $is_trial   = ( get_field( 'event_price_type', $reg['event_id'] ) ?: 'fixed' ) === 'request';
+    $event_id   = (int) $reg['event_id'];
+    $event_date = $reg['event_date'] ?? '';
+    $info       = tc_get_event_mail_info( $event_id, $event_date );
+    $is_trial   = ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) === 'request';
     $blogname   = get_option( 'blogname' );
     $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
     $cancel_url = ! empty( $reg['cancel_token'] )
         ? add_query_arg( 'tc_cancel', $reg['cancel_token'], home_url( '/' ) )
         : '';
 
-    if ( $is_trial ) {
-        $subject = 'Dein Probetraining ist bestätigt - ' . $info['title'];
+    $subject_tpl = tc_get_setting(
+        'mail_confirm_subject',
+        $is_trial
+            ? 'Dein Probetraining ist bestätigt – {{event_title}}'
+            : '{{anrede_possessiv}} Anmeldung ist bestätigt – {{event_title}}'
+    );
+    $subject = tc_resolve_placeholders( $subject_tpl, $reg, $event_id, $event_date );
+
+    $body_tpl = tc_get_setting( 'mail_confirm_body', '' );
+    if ( $body_tpl ) {
+        $resolved = tc_resolve_placeholders( $body_tpl, $reg, $event_id, $event_date );
+        $msg = tc_mail_wrapper_open( $blogname ) . $resolved . tc_mail_wrapper_close();
+    } elseif ( $is_trial ) {
         $msg  = tc_mail_wrapper_open( $blogname );
         $msg .= '<h2 style="color:#059669;margin-top:0;">Dein Probetraining ist bestätigt! &#10003;</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
@@ -184,7 +260,6 @@ function tc_send_confirmation_mail( $registration_id ) {
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
-        $subject = 'Ihre Anmeldung ist bestätigt - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
         $msg .= '<h2 style="color:#059669;margin-top:0;">Ihre Anmeldung ist bestätigt! &#10003;</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
@@ -206,13 +281,26 @@ function tc_send_cancellation_mail( $registration_id ) {
     $reg = tc_get_registration( $registration_id );
     if ( ! $reg ) return;
 
-    $info      = tc_get_event_mail_info( $reg['event_id'], $reg['event_date'] ?? '' );
-    $is_trial  = ( get_field( 'event_price_type', $reg['event_id'] ) ?: 'fixed' ) === 'request';
-    $blogname  = get_option( 'blogname' );
-    $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
+    $event_id   = (int) $reg['event_id'];
+    $event_date = $reg['event_date'] ?? '';
+    $info       = tc_get_event_mail_info( $event_id, $event_date );
+    $is_trial   = ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) === 'request';
+    $blogname   = get_option( 'blogname' );
+    $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
 
-    if ( $is_trial ) {
-        $subject = 'Deine Probetraining-Anfrage konnte leider nicht bestätigt werden - ' . $info['title'];
+    $subject_tpl = tc_get_setting(
+        'mail_cancel_subject',
+        $is_trial
+            ? 'Deine Probetraining-Anfrage konnte leider nicht bestätigt werden – {{event_title}}'
+            : '{{anrede_possessiv}} Anmeldung konnte leider nicht bestätigt werden – {{event_title}}'
+    );
+    $subject = tc_resolve_placeholders( $subject_tpl, $reg, $event_id, $event_date );
+
+    $body_tpl = tc_get_setting( 'mail_cancel_body', '' );
+    if ( $body_tpl ) {
+        $resolved = tc_resolve_placeholders( $body_tpl, $reg, $event_id, $event_date );
+        $msg = tc_mail_wrapper_open( $blogname ) . $resolved . tc_mail_wrapper_close();
+    } elseif ( $is_trial ) {
         $msg  = tc_mail_wrapper_open( $blogname );
         $msg .= '<h2 style="color:#dc2626;margin-top:0;">Deine Probetraining-Anfrage konnte nicht bestätigt werden</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
@@ -222,7 +310,6 @@ function tc_send_cancellation_mail( $registration_id ) {
         $msg .= tc_mail_signature( $blogname );
         $msg .= tc_mail_wrapper_close();
     } else {
-        $subject = 'Ihre Anmeldung konnte leider nicht bestätigt werden - ' . $info['title'];
         $msg  = tc_mail_wrapper_open( $blogname );
         $msg .= '<h2 style="color:#dc2626;margin-top:0;">Ihre Anmeldung konnte nicht bestätigt werden</h2>';
         $msg .= '<p>Hallo ' . esc_html( $reg['firstname'] ) . ' ' . esc_html( $reg['lastname'] ) . ',</p>';
@@ -243,42 +330,56 @@ function tc_send_admin_notification( $data ) {
     $admin_email = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
     if ( $admin_email === $data['email'] ) return;
 
-    $info      = tc_get_event_mail_info( $data['event_id'], $data['event_date'] ?? '' );
-    $is_trial  = ( get_field( 'event_price_type', $data['event_id'] ) ?: 'fixed' ) === 'request';
-    $blogname  = get_option( 'blogname' );
-    $headers   = array( 'Content-Type: text/html; charset=UTF-8' );
+    $event_id   = (int) ( $data['event_id'] ?? 0 );
+    $event_date = $data['event_date'] ?? '';
+    $info       = tc_get_event_mail_info( $event_id, $event_date );
+    $is_trial   = ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) === 'request';
+    $blogname   = get_option( 'blogname' );
+    $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
 
-    if ( $is_trial ) {
-        $subject = 'Neue Probetraining-Anfrage: ' . $info['title'] . ' - ' . $data['firstname'] . ' ' . $data['lastname'];
-        $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#5a7a00;margin-top:0;">Neue Probetraining-Anfrage eingegangen</h2>';
-        $msg .= '<div style="background:#f0fdf4;border-left:4px solid #a4d61f;padding:10px 16px;border-radius:4px;margin-bottom:16px;font-size:14px;">'
-              . '<strong>Kostenlos &amp; unverbindlich</strong> &ndash; Dies ist eine Probetraining-Anfrage.'
-              . '</div>';
+    $subject_tpl = tc_get_setting(
+        'mail_admin_subject',
+        $is_trial
+            ? 'Neue Probetraining-Anfrage: {{event_title}} – {{firstname}} {{lastname}}'
+            : 'Neue Anmeldung: {{event_title}} – {{firstname}} {{lastname}}'
+    );
+    $subject = tc_resolve_placeholders( $subject_tpl, $data, $event_id, $event_date );
+
+    $body_tpl = tc_get_setting( 'mail_admin_body', '' );
+    if ( $body_tpl ) {
+        $resolved = tc_resolve_placeholders( $body_tpl, $data, $event_id, $event_date );
+        $msg = tc_mail_wrapper_open( $blogname ) . $resolved . tc_mail_wrapper_close();
     } else {
-        $subject = 'Neue Anmeldung: ' . $info['title'] . ' - ' . $data['firstname'] . ' ' . $data['lastname'];
-        $msg  = tc_mail_wrapper_open( $blogname );
-        $msg .= '<h2 style="color:#0066cc;margin-top:0;">Neue Anmeldung eingegangen</h2>';
-    }
-
-    $msg .= tc_event_info_block( $info );
-    $msg .= '<h3 style="margin-bottom:8px;">' . ( $is_trial ? 'Anfragender' : 'Teilnehmer' ) . '</h3>';
-    $msg .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
-    $msg .= tc_mail_row( 'Name',   $data['firstname'] . ' ' . $data['lastname'] );
-    $msg .= tc_mail_row( 'E-Mail', $data['email'] );
-    if ( ! empty( $data['phone'] ) )   $msg .= tc_mail_row( 'Telefon', esc_html( $data['phone'] ) );
-    if ( ! $is_trial ) {
-        if ( ! empty( $data['address'] ) ) $msg .= tc_mail_row( 'Adresse', esc_html( $data['address'] ) );
-        if ( ! empty( $data['zip'] ) || ! empty( $data['city'] ) ) {
-            $msg .= tc_mail_row( 'PLZ / Ort', esc_html( trim( $data['zip'] . ' ' . $data['city'] ) ) );
+        if ( $is_trial ) {
+            $msg  = tc_mail_wrapper_open( $blogname );
+            $msg .= '<h2 style="color:#5a7a00;margin-top:0;">Neue Probetraining-Anfrage eingegangen</h2>';
+            $msg .= '<div style="background:#f0fdf4;border-left:4px solid #a4d61f;padding:10px 16px;border-radius:4px;margin-bottom:16px;font-size:14px;">'
+                  . '<strong>Kostenlos &amp; unverbindlich</strong> &ndash; Dies ist eine Probetraining-Anfrage.'
+                  . '</div>';
+        } else {
+            $msg  = tc_mail_wrapper_open( $blogname );
+            $msg .= '<h2 style="color:#0066cc;margin-top:0;">Neue Anmeldung eingegangen</h2>';
         }
+
+        $msg .= tc_event_info_block( $info );
+        $msg .= '<h3 style="margin-bottom:8px;">' . ( $is_trial ? 'Anfragender' : 'Teilnehmer' ) . '</h3>';
+        $msg .= '<table style="width:100%;border-collapse:collapse;font-size:14px;">';
+        $msg .= tc_mail_row( 'Name',   esc_html( $data['firstname'] ) . ' ' . esc_html( $data['lastname'] ) );
+        $msg .= tc_mail_row( 'E-Mail', esc_html( $data['email'] ) );
+        if ( ! empty( $data['phone'] ) )   $msg .= tc_mail_row( 'Telefon', esc_html( $data['phone'] ) );
+        if ( ! $is_trial ) {
+            if ( ! empty( $data['address'] ) ) $msg .= tc_mail_row( 'Adresse', esc_html( $data['address'] ) );
+            if ( ! empty( $data['zip'] ) || ! empty( $data['city'] ) ) {
+                $msg .= tc_mail_row( 'PLZ / Ort', esc_html( trim( $data['zip'] . ' ' . $data['city'] ) ) );
+            }
+        }
+        if ( ! empty( $data['notes'] ) )   $msg .= tc_mail_row( 'Notizen', nl2br( esc_html( $data['notes'] ) ) );
+        $msg .= '</table>';
+        $msg .= '<p style="margin-top:20px;"><a href="' . esc_url( admin_url( 'admin.php?page=training-registrations' ) ) . '" '
+              . 'style="background:#0066cc;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;">'
+              . 'Zur Anmeldungsuebersicht</a></p>';
+        $msg .= tc_mail_wrapper_close();
     }
-    if ( ! empty( $data['notes'] ) )   $msg .= tc_mail_row( 'Notizen', nl2br( esc_html( $data['notes'] ) ) );
-    $msg .= '</table>';
-    $msg .= '<p style="margin-top:20px;"><a href="' . esc_url( admin_url( 'admin.php?page=training-registrations' ) ) . '" '
-          . 'style="background:#0066cc;color:#fff;padding:10px 20px;text-decoration:none;border-radius:4px;display:inline-block;">'
-          . 'Zur Anmeldungsuebersicht</a></p>';
-    $msg .= tc_mail_wrapper_close();
 
     wp_mail( $admin_email, $subject, $msg, $headers );
 }
@@ -399,8 +500,8 @@ function tc_handle_registration_submission() {
     ) );
     if ( $existing ) {
         $dup_msg = $is_trial
-            ? 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.'
-            : 'Sie sind bereits für diese Veranstaltung angemeldet.';
+            ? tc_get_setting( 'label_duplicate_msg_trial', 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.' )
+            : tc_get_setting( 'label_duplicate_msg',       'Sie sind bereits für diese Veranstaltung angemeldet.' );
         wp_send_json_error( array( 'message' => $dup_msg ) );
     }
 
@@ -450,8 +551,8 @@ function tc_handle_registration_submission() {
     ) );
 
     $success_msg = $is_trial
-        ? 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.'
-        : 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.';
+        ? tc_get_setting( 'label_success_msg_trial', 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.' )
+        : tc_get_setting( 'label_success_msg',       'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.' );
 
     wp_send_json_success( array(
         'message'         => $success_msg,

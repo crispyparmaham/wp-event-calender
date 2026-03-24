@@ -54,6 +54,50 @@ add_action( 'admin_init', function () {
             'token_custom_css'            => '',
             // SEO
             'schema_enabled'          => '1',
+            // Texte & Labels
+            'anrede_mode'                    => 'sie',
+            'label_form_title'               => 'Anmelden',
+            'label_form_title_trial'         => 'Kostenloses Probetraining anfragen',
+            'label_submit_btn'               => 'Anmeldung absenden',
+            'label_submit_btn_trial'         => 'Probetraining anfragen',
+            'label_waitlist_btn'             => 'Auf Warteliste eintragen',
+            'label_request_btn'              => 'Jetzt anfragen',
+            'label_request_notice'           => 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.',
+            'label_full_notice'              => 'Diese Veranstaltung ist leider ausgebucht.',
+            'label_full_subtext'             => 'Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.',
+            'label_success_msg'              => 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.',
+            'label_success_msg_trial'        => 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.',
+            'label_duplicate_msg'            => 'Sie sind bereits für diese Veranstaltung angemeldet.',
+            'label_duplicate_msg_trial'      => 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.',
+            'label_price_bar_full'           => 'Ausgebucht',
+            'label_price_bar_full_sub'       => 'Leider keine Plätze mehr verfügbar.',
+            'label_price_bar_free'           => 'Kostenlos',
+            'label_price_bar_request_headline' => 'Neugierig geworden?',
+            'label_price_bar_request_teaser'   => 'Dann melde dich jetzt für ein kostenloses Probetraining an.',
+            'label_price_bar_cta_full'       => 'Ausgebucht',
+            'label_price_bar_cta_request'    => 'Probetraining anfragen',
+            // Mail-Templates
+            'mail_thankyou_subject'          => 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}',
+            'mail_thankyou_preview'          => 'Wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah.',
+            'mail_thankyou_body'             => '',
+            'mail_confirm_subject'           => '{{anrede_possessiv}} Anmeldung ist bestätigt – {{event_title}}',
+            'mail_confirm_preview'           => 'Wir freuen uns auf {{anrede_akkusativ}}!',
+            'mail_confirm_body'              => '',
+            'mail_cancel_subject'            => '{{anrede_possessiv}} Anmeldung konnte leider nicht bestätigt werden – {{event_title}}',
+            'mail_cancel_preview'            => '',
+            'mail_cancel_body'               => '',
+            'mail_waitlist_subject'          => '{{anrede}} stehen auf der Warteliste – {{event_title}}',
+            'mail_waitlist_preview'          => 'Wir benachrichtigen {{anrede_akkusativ}}, sobald ein Platz frei wird.',
+            'mail_waitlist_body'             => '',
+            'mail_waitlist_slot_subject'     => 'Ein Platz ist frei geworden – {{event_title}}',
+            'mail_waitlist_slot_preview'     => '',
+            'mail_waitlist_slot_body'        => '',
+            'mail_reminder_subject'          => 'Erinnerung: {{event_title}} – in 3 Tagen',
+            'mail_reminder_preview'          => '',
+            'mail_reminder_body'             => '',
+            'mail_admin_subject'             => 'Neue Anmeldung: {{event_title}} – {{firstname}} {{lastname}}',
+            'mail_admin_preview'             => '',
+            'mail_admin_body'               => '',
         ),
     ) );
 } );
@@ -202,6 +246,34 @@ function tc_sanitize_settings( $input ) {
 
     // SEO
     $clean['schema_enabled'] = ! empty( $input['schema_enabled'] ) ? '1' : '0';
+
+    // ── Anrede-Modus ──────────────────────────────────────────
+    $clean['anrede_mode'] = ( isset( $input['anrede_mode'] ) && $input['anrede_mode'] === 'du' ) ? 'du' : 'sie';
+
+    // ── UI-Labels ─────────────────────────────────────────────
+    $label_keys = array(
+        'label_form_title', 'label_form_title_trial', 'label_submit_btn', 'label_submit_btn_trial',
+        'label_waitlist_btn', 'label_request_btn', 'label_request_notice',
+        'label_full_notice', 'label_full_subtext',
+        'label_success_msg', 'label_success_msg_trial',
+        'label_duplicate_msg', 'label_duplicate_msg_trial',
+        'label_price_bar_full', 'label_price_bar_full_sub', 'label_price_bar_free',
+        'label_price_bar_request_headline', 'label_price_bar_request_teaser', 'label_price_bar_cta_full', 'label_price_bar_cta_request',
+    );
+    foreach ( $label_keys as $k ) {
+        $clean[ $k ] = isset( $input[ $k ] ) ? sanitize_text_field( wp_unslash( $input[ $k ] ) ) : '';
+    }
+
+    // ── Mail-Templates ────────────────────────────────────────
+    $mail_ids = array( 'thankyou', 'confirm', 'cancel', 'waitlist', 'waitlist_slot', 'reminder', 'admin' );
+    foreach ( $mail_ids as $id ) {
+        $clean[ 'mail_' . $id . '_subject' ] = isset( $input[ 'mail_' . $id . '_subject' ] )
+            ? sanitize_text_field( wp_unslash( $input[ 'mail_' . $id . '_subject' ] ) ) : '';
+        $clean[ 'mail_' . $id . '_preview' ] = isset( $input[ 'mail_' . $id . '_preview' ] )
+            ? sanitize_text_field( wp_unslash( $input[ 'mail_' . $id . '_preview' ] ) ) : '';
+        $clean[ 'mail_' . $id . '_body' ] = isset( $input[ 'mail_' . $id . '_body' ] )
+            ? wp_kses_post( wp_unslash( $input[ 'mail_' . $id . '_body' ] ) ) : '';
+    }
 
     return $clean;
 }
@@ -406,6 +478,7 @@ function tc_render_settings_page() {
             <button class="tc-stg-tab" data-tab="kalender" role="tab">📅 Kalender</button>
             <button class="tc-stg-tab" data-tab="email"    role="tab">📧 E-Mails &amp; Anmeldungen</button>
             <button class="tc-stg-tab" data-tab="seo"      role="tab">🔍 SEO</button>
+            <button class="tc-stg-tab" data-tab="texte"    role="tab">✏️ Texte &amp; Labels</button>
             <button class="tc-stg-tab" data-tab="updates"  role="tab">🔄 Updates</button>
         </nav>
 
@@ -921,6 +994,289 @@ function tc_render_settings_page() {
                 </div><!-- .tc-stg-card -->
             </div><!-- .tc-stg-pane[updates] -->
 
+            <!-- ═══ Tab: Texte & Labels ═══════════════════════ -->
+            <div class="tc-stg-pane" data-tab="texte">
+
+                <!-- ── Card: Allgemein ───────────────────────────── -->
+                <div class="tc-stg-card">
+                    <h3 class="tc-stg-section-title">Allgemein</h3>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Anrede (Du / Sie)</strong>
+                            <span>Steuert alle automatischen Platzhalter: <code>{{anrede}}</code>, <code>{{anrede_possessiv}}</code>, <code>{{anrede_dativ}}</code> usw.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <?php $anrede_mode = tc_get_setting( 'anrede_mode', 'sie' ); ?>
+                            <label class="tc-stg-radio-label">
+                                <input type="radio" name="tc_settings[anrede_mode]" value="sie" <?php checked( $anrede_mode, 'sie' ); ?>>
+                                <strong>Sie</strong>
+                                <span class="tc-stg-hint">&nbsp;— Ihre, Ihnen …</span>
+                            </label>
+                            <label class="tc-stg-radio-label">
+                                <input type="radio" name="tc_settings[anrede_mode]" value="du" <?php checked( $anrede_mode, 'du' ); ?>>
+                                <strong>Du</strong>
+                                <span class="tc-stg-hint">&nbsp;— deine, dir, dich …</span>
+                            </label>
+                            <p class="tc-stg-hint">Standard: <strong>Sie</strong></p>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Formulartitel (Standard)</strong>
+                            <span>Überschrift des Anmeldeformulars.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <input type="text" name="tc_settings[label_form_title]" class="tc-stg-input"
+                                value="<?php echo esc_attr( tc_get_setting( 'label_form_title', 'Anmelden' ) ); ?>">
+                            <p class="tc-stg-hint">Standard: Anmelden</p>
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Formulartitel (Probetraining)</strong>
+                            <span>Bei <code>event_price_type = request</code>.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <input type="text" name="tc_settings[label_form_title_trial]" class="tc-stg-input"
+                                value="<?php echo esc_attr( tc_get_setting( 'label_form_title_trial', 'Kostenloses Probetraining anfragen' ) ); ?>">
+                            <p class="tc-stg-hint">Standard: Kostenloses Probetraining anfragen</p>
+                        </div>
+                    </div>
+                </div><!-- .tc-stg-card -->
+
+                <!-- ── Card: Buttons & Status-Texte ─────────────── -->
+                <div class="tc-stg-card">
+                    <h3 class="tc-stg-section-title">Buttons &amp; Status-Texte</h3>
+                    <?php
+                    $tc_text_row = function( $label, $hint, $key, $default ) {
+                        $val = tc_get_setting( $key, $default ); ?>
+                        <div class="tc-stg-row">
+                            <div class="tc-stg-row-left">
+                                <strong><?php echo esc_html( $label ); ?></strong>
+                                <?php if ( $hint ) echo '<span>' . esc_html( $hint ) . '</span>'; ?>
+                            </div>
+                            <div class="tc-stg-row-right">
+                                <input type="text" name="tc_settings[<?php echo esc_attr( $key ); ?>]"
+                                    class="tc-stg-input" value="<?php echo esc_attr( $val ); ?>">
+                                <p class="tc-stg-hint">Standard: <?php echo esc_html( $default ); ?></p>
+                            </div>
+                        </div>
+                        <div class="tc-stg-divider"></div>
+                    <?php };
+
+                    $tc_text_row( 'Absenden-Button', '', 'label_submit_btn', 'Anmeldung absenden' );
+                    $tc_text_row( 'Absenden-Button (Probetraining)', 'Bei event_price_type = request.', 'label_submit_btn_trial', 'Probetraining anfragen' );
+                    $tc_text_row( 'Wartelisten-Button', '', 'label_waitlist_btn', 'Auf Warteliste eintragen' );
+                    $tc_text_row( 'Anfragen-Button (Modus „Auf Anfrage")', 'Wenn registration_mode = request.', 'label_request_btn', 'Jetzt anfragen' );
+                    $tc_text_row( 'Hinweistext (Modus „Auf Anfrage")', '', 'label_request_notice', 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.' );
+                    $tc_text_row( 'Ausgebucht – Hauptzeile', '', 'label_full_notice', 'Diese Veranstaltung ist leider ausgebucht.' );
+                    $tc_text_row( 'Ausgebucht – Untertext', '', 'label_full_subtext', 'Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.' );
+                    $tc_text_row( 'Erfolgsmeldung', 'Nach dem Absenden des Formulars.', 'label_success_msg', 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.' );
+                    $tc_text_row( 'Erfolgsmeldung (Probetraining)', '', 'label_success_msg_trial', 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.' );
+                    $tc_text_row( 'Duplikat-Hinweis', 'E-Mail-Adresse bereits angemeldet.', 'label_duplicate_msg', 'Sie sind bereits für diese Veranstaltung angemeldet.' );
+                    $tc_text_row( 'Duplikat-Hinweis (Probetraining)', '', 'label_duplicate_msg_trial', 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.' );
+                    ?>
+
+                    <p class="tc-stg-sub-label">Preisleiste (Price Bar)</p>
+                    <div class="tc-stg-divider"></div>
+
+                    <?php
+                    $tc_text_row( 'Ausgebucht – Label', '', 'label_price_bar_full', 'Ausgebucht' );
+                    $tc_text_row( 'Ausgebucht – Untertext', '', 'label_price_bar_full_sub', 'Leider keine Plätze mehr verfügbar.' );
+                    $tc_text_row( 'Kostenlos – Text', 'Bei event_price_type = free.', 'label_price_bar_free', 'Kostenlos' );
+                    $tc_text_row( 'Probetraining – Headline', 'Fett, in Primärfarbe. Z. B. „Neugierig geworden?"', 'label_price_bar_request_headline', 'Neugierig geworden?' );
+                    $tc_text_row( 'Probetraining – Teaser-Text', 'Erscheint nach der Headline.', 'label_price_bar_request_teaser', 'Dann melde dich jetzt für ein kostenloses Probetraining an.' );
+                    $tc_text_row( 'CTA-Button – Ausgebucht', '', 'label_price_bar_cta_full', 'Ausgebucht' );
+                    $tc_text_row( 'CTA-Button – Probetraining', '', 'label_price_bar_cta_request', 'Probetraining anfragen' );
+                    ?>
+                </div><!-- .tc-stg-card -->
+
+                <!-- ── Card: Platzhalter-Referenz ────────────────── -->
+                <div class="tc-stg-card">
+                    <h3 class="tc-stg-section-title">Verfügbare Platzhalter</h3>
+                    <p class="tc-stg-card-desc">Können in Betreff, Vorschautext und Body der Mail-Templates verwendet werden. Werden beim Versand automatisch ersetzt.</p>
+                    <div style="padding:0 28px 20px;">
+                        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+                            <thead>
+                                <tr style="background:#f9fafb;border-bottom:2px solid #e5e7eb;">
+                                    <th style="padding:8px 14px;text-align:left;font-weight:700;color:#374151;font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Platzhalter</th>
+                                    <th style="padding:8px 14px;text-align:left;font-weight:700;color:#374151;font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Beschreibung</th>
+                                    <th style="padding:8px 14px;text-align:left;font-weight:700;color:#374151;font-size:11px;text-transform:uppercase;letter-spacing:.04em;">Beispiel (Sie)</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <?php
+                                $ph_rows = array(
+                                    array( '{{firstname}}',        'Vorname des Teilnehmers',             'Maria' ),
+                                    array( '{{lastname}}',         'Nachname des Teilnehmers',            'Mustermann' ),
+                                    array( '{{event_title}}',      'Veranstaltungstitel',                 'Yoga Grundkurs' ),
+                                    array( '{{event_date}}',       'Datum &amp; Uhrzeit',                 '10.04.2025 um 10:00 Uhr' ),
+                                    array( '{{event_location}}',   'Veranstaltungsort',                   'Studio 1, Hauptstr. 5' ),
+                                    array( '{{storno_url}}',       'Stornierungslink (vollständige URL)', 'https://…/?tc_cancel=…' ),
+                                    array( '{{blogname}}',         'Website-Name',                        esc_html( get_option('blogname') ) ),
+                                    array( '{{anrede}}',           'Anrede',                              'Sie' ),
+                                    array( '{{anrede_possessiv}}', 'Possessiv',                           'Ihre' ),
+                                    array( '{{anrede_akkusativ}}', 'Akkusativ',                           'Sie' ),
+                                    array( '{{anrede_dativ}}',     'Dativ',                               'Ihnen' ),
+                                    array( '{{anrede_imperativ}}', 'Imperativ',                           'Bitte melden Sie sich' ),
+                                );
+                                foreach ( $ph_rows as $i => $row ) :
+                                    $bg = $i % 2 !== 0 ? 'background:#f9fafb;' : '';
+                                ?>
+                                <tr style="<?php echo $bg; ?>border-bottom:1px solid #f3f4f6;">
+                                    <td style="padding:8px 14px;"><code style="background:#eef2ff;color:#4f46e5;padding:2px 8px;border-radius:4px;font-size:12px;"><?php echo $row[0]; ?></code></td>
+                                    <td style="padding:8px 14px;color:#374151;"><?php echo $row[1]; ?></td>
+                                    <td style="padding:8px 14px;color:#9ca3af;font-style:italic;"><?php echo $row[2]; ?></td>
+                                </tr>
+                                <?php endforeach; ?>
+                            </tbody>
+                        </table>
+                    </div>
+                </div><!-- .tc-stg-card -->
+
+                <!-- ── Cards: E-Mail-Templates (7×) ─────────────── -->
+                <?php
+                $mail_meta = array(
+                    'thankyou'      => array(
+                        'label' => 'Dankes-Mail',
+                        'hint'  => 'Geht direkt nach der Anmeldung an den Teilnehmer.',
+                        'body'  => '<h2 style="color:#0066cc;margin-top:0;">Vielen Dank für {{anrede_possessiv}} Anmeldung!</h2>' . "\n"
+                                 . '<p>Hallo {{firstname}} {{lastname}},</p>' . "\n"
+                                 . '<p>wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah mit einer Bestätigung bei {{anrede_dativ}}.</p>' . "\n"
+                                 . '<p><strong>{{event_title}}</strong><br>Datum: {{event_date}}<br>Ort: {{event_location}}</p>' . "\n"
+                                 . '<p>Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.</p>' . "\n"
+                                 . '<p style="font-size:13px;color:#6b7280;">Anmeldung stornieren: <a href="{{storno_url}}">{{storno_url}}</a></p>',
+                    ),
+                    'confirm'       => array(
+                        'label' => 'Bestätigungs-Mail',
+                        'hint'  => 'Wird nach der Admin-Freigabe einer Anmeldung versendet.',
+                        'body'  => '<h2 style="color:#059669;margin-top:0;">{{anrede_possessiv}} Anmeldung ist bestätigt ✓</h2>' . "\n"
+                                 . '<p>Hallo {{firstname}} {{lastname}},</p>' . "\n"
+                                 . '<p>wir freuen uns, {{anrede_possessiv}} Anmeldung hiermit offiziell zu bestätigen. Wir sehen uns beim Termin!</p>' . "\n"
+                                 . '<p><strong>{{event_title}}</strong><br>Datum: {{event_date}}<br>Ort: {{event_location}}</p>' . "\n"
+                                 . '<p>Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.</p>' . "\n"
+                                 . '<p style="font-size:13px;color:#6b7280;">Anmeldung stornieren: <a href="{{storno_url}}">{{storno_url}}</a></p>',
+                    ),
+                    'cancel'        => array(
+                        'label' => 'Absage-Mail',
+                        'hint'  => 'Wird nach der Admin-Stornierung einer Anmeldung versendet.',
+                        'body'  => '<h2 style="color:#dc2626;margin-top:0;">{{anrede_possessiv}} Anmeldung konnte nicht bestätigt werden</h2>' . "\n"
+                                 . '<p>Hallo {{firstname}} {{lastname}},</p>' . "\n"
+                                 . '<p>leider müssen wir {{anrede_dativ}} mitteilen, dass {{anrede_possessiv}} Anmeldung nicht bestätigt werden konnte.</p>' . "\n"
+                                 . '<p><strong>{{event_title}}</strong><br>Datum: {{event_date}}<br>Ort: {{event_location}}</p>' . "\n"
+                                 . '<p>Melden {{anrede}} sich gerne bei uns, wenn {{anrede}} einen alternativen Termin buchen möchten.</p>',
+                    ),
+                    'waitlist'      => array(
+                        'label' => 'Warteliste – Eintragsbestätigung',
+                        'hint'  => 'Wenn ein Teilnehmer auf die Warteliste gesetzt wird.',
+                        'body'  => '<h2 style="color:#d97706;margin-top:0;">{{anrede}} stehen auf der Warteliste</h2>' . "\n"
+                                 . '<p>Hallo {{firstname}} {{lastname}},</p>' . "\n"
+                                 . '<p>vielen Dank für {{anrede_possessiv}} Interesse! {{anrede}} wurden auf die Warteliste für folgende Veranstaltung eingetragen:</p>' . "\n"
+                                 . '<p><strong>{{event_title}}</strong><br>Datum: {{event_date}}<br>Ort: {{event_location}}</p>' . "\n"
+                                 . '<p>Wir benachrichtigen {{anrede_akkusativ}} umgehend, sobald ein Platz frei wird.</p>',
+                    ),
+                    'waitlist_slot' => array(
+                        'label' => 'Warteliste – Platz frei',
+                        'hint'  => 'Wenn eine Stornierung einen Wartelistenplatz freigibt.',
+                        'body'  => '<h2 style="color:#059669;margin-top:0;">Ein Platz ist frei geworden!</h2>' . "\n"
+                                 . '<p>Hallo {{firstname}} {{lastname}},</p>' . "\n"
+                                 . '<p>gute Neuigkeit! Für folgende Veranstaltung ist ein Platz frei geworden:</p>' . "\n"
+                                 . '<p><strong>{{event_title}}</strong><br>Datum: {{event_date}}<br>Ort: {{event_location}}</p>' . "\n"
+                                 . '<p>{{anrede_possessiv}} Anfrage wird nun bearbeitet. {{anrede}} erhalten zeitnah eine Bestätigung.</p>',
+                    ),
+                    'reminder'      => array(
+                        'label' => 'Erinnerungs-Mail',
+                        'hint'  => 'Wird 3 Tage vor dem Event automatisch versendet (wenn aktiviert).',
+                        'body'  => '<h2 style="color:#0066cc;margin-top:0;">Erinnerung: {{event_title}}</h2>' . "\n"
+                                 . '<p>Hallo {{firstname}} {{lastname}},</p>' . "\n"
+                                 . '<p>wir möchten {{anrede_akkusativ}} daran erinnern, dass in <strong>3 Tagen</strong> folgender Termin stattfindet:</p>' . "\n"
+                                 . '<p><strong>{{event_title}}</strong><br>Datum: {{event_date}}<br>Ort: {{event_location}}</p>' . "\n"
+                                 . '<p>Wir freuen uns auf {{anrede_akkusativ}}!</p>',
+                    ),
+                    'admin'         => array(
+                        'label' => 'Admin-Benachrichtigung',
+                        'hint'  => 'Interne Benachrichtigung bei jeder neuen Anmeldung.',
+                        'body'  => '<h2 style="color:#0066cc;margin-top:0;">Neue Anmeldung eingegangen</h2>' . "\n"
+                                 . '<p><strong>Veranstaltung:</strong> {{event_title}}<br>'
+                                 . '<strong>Datum:</strong> {{event_date}}<br>'
+                                 . '<strong>Ort:</strong> {{event_location}}</p>' . "\n"
+                                 . '<p><strong>Teilnehmer:</strong> {{firstname}} {{lastname}}</p>',
+                    ),
+                );
+                foreach ( $mail_meta as $mid => $mmeta ) :
+                    $s = tc_get_setting( 'mail_' . $mid . '_subject', '' );
+                    $p = tc_get_setting( 'mail_' . $mid . '_preview', '' );
+                    $b = tc_get_setting( 'mail_' . $mid . '_body',    '' );
+                ?>
+                <div class="tc-stg-card">
+                    <h3 class="tc-stg-section-title"><?php echo esc_html( $mmeta['label'] ); ?></h3>
+                    <p class="tc-stg-card-desc"><?php echo esc_html( $mmeta['hint'] ); ?></p>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Betreff</strong>
+                            <span>Platzhalter wie <code>{{event_title}}</code> sind erlaubt.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <input type="text"
+                                name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_subject]"
+                                class="tc-stg-input" style="max-width:100%;"
+                                placeholder="Standard-Betreff des Plugins"
+                                value="<?php echo esc_attr( $s ); ?>">
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Vorschautext</strong>
+                            <span>Preheader in E-Mail-Clients (optional).</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <input type="text"
+                                name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_preview]"
+                                class="tc-stg-input" style="max-width:100%;"
+                                placeholder="(optional)"
+                                value="<?php echo esc_attr( $p ); ?>">
+                        </div>
+                    </div>
+
+                    <div class="tc-stg-divider"></div>
+
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong>Body (HTML)</strong>
+                            <span>Leer = eingebautes Standard-Template. HTML-Tags erlaubt.</span>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <textarea
+                                name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_body]"
+                                class="tc-stg-input tc-stg-input--code"
+                                style="width:100%;max-width:100%;min-height:150px;"
+                                placeholder="Leer = eingebauter Standard"
+                            ><?php echo esc_textarea( $b ); ?></textarea>
+                            <details class="tc-stg-details">
+                                <summary>Standard-Template anzeigen</summary>
+                                <pre class="tc-stg-code-preview"><?php echo esc_html( $mmeta['body'] ); ?></pre>
+                            </details>
+                        </div>
+                    </div>
+                </div><!-- .tc-stg-card[<?php echo esc_attr( $mid ); ?>] -->
+                <?php endforeach; ?>
+
+                <div class="tc-stg-actions">
+                    <button type="submit" class="tc-stg-save">Einstellungen speichern</button>
+                </div>
+            </div><!-- .tc-stg-pane[texte] -->
+
         </form>
 
         <!-- ── Inline-Scripts ──────────────────────────────── -->
@@ -961,7 +1317,7 @@ function tc_render_settings_page() {
             var TABS_KEY  = 'tc_settings_active_tab';
             var tabBtns   = document.querySelectorAll('.tc-stg-tab');
             var tabPanes  = document.querySelectorAll('.tc-stg-pane');
-            var validTabs = ['design', 'kalender', 'email', 'seo', 'updates'];
+            var validTabs = ['design', 'kalender', 'email', 'seo', 'texte', 'updates'];
 
             function activateTab(id) {
                 if (validTabs.indexOf(id) === -1) id = 'design';
