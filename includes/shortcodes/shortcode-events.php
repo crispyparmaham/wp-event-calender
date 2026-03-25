@@ -194,7 +194,8 @@ function tc_events_render_grouped_inline( array $posts, array $atts ): void {
 		'10' => 'Oktober',   '11' => 'November', '12' => 'Dezember',
 	];
 
-	$groups = [];
+	$columns = max( 1, (int) ( $atts['columns'] ?? 3 ) );
+	$groups  = [];
 
 	foreach ( $posts as $post ) {
 		$first = tc_get_first_event_date( $post->ID );
@@ -214,16 +215,19 @@ function tc_events_render_grouped_inline( array $posts, array $atts ): void {
 		$groups[ $key ]['posts'][] = $post;
 	}
 
+	$style = '--tc-month-cols: ' . $columns . ';';
+	echo '<div class="tc-events-months-grid" style="' . esc_attr( $style ) . '">';
 	foreach ( $groups as $group ) {
-		echo '<div class="tc-events-group-inline">';
+		echo '<div class="tc-events-month-col">';
 		echo '<div class="tc-events-month-header">' . esc_html( $group['label'] ) . '</div>';
-		echo '<div class="tc-events-grid">';
+		echo '<div class="tc-events-month-cards">';
 		foreach ( $group['posts'] as $post ) {
 			tc_render_event_card( $post, $atts );
 		}
 		echo '</div>';
 		echo '</div>';
 	}
+	echo '</div>';
 }
 
 // ── Card renderer (shared by all layouts) ─────────────────────────────────

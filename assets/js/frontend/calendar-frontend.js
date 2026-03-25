@@ -187,7 +187,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const popBody = popover.querySelector('.tc-popover-body');
     const popBack = document.getElementById(uid + '-backdrop');
     const loader     = document.getElementById(uid + '-loader');
-    const weekLabel  = document.getElementById(uid + '-week-label');
 
     const weekOnly       = el.dataset.weekOnly       === '1';
     const showEventList  = el.dataset.showEventList  === '1';
@@ -363,7 +362,13 @@ document.addEventListener('DOMContentLoaded', () => {
       endDisp.setDate(weekEnd.getDate() - 1);
       const fmtD = d => `${d.getDate()}.${d.getMonth() + 1}.${d.getFullYear()}`;
       if (weekPlanLabel) {
-        weekPlanLabel.textContent = `KW ${getISOWeek(weekStart)}  ·  ${fmtD(weekStart)} – ${fmtD(endDisp)}`;
+        if (globalShowWeekNumber) {
+          weekPlanLabel.textContent = `KW ${getISOWeek(weekStart)}  ·  ${fmtD(weekStart)} – ${fmtD(endDisp)}`;
+          weekPlanLabel.style.display = '';
+        } else {
+          weekPlanLabel.textContent = '';
+          weekPlanLabel.style.display = 'none';
+        }
       }
 
       weekPlanRefs = [];
@@ -552,24 +557,31 @@ document.addEventListener('DOMContentLoaded', () => {
       wrap.classList.toggle('tc-mobile-slider', useMobileSlider());
     };
 
-    const scrollSliderToToday = () => {
-      if (!useMobileSlider()) return;
-      requestAnimationFrame(() => {
-        const todayCol = el.querySelector('.fc-day-today');
-        if (todayCol) {
-          todayCol.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'start' });
-        }
-      });
-    };
-
-    // Scroll zum Montag der aktuellen Woche (Mobile Slider)
+    // Scroll zum Montag der aktuellen Woche (Mobile Slider) — mit Retry
     const scrollToMonday = () => {
       if (!useMobileSlider()) return;
-      requestAnimationFrame(() => {
-        const cols = el.querySelectorAll('.fc-col-header-cell[data-date]');
-        const monday = Array.from(cols).find(c => new Date(c.dataset.date).getDay() === 1);
-        if (monday) monday.scrollIntoView({ block: 'nearest', inline: 'start' });
-      });
+      let attempts = 0;
+      const tryScroll = () => {
+        const harness = el.querySelector('.fc-view-harness');
+        if (!harness) {
+          if (attempts++ < 12) setTimeout(tryScroll, 100);
+          return;
+        }
+        const headers = el.querySelectorAll('.fc-col-header-cell[data-date]');
+        const monday = Array.from(headers).find(h => {
+          const d = new Date(h.dataset.date + 'T00:00:00');
+          return d.getDay() === 1;
+        });
+        if (monday) {
+          harness.scrollLeft = monday.offsetLeft;
+          // Sync header scroller
+          const headerScroller = el.querySelector('.fc-scrollgrid-section-header .fc-scroller');
+          if (headerScroller) headerScroller.scrollLeft = monday.offsetLeft;
+        } else if (attempts++ < 12) {
+          setTimeout(tryScroll, 100);
+        }
+      };
+      setTimeout(tryScroll, 150);
     };
 
     const initSliderScrollSync = () => {
@@ -673,19 +685,14 @@ document.addEventListener('DOMContentLoaded', () => {
         list:  'Liste',
       },
       noEventsText:  'Keine Events in diesem Zeitraum.',
+      allDaySlot:    false,
       slotDuration:  '00:30:00',
       slotLabelFormat: { hour: '2-digit', minute: '2-digit', hour12: false },
 
-      datesSet({ start }) {
+      datesSet() {
         updateVisibleTimeRange();
         initSliderScrollSync();
         scrollToMonday();
-        // KW-Label aktualisieren
-        if (weekOnly && globalShowWeekNumber && weekLabel) {
-          const kw = getISOWeek(start);
-          weekLabel.textContent = `KW ${kw}`;
-          weekLabel.style.display = '';
-        }
       },
       eventsSet()  { updateVisibleTimeRange(); },
 

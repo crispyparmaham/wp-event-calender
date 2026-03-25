@@ -154,8 +154,6 @@ add_shortcode( 'time_calendar', function ( $atts ) {
         </div>
         <?php endif; ?>
 
-        <div class="tc-week-label" id="<?php echo esc_attr( $uid ); ?>-week-label" style="display:none;" aria-live="polite"></div>
-
         <div class="tc-frontend-calendar"
              id="<?php echo esc_attr( $uid ); ?>"
              data-type="<?php echo esc_attr( $active_type ); ?>"

@@ -59,18 +59,45 @@
   background: var(--tc-border);
 }
 
-/* ── Month inline grouping ──────────────────────────────────────────────── */
-.tc-events-group-inline + .tc-events-group-inline {
-  margin-top: 40px;
+/* ── Month inline grouping (Monate nebeneinander) ───────────────────────── */
+.tc-events-months-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--tc-month-cols, 3), 1fr);
+  gap: 24px;
+  align-items: start;
+}
+
+.tc-events-month-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .tc-events-month-header {
-  font-size: 1.1rem;
+  font-size: 1rem;
   font-weight: 700;
   color: var(--tc-primary);
-  margin: 0 0 16px;
   padding-bottom: 8px;
   border-bottom: 2px solid var(--tc-primary);
+  margin-bottom: 4px;
+}
+
+.tc-events-month-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+@media (max-width: 900px) {
+  .tc-events-months-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .tc-events-months-grid {
+    grid-template-columns: 1fr;
+  }
 }
 
 /* ── Card (base — all layouts) ──────────────────────────────────────────── */
