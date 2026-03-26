@@ -7,8 +7,12 @@
  */
 defined( 'ABSPATH' ) || exit;
 
+// ─────────────────────────────────────────────
+// Assets früh einreihen damit
+// Oxygen Builder die Styles im <head> ausgibt.
+// ─────────────────────────────────────────────
 add_action( 'wp_enqueue_scripts', function () {
-    wp_register_style(
+    wp_enqueue_style(
         'tc-event-info',
         TC_URL . 'assets/css/frontend/event-info.css',
         array( 'tc-design-system' ),
@@ -127,9 +131,6 @@ function tc_time_event_info_shortcode( $atts ): string {
     if ( empty( $items ) ) {
         return '';
     }
-
-    // ── Enqueue CSS ────────────────────────────────────────────────
-    wp_enqueue_style( 'tc-event-info' );
 
     $dark_class = tc_dark_class();
 

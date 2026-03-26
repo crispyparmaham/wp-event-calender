@@ -499,6 +499,8 @@
 .tc-week-plan-table-wrap {
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
+  scroll-behavior: auto;
+  scroll-snap-type: none;
 }
 
 .tc-week-plan-table {

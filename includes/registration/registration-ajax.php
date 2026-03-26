@@ -154,27 +154,12 @@ function tc_get_event_details_ajax() {
     if ( $date_type === 'recurring' ) {
         $start_time        = $fields['recurring_time_start'] ?? null;
         $recurring_weekday = $fields['recurring_weekday']    ?? null;
-        $interval          = max( 1, min( 3, (int) ( $fields['recurring_interval'] ?? 1 ) ) );
 
         if ( $recurring_weekday !== '' && $recurring_weekday !== null ) {
             $is_recurring_event = true;
             $start_date         = wp_date( 'Y-m-d' );
-            try {
-                $target   = (int) $recurring_weekday;
-                $today    = new DateTime( 'today' );
-                $until_dt = new DateTime( '+52 weeks 23:59:59' );
-                $cur      = clone $today;
-                $diff     = ( $target - (int) $cur->format('w') + 7 ) % 7;
-                $cur->modify( "+{$diff} days" );
-                $limit = 0;
-                while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
-                    $dates[] = $cur->format('Y-m-d');
-                    $cur->modify( "+{$interval} weeks" );
-                    $limit++;
-                }
-            } catch ( Exception $e ) {
-                // ignore
-            }
+            // Kein dates-Array — recurring Events benötigen kein Termin-Dropdown.
+            // Die Anmeldung gilt für das gesamte Event, nicht einen einzelnen Termin.
         }
     } else {
         $rows = get_field( 'event_dates', $event_id ) ?: array();

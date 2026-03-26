@@ -71,25 +71,79 @@ function tc_delete_registration( $id ) {
 }
 
 // ---------------------------------------------
+// Helper: Nächsten Occurrence-Termin berechnen
+// ---------------------------------------------
+function tc_get_next_occurrence_date( $weekday, int $interval = 1 ): ?string {
+    if ( $weekday === null || $weekday === '' ) return null;
+
+    $target = (int) $weekday;
+    $today  = new DateTime( 'today' );
+    $cur    = clone $today;
+
+    $diff = ( $target - (int) $cur->format( 'w' ) + 7 ) % 7;
+    // Falls heute der richtige Wochentag ist, nächste Occurrence = in $interval Wochen
+    if ( $diff === 0 ) $diff = 7 * $interval;
+    $cur->modify( "+{$diff} days" );
+
+    return $cur->format( 'Y-m-d' );
+}
+
+// ---------------------------------------------
 // Helper: Event-Infos für Mails aufbereiten
 // ---------------------------------------------
-function tc_get_event_mail_info( $event_id, $event_date = '' ) {
+function tc_get_event_mail_info( $event_id, $event_date = '' ): array {
     $event    = get_post( $event_id );
     $title    = $event ? $event->post_title : '-';
     $location = wp_strip_all_tags( get_field( 'location', $event_id ) ?: '' );
 
     $date_type = get_field( 'event_date_type', $event_id );
 
+    // ── Wiederkehrende Events ────────────────────────────────────────
     if ( $date_type === 'recurring' ) {
-        $start_date = wp_date( 'Y-m-d' );
-        $start_time = get_field( 'recurring_time_start', $event_id );
-        $end_date   = '';
-    } else {
-        $first      = tc_get_first_event_date( $event_id );
-        $start_date = $first['date_start'] ?? '';
-        $start_time = $first['time_start'] ?? '';
-        $end_date   = $first['date_end']   ?? '';
+        $weekday  = get_field( 'recurring_weekday',    $event_id );
+        $interval = (int) ( get_field( 'recurring_interval', $event_id ) ?: 1 );
+        $t_start  = get_field( 'recurring_time_start', $event_id );
+        $t_end    = get_field( 'recurring_time_end',   $event_id );
+
+        $weekday_names   = array(
+            '0' => 'Sonntag', '1' => 'Montag',  '2' => 'Dienstag',
+            '3' => 'Mittwoch','4' => 'Donnerstag','5' => 'Freitag','6' => 'Samstag',
+        );
+        $interval_labels = array( 1 => 'wöchentlich', 2 => 'alle 2 Wochen', 3 => 'alle 3 Wochen' );
+
+        $day_name      = $weekday_names[ (string) $weekday ] ?? '';
+        $interval_text = $interval_labels[ $interval ]       ?? '';
+        $turnus        = 'Jeden ' . $day_name . ( $interval_text ? ', ' . $interval_text : '' );
+        if ( $t_start ) {
+            $turnus .= ' · ' . $t_start;
+            if ( $t_end ) $turnus .= ' – ' . $t_end;
+            $turnus .= ' Uhr';
+        }
+
+        // Nächsten konkreten Termin für den Mail-Block berechnen
+        $next_ymd  = tc_get_next_occurrence_date( $weekday, $interval );
+        $next_d    = $next_ymd ? DateTime::createFromFormat( 'Y-m-d', $next_ymd ) : null;
+        $next_date = $next_d ? $next_d->format( 'd.m.Y' ) : 'Wiederkehrender Termin';
+        if ( $t_start ) {
+            $next_date .= ' · ' . $t_start;
+            if ( $t_end ) $next_date .= ' – ' . $t_end;
+            $next_date .= ' Uhr';
+        }
+
+        return array(
+            'title'        => $title,
+            'date'         => $turnus,     // Turnus-Text für {{event_datum}}
+            'next_date'    => $next_date,  // Nächster konkreter Termin
+            'location'     => $location ?: '-',
+            'is_recurring' => true,
+        );
     }
+
+    // ── Single / Repeater Events ─────────────────────────────────────
+    $first      = tc_get_first_event_date( $event_id );
+    $start_date = $first['date_start'] ?? '';
+    $start_time = $first['time_start'] ?? '';
+    $end_date   = $first['date_end']   ?? '';
 
     if ( $event_date ) {
         $d        = DateTime::createFromFormat( 'Y-m-d', $event_date );
@@ -101,7 +155,7 @@ function tc_get_event_mail_info( $event_id, $event_date = '' ) {
         if ( $start_time ) $date_str .= ' um ' . $start_time . ' Uhr';
         if ( $end_date && $end_date !== $start_date ) {
             $de        = DateTime::createFromFormat( 'Y-m-d', $end_date );
-            $date_str .= ' - ' . ( $de ? $de->format( 'd.m.Y' ) : $end_date );
+            $date_str .= ' – ' . ( $de ? $de->format( 'd.m.Y' ) : $end_date );
         }
     } else {
         $date_str = '-';

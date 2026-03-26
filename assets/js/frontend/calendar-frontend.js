@@ -547,6 +547,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
       weekPlanBody.innerHTML = html + mobileHtml;
 
+      // Nach DOM-Insert: scroll-Container auf Montag (= ganz links) zurücksetzen.
+      // Nötig weil Safari/Chrome auf Mobile automatisch zu .tc-wp-today scrollen.
+      const tableWrap = weekPlanBody.querySelector('.tc-week-plan-table-wrap');
+      if (tableWrap) {
+        tableWrap.scrollLeft = 0;
+        requestAnimationFrame(() => { tableWrap.scrollLeft = 0; });
+      }
+
       weekPlanBody.querySelectorAll('.tc-wp-event').forEach(btn => {
         btn.addEventListener('click', jsEvent => {
           openPopoverRaw(weekPlanRefs[+btn.dataset.evIdx], jsEvent);

@@ -138,11 +138,13 @@ add_shortcode( 'time_registration', function ( $atts ) {
     // Termine aufbereiten: Repeater-Termine haben Vorrang vor Wiederholungen
     $date_type_val  = $event_id ? ( get_field( 'event_date_type', $event_id ) ?: 'single' ) : 'single';
     $is_recurring   = $date_type_val === 'recurring';
-    $repeater_dates = $event_id ? tc_get_repeater_dates_for_registration( $event_id ) : array();
-    $occurrences    = empty( $repeater_dates ) && $event_id && $is_recurring
+    // Dropdown nur bei Single-Events mit mehreren Terminen.
+    // Bei recurring Events: kein Dropdown — Anmeldung gilt für das gesamte Event.
+    $repeater_dates = ! $is_recurring && $event_id ? tc_get_repeater_dates_for_registration( $event_id ) : array();
+    $occurrences    = ! $is_recurring && empty( $repeater_dates ) && $event_id
         ? tc_get_upcoming_occurrences( $event_id )
         : array();
-    $show_date_pick = ! empty( $repeater_dates ) || ! empty( $occurrences );
+    $show_date_pick = ! $is_recurring && (! empty( $repeater_dates ) || ! empty( $occurrences ));
 
     // Ausgebucht? Warteliste prüfen
     $is_full = false;
