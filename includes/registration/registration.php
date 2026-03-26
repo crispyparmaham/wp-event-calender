@@ -126,13 +126,3 @@ function tc_price_period_suffix( int $event_id ): string {
     }
 }
 
-// ---------------------------------------------
-// Helper: Ersten Termin aus Repeater lesen
-// ---------------------------------------------
-function tc_get_first_event_date( int $event_id ): array {
-    $rows = get_field( 'event_dates', $event_id );
-    if ( ! is_array( $rows ) || empty( $rows ) ) {
-        return array();
-    }
-    return $rows[0];
-}
