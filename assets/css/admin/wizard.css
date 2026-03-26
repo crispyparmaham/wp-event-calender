@@ -1,0 +1,418 @@
+/* ─────────────────────────────────────────────────────────────────
+ * Time Calendar – Setup Wizard
+ * ─────────────────────────────────────────────────────────────────
+ * Erscheint einmalig nach Plugin-Aktivierung als Modal über dem
+ * WP-Admin-Bildschirm. z-index höher als WP-Core-Overlays (9999).
+ * ─────────────────────────────────────────────────────────────────*/
+
+/* ── Backdrop ────────────────────────────────────────────────────── */
+#tc-wizard-backdrop {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.62);
+    z-index: 999998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* ── Modal ───────────────────────────────────────────────────────── */
+#tc-wizard-modal {
+    position: relative;
+    z-index: 999999;
+    background: #fff;
+    border-radius: 16px;
+    width: 540px;
+    max-width: calc(100vw - 32px);
+    max-height: 90vh;
+    overflow-y: auto;
+    box-shadow: 0 24px 64px rgba(0, 0, 0, 0.22);
+    display: flex;
+    flex-direction: column;
+}
+
+/* ── Header ──────────────────────────────────────────────────────── */
+.tc-wiz-header {
+    padding: 28px 32px 20px;
+    border-bottom: 1px solid #f0f0f0;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.tc-wiz-title {
+    font-size: 20px;
+    font-weight: 700;
+    color: #1a1a2e;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tc-wiz-title-icon {
+    font-size: 24px;
+}
+
+/* ── Progress bar ────────────────────────────────────────────────── */
+.tc-wiz-progress-wrap {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.tc-wiz-progress-bar-bg {
+    height: 6px;
+    background: #e5e7eb;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.tc-wiz-progress-bar-fill {
+    height: 100%;
+    background: #4f46e5;
+    border-radius: 99px;
+    transition: width 0.3s ease;
+    width: 20%;
+}
+
+.tc-wiz-step-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.tc-wiz-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #d1d5db;
+    transition: background 0.25s, transform 0.25s;
+    font-size: 0;
+}
+
+.tc-wiz-dot.is-active {
+    background: #4f46e5;
+    transform: scale(1.35);
+}
+
+.tc-wiz-dot.is-done {
+    background: #6ee7b7;
+}
+
+.tc-wiz-step-label {
+    font-size: 12px;
+    color: #9ca3af;
+    margin-left: auto;
+}
+
+/* ── Step body ───────────────────────────────────────────────────── */
+.tc-wiz-body {
+    padding: 28px 32px;
+    flex: 1;
+}
+
+.tc-wiz-step {
+    display: none;
+}
+
+.tc-wiz-step.is-active {
+    display: block;
+}
+
+.tc-wiz-step h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #111827;
+    margin: 0 0 6px;
+}
+
+.tc-wiz-step .tc-wiz-desc {
+    font-size: 13px;
+    color: #6b7280;
+    margin: 0 0 22px;
+    line-height: 1.5;
+}
+
+/* ── Form fields ─────────────────────────────────────────────────── */
+.tc-wiz-field {
+    margin-bottom: 16px;
+}
+
+.tc-wiz-field label {
+    display: block;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 5px;
+}
+
+.tc-wiz-field input[type="text"],
+.tc-wiz-field input[type="email"],
+.tc-wiz-field input[type="number"],
+.tc-wiz-field select {
+    width: 100%;
+    padding: 9px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 14px;
+    color: #1f2937;
+    box-sizing: border-box;
+    transition: border-color 0.2s;
+    background: #fff;
+}
+
+.tc-wiz-field input:focus,
+.tc-wiz-field select:focus {
+    outline: none;
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.12);
+}
+
+/* ── Radio groups ────────────────────────────────────────────────── */
+.tc-wiz-radio-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tc-wiz-radio-group label {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 12px 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s;
+    font-weight: 400;
+    font-size: 13px;
+    color: #374151;
+    margin: 0;
+}
+
+.tc-wiz-radio-group label:hover {
+    border-color: #a5b4fc;
+    background: #f5f3ff;
+}
+
+.tc-wiz-radio-group input[type="radio"] {
+    margin: 2px 0 0;
+    accent-color: #4f46e5;
+    flex-shrink: 0;
+}
+
+.tc-wiz-radio-group input[type="radio"]:checked + .tc-wiz-radio-text {
+    color: #4f46e5;
+}
+
+.tc-wiz-radio-group label:has(input:checked) {
+    border-color: #4f46e5;
+    background: #eef2ff;
+}
+
+.tc-wiz-radio-text strong {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 1px;
+}
+
+/* ── Color picker row ────────────────────────────────────────────── */
+.tc-wiz-color-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.tc-wiz-color-row input[type="color"] {
+    width: 44px;
+    height: 36px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.tc-wiz-color-row input[type="text"] {
+    width: 120px;
+    flex-shrink: 0;
+}
+
+.tc-wiz-color-preview {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    color: #fff;
+    font-size: 16px;
+    flex-shrink: 0;
+    transition: background 0.2s;
+}
+
+/* ── Category rows (Step 3) ──────────────────────────────────────── */
+#tc-wiz-categories-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 12px;
+    min-height: 20px;
+}
+
+.tc-wiz-cat-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border: 1px solid #e5e7eb;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #374151;
+}
+
+.tc-wiz-cat-row .tc-wiz-cat-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.tc-wiz-cat-row .tc-wiz-cat-name {
+    flex: 1;
+}
+
+.tc-wiz-cat-add-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.tc-wiz-cat-add-row input[type="text"] {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 13px;
+}
+
+.tc-wiz-cat-add-row input[type="color"] {
+    width: 36px;
+    height: 34px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    padding: 2px;
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.tc-wiz-skip {
+    font-size: 12px;
+    color: #9ca3af;
+    text-align: center;
+    margin-top: 10px;
+}
+
+/* ── Success step ────────────────────────────────────────────────── */
+.tc-wiz-success {
+    text-align: center;
+    padding: 12px 0;
+}
+
+.tc-wiz-success-icon {
+    font-size: 56px;
+    display: block;
+    margin-bottom: 14px;
+}
+
+.tc-wiz-success h2 {
+    margin-bottom: 8px !important;
+}
+
+.tc-wiz-success .tc-wiz-desc {
+    margin-bottom: 28px !important;
+}
+
+/* ── Footer ──────────────────────────────────────────────────────── */
+.tc-wiz-footer {
+    padding: 16px 32px 24px;
+    border-top: 1px solid #f0f0f0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────────── */
+.tc-wiz-btn {
+    padding: 9px 20px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border: none;
+    transition: background 0.2s, opacity 0.2s;
+}
+
+.tc-wiz-btn-primary {
+    background: #4f46e5;
+    color: #fff;
+}
+
+.tc-wiz-btn-primary:hover {
+    background: #4338ca;
+}
+
+.tc-wiz-btn-secondary {
+    background: #f3f4f6;
+    color: #374151;
+}
+
+.tc-wiz-btn-secondary:hover {
+    background: #e5e7eb;
+}
+
+.tc-wiz-btn-ghost {
+    background: transparent;
+    color: #9ca3af;
+    padding-left: 0;
+}
+
+.tc-wiz-btn-ghost:hover {
+    color: #6b7280;
+}
+
+.tc-wiz-btn-add {
+    background: #eef2ff;
+    color: #4f46e5;
+    font-size: 13px;
+    padding: 7px 14px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    flex-shrink: 0;
+    font-weight: 500;
+}
+
+.tc-wiz-btn-add:hover {
+    background: #e0e7ff;
+}
+
+.tc-wiz-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+/* ── Notice ──────────────────────────────────────────────────────── */
+.tc-wiz-notice {
+    font-size: 12px;
+    color: #6b7280;
+    margin-top: 10px;
+    padding: 8px 12px;
+    background: #f9fafb;
+    border-radius: 8px;
+    border-left: 3px solid #d1d5db;
+    line-height: 1.45;
+}

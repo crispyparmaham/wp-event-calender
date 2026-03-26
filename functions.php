@@ -42,6 +42,7 @@ require_once TC_PATH . 'includes/admin/dashboard.php';
 require_once TC_PATH . 'includes/admin/admin-page.php';
 require_once TC_PATH . 'includes/admin/events-overview.php';
 require_once TC_PATH . 'includes/admin/categories.php';
+require_once TC_PATH . 'includes/admin/wizard.php';
 
 
 require_once TC_PATH . 'includes/post-type/cpt.php';
@@ -101,6 +102,8 @@ function tc_run_db_setup() {
     tc_install_default_categories();
     // iCal-Rewrite-Regeln flush
     tc_flush_rewrite_rules_for_ical();
+    // Setup-Wizard beim nächsten Admin-Aufruf anzeigen
+    update_option( 'tc_wizard_completed', '0' );
 }
 
 // ── Cron beim Deaktivieren abmelden ───────────────────────────
