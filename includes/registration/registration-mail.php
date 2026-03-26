@@ -51,39 +51,70 @@ function tc_resolve_placeholders( string $text, array $data, int $event_id = 0, 
 }
 
 // ---------------------------------------------
-// Mail-Subject Defaults + Hilfsfunktionen
+// Mail-Defaults — einzige Quelle für alle Felder
+// Wird sowohl für Mail-Versand als auch für
+// Placeholder-Attribute in den Settings genutzt.
 // ---------------------------------------------
-function tc_get_mail_default( string $mail_id, string $field ): string {
+function tc_mail_default( string $mail_id, string $field ): string {
     static $d = null;
     if ( $d === null ) {
-        $d = array(
+        $sig = "Mit freundlichen Grüßen\n{{blogname}}";
+        $d   = array(
             'thankyou'      => array(
-                'subject' => 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}',
-                'anrede'  => 'Hallo {{firstname}} {{lastname}},',
+                'subject'    => 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah mit einer Bestätigung bei {{anrede_dativ}}.',
+                'show_event' => '1',
+                'abschluss'  => "Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.\n\nMöchten {{anrede}} {{anrede_possessiv}} Anmeldung stornieren? {{storno_url}}",
+                'signatur'   => $sig,
             ),
             'confirm'       => array(
-                'subject' => '{{anrede_possessiv}} Anmeldung ist bestätigt – {{event_title}}',
-                'anrede'  => 'Hallo {{firstname}} {{lastname}},',
+                'subject'    => '{{anrede_possessiv}} Anmeldung ist bestätigt – {{event_title}}',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'wir freuen uns, {{anrede_possessiv}} Anmeldung hiermit offiziell zu bestätigen. Wir sehen {{anrede_akkusativ}} beim Termin!',
+                'show_event' => '1',
+                'abschluss'  => "Bei Fragen vor dem Termin stehen wir {{anrede_dativ}} gerne zur Verfügung.\n\nMöchten {{anrede}} den Termin nicht wahrnehmen? {{storno_url}}",
+                'signatur'   => $sig,
             ),
             'cancel'        => array(
-                'subject' => '{{anrede_possessiv}} Anmeldung konnte leider nicht bestätigt werden – {{event_title}}',
-                'anrede'  => 'Hallo {{firstname}} {{lastname}},',
+                'subject'    => '{{anrede_possessiv}} Anmeldung konnte leider nicht bestätigt werden – {{event_title}}',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'leider müssen wir {{anrede_dativ}} mitteilen, dass {{anrede_possessiv}} Anmeldung für den folgenden Termin nicht bestätigt werden konnte.',
+                'show_event' => '1',
+                'abschluss'  => 'Bei Fragen oder wenn {{anrede}} einen alternativen Termin buchen möchten, melden {{anrede}} sich gerne bei uns.',
+                'signatur'   => $sig,
             ),
             'waitlist'      => array(
-                'subject' => '{{anrede}} stehen auf der Warteliste – {{event_title}}',
-                'anrede'  => 'Hallo {{firstname}} {{lastname}},',
+                'subject'    => '{{anrede_possessiv}} Wartelisten-Eintrag – {{event_title}}',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'vielen Dank für {{anrede_possessiv}} Interesse! {{anrede}} wurden auf die Warteliste eingetragen. Wir benachrichtigen {{anrede_akkusativ}} umgehend sobald ein Platz frei wird.',
+                'show_event' => '1',
+                'abschluss'  => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
+                'signatur'   => $sig,
             ),
             'waitlist_slot' => array(
-                'subject' => 'Ein Platz ist frei geworden – {{event_title}}',
-                'anrede'  => 'Hallo {{firstname}} {{lastname}},',
+                'subject'    => 'Ein Platz ist frei geworden – {{event_title}}',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'gute Neuigkeit! Für folgenden Termin ist ein Platz frei geworden. {{anrede_possessiv}} Anfrage wird nun bearbeitet und {{anrede}} erhalten zeitnah eine Bestätigung von uns.',
+                'show_event' => '1',
+                'abschluss'  => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
+                'signatur'   => $sig,
             ),
             'reminder'      => array(
-                'subject' => 'Erinnerung: {{event_title}} – in 3 Tagen',
-                'anrede'  => 'Hallo {{firstname}} {{lastname}},',
+                'subject'    => 'Erinnerung: {{event_title}} – in 3 Tagen',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'wir möchten {{anrede_akkusativ}} daran erinnern, dass in 3 Tagen folgender Termin stattfindet. Wir freuen uns auf {{anrede_akkusativ}}!',
+                'show_event' => '1',
+                'abschluss'  => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
+                'signatur'   => $sig,
             ),
             'admin'         => array(
-                'subject' => 'Neue Anmeldung: {{event_title}} – {{firstname}} {{lastname}}',
-                'anrede'  => '',
+                'subject'    => 'Neue Anmeldung: {{event_title}} – {{firstname}} {{lastname}}',
+                'anrede'     => '',
+                'haupttext'  => 'Für folgende Veranstaltung wurde eine neue Anmeldung von {{firstname}} {{lastname}} eingegangen.',
+                'show_event' => '1',
+                'abschluss'  => '',
+                'signatur'   => '{{blogname}}',
             ),
         );
     }
@@ -91,12 +122,21 @@ function tc_get_mail_default( string $mail_id, string $field ): string {
 }
 
 /**
- * Liest eine Mail-Einstellung; fällt bei leerem Wert auf den Built-in-Default zurück.
+ * Liest ein Mail-Feld; fällt bei leerem Wert auf tc_mail_default() zurück.
  */
-function tc_get_mail_setting( string $mail_id, string $field ): string {
+function tc_get_mail_field( string $mail_id, string $field ): string {
     $val = tc_get_setting( 'mail_' . $mail_id . '_' . $field, '' );
-    if ( $val !== '' ) return $val;
-    return tc_get_mail_default( $mail_id, $field );
+    return ( $val !== '' ) ? $val : tc_mail_default( $mail_id, $field );
+}
+
+/** @deprecated Verwende tc_mail_default() */
+function tc_get_mail_default( string $mail_id, string $field ): string {
+    return tc_mail_default( $mail_id, $field );
+}
+
+/** @deprecated Verwende tc_get_mail_field() */
+function tc_get_mail_setting( string $mail_id, string $field ): string {
+    return tc_get_mail_field( $mail_id, $field );
 }
 
 // ---------------------------------------------
@@ -222,63 +262,6 @@ function tc_build_event_block( int $event_id, string $event_date = '' ): string 
 }
 
 function tc_build_mail_body( string $mail_id, array $data, int $event_id = 0, string $event_date = '' ): string {
-    static $field_defaults = null;
-    if ( $field_defaults === null ) {
-        $sig = "Mit freundlichen Grüßen\n{{blogname}}";
-        $field_defaults = array(
-            'thankyou'      => array(
-                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
-                'haupttext'  => 'wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah mit einer Bestätigung bei {{anrede_dativ}}.',
-                'show_event' => '1',
-                'abschluss'  => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
-                'signatur'   => $sig,
-            ),
-            'confirm'       => array(
-                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
-                'haupttext'  => 'wir freuen uns, {{anrede_possessiv}} Anmeldung hiermit offiziell zu bestätigen. Wir sehen uns beim Termin!',
-                'show_event' => '1',
-                'abschluss'  => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
-                'signatur'   => $sig,
-            ),
-            'cancel'        => array(
-                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
-                'haupttext'  => 'leider müssen wir {{anrede_dativ}} mitteilen, dass {{anrede_possessiv}} Anmeldung für den folgenden Termin nicht bestätigt werden konnte.',
-                'show_event' => '1',
-                'abschluss'  => 'Bei Fragen oder wenn {{anrede}} einen alternativen Termin buchen möchten, melden {{anrede}} sich gerne bei uns.',
-                'signatur'   => $sig,
-            ),
-            'waitlist'      => array(
-                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
-                'haupttext'  => 'vielen Dank für {{anrede_possessiv}} Interesse! {{anrede}} wurden auf die Warteliste für folgende Veranstaltung eingetragen:',
-                'show_event' => '1',
-                'abschluss'  => 'Wir benachrichtigen {{anrede_akkusativ}} umgehend, sobald ein Platz frei wird.',
-                'signatur'   => $sig,
-            ),
-            'waitlist_slot' => array(
-                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
-                'haupttext'  => 'gute Neuigkeit! Für folgende Veranstaltung ist ein Platz frei geworden:',
-                'show_event' => '1',
-                'abschluss'  => '{{anrede_possessiv}} Anfrage wird nun bearbeitet. {{anrede}} erhalten zeitnah eine Bestätigung.',
-                'signatur'   => $sig,
-            ),
-            'reminder'      => array(
-                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
-                'haupttext'  => 'wir möchten {{anrede_akkusativ}} daran erinnern, dass in 3 Tagen folgender Termin stattfindet:',
-                'show_event' => '1',
-                'abschluss'  => 'Wir freuen uns auf {{anrede_akkusativ}}!',
-                'signatur'   => $sig,
-            ),
-            'admin'         => array(
-                'anrede'     => 'Neue Anmeldung eingegangen',
-                'haupttext'  => 'Für folgende Veranstaltung wurde eine neue Anmeldung von {{firstname}} {{lastname}} eingegangen.',
-                'show_event' => '1',
-                'abschluss'  => '',
-                'signatur'   => '{{blogname}}',
-            ),
-        );
-    }
-
-    $d        = $field_defaults[ $mail_id ] ?? array();
     $blogname = get_option( 'blogname' );
     $pfx      = 'mail_' . $mail_id . '_';
 
@@ -303,12 +286,12 @@ function tc_build_mail_body( string $mail_id, array $data, int $event_id = 0, st
         return tc_mail_wrapper_open( $blogname ) . $legacy_body . tc_mail_wrapper_close();
     }
 
-    // 3. Strukturierte Felder
-    $anrede    = tc_get_setting( $pfx . 'anrede',     $d['anrede']     ?? '' );
-    $haupttext = tc_get_setting( $pfx . 'haupttext',  $d['haupttext']  ?? '' );
-    $show_ev   = tc_get_setting( $pfx . 'show_event', $d['show_event'] ?? '1' );
-    $abschluss = tc_get_setting( $pfx . 'abschluss',  $d['abschluss']  ?? '' );
-    $signatur  = tc_get_setting( $pfx . 'signatur',   $d['signatur']   ?? '' );
+    // 3. Strukturierte Felder — Admin-Eingabe oder tc_mail_default() als Fallback
+    $anrede    = tc_get_mail_field( $mail_id, 'anrede' );
+    $haupttext = tc_get_mail_field( $mail_id, 'haupttext' );
+    $show_ev   = tc_get_mail_field( $mail_id, 'show_event' );
+    $abschluss = tc_get_mail_field( $mail_id, 'abschluss' );
+    $signatur  = tc_get_mail_field( $mail_id, 'signatur' );
 
     $body = '';
     if ( $anrede )         $body .= '<p>' . nl2br( esc_html( $anrede ) )    . '</p>' . "\n";

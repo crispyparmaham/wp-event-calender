@@ -1425,7 +1425,7 @@ function tc_render_settings_page() {
                                 <input type="text"
                                     name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_subject]"
                                     class="tc-stg-input" style="max-width:100%;"
-                                    placeholder="<?php echo esc_attr( $mmeta['ph_subject'] ?? '' ); ?>"
+                                    placeholder="<?php echo esc_attr( tc_mail_default( $mid, 'subject' ) ); ?>"
                                     value="<?php echo esc_attr( $s ); ?>">
                             </div>
                         </div>
@@ -1461,7 +1461,7 @@ function tc_render_settings_page() {
                                     <input type="text"
                                         name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_anrede]"
                                         class="tc-stg-input" style="max-width:100%;"
-                                        placeholder="<?php echo esc_attr( $mmeta['ph_anrede'] ); ?>"
+                                        placeholder="<?php echo esc_attr( tc_mail_default( $mid, 'anrede' ) ); ?>"
                                         value="<?php echo esc_attr( $anr ); ?>">
                                 </div>
                             </div>
@@ -1478,7 +1478,7 @@ function tc_render_settings_page() {
                                         name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_haupttext]"
                                         class="tc-stg-input"
                                         style="width:100%;max-width:100%;min-height:80px;"
-                                        placeholder="<?php echo esc_attr( $mmeta['ph_haupttext'] ); ?>"
+                                        placeholder="<?php echo esc_attr( tc_mail_default( $mid, 'haupttext' ) ); ?>"
                                     ><?php echo esc_textarea( $ht ); ?></textarea>
                                 </div>
                             </div>
@@ -1513,7 +1513,7 @@ function tc_render_settings_page() {
                                         name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_abschluss]"
                                         class="tc-stg-input"
                                         style="width:100%;max-width:100%;min-height:60px;"
-                                        placeholder="<?php echo esc_attr( $mmeta['ph_abschluss'] ); ?>"
+                                        placeholder="<?php echo esc_attr( tc_mail_default( $mid, 'abschluss' ) ); ?>"
                                     ><?php echo esc_textarea( $abs ); ?></textarea>
                                 </div>
                             </div>
@@ -1529,7 +1529,7 @@ function tc_render_settings_page() {
                                     <input type="text"
                                         name="tc_settings[mail_<?php echo esc_attr( $mid ); ?>_signatur]"
                                         class="tc-stg-input" style="max-width:100%;"
-                                        placeholder="<?php echo esc_attr( $mmeta['ph_signatur'] ); ?>"
+                                        placeholder="<?php echo esc_attr( tc_mail_default( $mid, 'signatur' ) ); ?>"
                                         value="<?php echo esc_attr( $sig ); ?>">
                                 </div>
                             </div>
