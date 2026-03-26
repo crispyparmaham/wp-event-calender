@@ -79,18 +79,21 @@ function tc_handle_get_events() {
     $today_str = wp_date( 'Y-m-d' );
 
     foreach ( $posts as $post ) {
-        $type  = get_field( 'event_type', $post->ID ) ?: 'training';
+        // EIN Aufruf statt ~15 einzelne get_field()
+        $fields = get_fields( $post->ID ) ?: array();
+
+        $type  = $fields['event_type'] ?? 'training';
+        if ( ! $type ) $type = 'training';
         $color = tc_get_category_color( $type );
 
-        $intro_text      = get_field( 'event_description', $post->ID );
-        $recurring_day   = get_field( 'recurring_weekday', $post->ID );
-        $event_dates_raw = get_field( 'event_dates',       $post->ID );
+        $intro_text      = $fields['event_description']  ?? '';
+        $recurring_day   = $fields['recurring_weekday']   ?? false;
+        $event_dates_raw = $fields['event_dates']         ?? array();
 
         // ── Termintyp bestimmen ──────────────────────────────────
-        $date_type = get_field( 'event_date_type', $post->ID );
+        $date_type = $fields['event_date_type'] ?? '';
         if ( empty( $date_type ) ) {
-            // Backward-Compat: aus Legacy-Feldern ableiten
-            $is_recurring_leg = (bool) get_field( 'is_recurring', $post->ID );
+            $is_recurring_leg = ! empty( $fields['is_recurring'] );
             $date_type = $is_recurring_leg ? 'recurring' : 'single';
         }
         if ( $date_type === 'multiple' ) {
@@ -115,22 +118,24 @@ function tc_handle_get_events() {
             }
         }
 
+        $permalink = get_permalink( $post->ID );
+
         $shared_props = array(
             'id'      => $post->ID,
             'title'   => $post->post_title,
-            'url'     => get_permalink( $post->ID ),
+            'url'     => $permalink,
             'color'   => $color,
             'type'    => $type,
             'status'  => $post->post_status,
             'extendedProps' => array(
                 'type'             => $type,
                 'dateType'         => $date_type,
-                'permalink'        => get_permalink( $post->ID ),
+                'permalink'        => $permalink,
                 'intro_text'       => $intro_text,
-                'leadership'       => get_field( 'event_host',    $post->ID ),
-                'location'         => wp_strip_all_tags( get_field( 'location', $post->ID ) ),
-                'participants'     => get_field( 'max_participants', $post->ID ),
-                'price'            => get_field( 'event_price',     $post->ID ),
+                'leadership'       => $fields['event_host']         ?? '',
+                'location'         => wp_strip_all_tags( $fields['location'] ?? '' ),
+                'participants'     => $fields['max_participants']   ?? '',
+                'price'            => $fields['event_price']        ?? '',
                 'editUrl'          => get_edit_post_link( $post->ID, 'raw' ),
                 'isRecurring'      => $is_recurring_type,
                 'recurringWeekday' => ( $is_recurring_type && $recurring_day !== false )
@@ -148,9 +153,9 @@ function tc_handle_get_events() {
                 continue;
             }
 
-            $time_start = get_field( 'recurring_time_start', $post->ID ) ?: '';
-            $time_end   = get_field( 'recurring_time_end',   $post->ID ) ?: '';
-            $interval   = (int) ( get_field( 'recurring_interval', $post->ID ) ?: 1 );
+            $time_start = $fields['recurring_time_start'] ?? '';
+            $time_end   = $fields['recurring_time_end']   ?? '';
+            $interval   = (int) ( $fields['recurring_interval'] ?? 1 );
 
             $occurrences = tc_get_occurrences( (string) $recurring_day, $time_start, $time_end, $interval );
 

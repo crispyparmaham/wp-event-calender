@@ -27,7 +27,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
     wp_localize_script( 'tc-settings', 'tcSettingsData', array(
         'tabMap' => array(
             'design'      => array( 'design-allgemein', 'design-tokens', 'design-css' ),
-            'kalender'    => array( 'kalender-allgemein', 'kalender-desktop', 'kalender-mobile', 'kalender-liste' ),
+            'kalender'    => array( 'kalender-allgemein', 'kalender-desktop', 'kalender-mobile', 'kalender-liste', 'kalender-presets' ),
             'texte'       => array( 'texte-allgemein', 'texte-mail' ),
             'anmeldungen' => array( 'anmeldungen-email', 'anmeldungen-erinnerung' ),
             'seo'         => array( 'seo-schema' ),
@@ -171,6 +171,8 @@ add_action( 'admin_init', function () {
             'mail_admin_signatur'            => '',
             'mail_admin_expert_mode'         => '0',
             'mail_admin_expert_html'         => '',
+            // Shortcode-Presets
+            'shortcode_presets'              => array(),
         ),
     ) );
 } );
@@ -364,6 +366,28 @@ function tc_sanitize_settings( $input ) {
             ? wp_kses_post( wp_unslash( $input[ $pfx . 'expert_html' ] ) ) : '';
     }
 
+    // ── Shortcode-Presets ─────────────────────────────────────
+    $raw_presets = isset( $input['shortcode_presets'] ) && is_array( $input['shortcode_presets'] )
+        ? $input['shortcode_presets']
+        : array();
+    $clean_presets = array();
+    $preset_bool_keys = array( 'show_image', 'show_date', 'show_time', 'show_location', 'show_trainer', 'show_price', 'show_excerpt', 'show_badge' );
+    foreach ( $raw_presets as $pkey => $pvals ) {
+        $pkey = sanitize_key( $pkey );
+        if ( ! $pkey || ! is_array( $pvals ) ) continue;
+        $p = array();
+        $p['layout']    = isset( $pvals['layout'] ) && in_array( $pvals['layout'], array( 'grid', 'list', 'cards' ), true ) ? $pvals['layout'] : 'grid';
+        $p['columns']   = max( 1, min( 3, (int) ( $pvals['columns'] ?? 3 ) ) );
+        $p['group_by']  = isset( $pvals['group_by'] ) && in_array( $pvals['group_by'], array( 'none', 'month', 'month_inline' ), true ) ? $pvals['group_by'] : 'none';
+        $p['limit']     = (int) ( $pvals['limit'] ?? -1 );
+        $p['show_past'] = ! empty( $pvals['show_past'] ) ? 'true' : 'false';
+        foreach ( $preset_bool_keys as $bk ) {
+            $p[ $bk ] = ! empty( $pvals[ $bk ] ) ? 'true' : 'false';
+        }
+        $clean_presets[ $pkey ] = $p;
+    }
+    $clean['shortcode_presets'] = $clean_presets;
+
     return $clean;
 }
 
@@ -371,8 +395,13 @@ function tc_sanitize_settings( $input ) {
 // Helper: aktuelle Einstellung lesen
 // ─────────────────────────────────────────────
 function tc_get_setting( $key, $default = '' ) {
-    $settings = get_option( 'tc_settings', array() );
-    return $settings[ $key ] ?? $default;
+    static $cache  = null;
+    static $loaded = false;
+    if ( ! $loaded ) {
+        $cache  = get_option( 'tc_settings', array() );
+        $loaded = true;
+    }
+    return $cache[ $key ] ?? $default;
 }
 
 // ─────────────────────────────────────────────
@@ -782,6 +811,7 @@ function tc_render_settings_page() {
                     <button type="button" class="tc-stg-tab" data-sub-tab="kalender-desktop"   id="tab-kalender-desktop"   aria-controls="pane-kalender-desktop"   role="tab" aria-selected="false" tabindex="-1">Desktop</button>
                     <button type="button" class="tc-stg-tab" data-sub-tab="kalender-mobile"    id="tab-kalender-mobile"    aria-controls="pane-kalender-mobile"    role="tab" aria-selected="false" tabindex="-1">Mobile</button>
                     <button type="button" class="tc-stg-tab" data-sub-tab="kalender-liste"     id="tab-kalender-liste"     aria-controls="pane-kalender-liste"     role="tab" aria-selected="false" tabindex="-1">Event-Liste</button>
+                    <button type="button" class="tc-stg-tab" data-sub-tab="kalender-presets"  id="tab-kalender-presets"  aria-controls="pane-kalender-presets"  role="tab" aria-selected="false" tabindex="-1">Shortcode-Presets</button>
                 </nav>
 
                 <!-- ── Sub-Pane: kalender-allgemein ──────────── -->
@@ -1037,6 +1067,101 @@ function tc_render_settings_page() {
 
                     </div><!-- .tc-stg-card Event-Liste -->
                 </div><!-- [kalender-liste] -->
+
+                <!-- ── Sub-Pane: kalender-presets ────────────── -->
+                <div class="tc-stg-pane" id="pane-kalender-presets" role="tabpanel" aria-labelledby="tab-kalender-presets" tabindex="-1" data-sub-tab="kalender-presets">
+                    <div class="tc-stg-card">
+                        <h3 class="tc-stg-section-title">Shortcode-Presets</h3>
+                        <p class="tc-stg-card-desc">
+                            Definiere wiederverwendbare Konfigurationen für <code>[time_events]</code>.
+                            Nutzung: <code>[time_events preset="mein-preset"]</code>
+                        </p>
+
+                        <?php
+                        $saved_presets = tc_get_setting( 'shortcode_presets', array() );
+                        if ( ! is_array( $saved_presets ) ) $saved_presets = array();
+
+                        // Immer mindestens ein leeres Preset zum Anlegen anzeigen
+                        if ( empty( $saved_presets ) ) {
+                            $saved_presets = array( '' => array() );
+                        }
+
+                        $preset_idx = 0;
+                        foreach ( $saved_presets as $p_key => $p_vals ) :
+                            if ( ! is_array( $p_vals ) ) $p_vals = array();
+                            $pfx = 'tc_settings[shortcode_presets][' . esc_attr( $p_key ) . ']';
+                        ?>
+                        <div class="tc-stg-row" style="flex-wrap:wrap;gap:12px;">
+                            <div style="flex:1 1 100%;display:flex;align-items:center;gap:12px;margin-bottom:4px;">
+                                <strong style="white-space:nowrap;">Preset-Name:</strong>
+                                <input type="text" class="tc-stg-input tc-stg-input--narrow"
+                                    value="<?php echo esc_attr( $p_key ); ?>"
+                                    placeholder="z.B. kompakt"
+                                    onchange="this.name='__preset_rename_' + <?php echo $preset_idx; ?>"
+                                    disabled style="opacity:.7;cursor:not-allowed;"
+                                    title="Preset-Name kann nach Erstellung nicht geändert werden">
+                                <?php if ( $p_key ) : ?>
+                                <button type="button" class="tc-stg-save" style="padding:4px 12px;font-size:12px;"
+                                    onclick="navigator.clipboard.writeText('[time_events preset=&quot;<?php echo esc_attr( $p_key ); ?>&quot;]');this.textContent='Kopiert!';setTimeout(()=>this.textContent='Shortcode kopieren',1500)">
+                                    Shortcode kopieren
+                                </button>
+                                <?php endif; ?>
+                            </div>
+                            <label style="flex:0 0 auto;">
+                                Layout:
+                                <select name="<?php echo $pfx; ?>[layout]" class="tc-stg-select" style="width:auto;">
+                                    <option value="grid" <?php selected( $p_vals['layout'] ?? '', 'grid' ); ?>>Grid</option>
+                                    <option value="list" <?php selected( $p_vals['layout'] ?? '', 'list' ); ?>>Liste</option>
+                                    <option value="cards" <?php selected( $p_vals['layout'] ?? '', 'cards' ); ?>>Karten</option>
+                                </select>
+                            </label>
+                            <label style="flex:0 0 auto;">
+                                Spalten:
+                                <select name="<?php echo $pfx; ?>[columns]" class="tc-stg-select" style="width:auto;">
+                                    <option value="1" <?php selected( $p_vals['columns'] ?? 3, 1 ); ?>>1</option>
+                                    <option value="2" <?php selected( $p_vals['columns'] ?? 3, 2 ); ?>>2</option>
+                                    <option value="3" <?php selected( $p_vals['columns'] ?? 3, 3 ); ?>>3</option>
+                                </select>
+                            </label>
+                            <label style="flex:0 0 auto;">
+                                Gruppierung:
+                                <select name="<?php echo $pfx; ?>[group_by]" class="tc-stg-select" style="width:auto;">
+                                    <option value="none" <?php selected( $p_vals['group_by'] ?? '', 'none' ); ?>>Keine</option>
+                                    <option value="month" <?php selected( $p_vals['group_by'] ?? '', 'month' ); ?>>Monat</option>
+                                    <option value="month_inline" <?php selected( $p_vals['group_by'] ?? '', 'month_inline' ); ?>>Monate nebeneinander</option>
+                                </select>
+                            </label>
+                            <label style="flex:0 0 auto;">
+                                Limit:
+                                <input type="number" name="<?php echo $pfx; ?>[limit]" class="tc-stg-input tc-stg-input--narrow" style="width:70px;"
+                                    value="<?php echo esc_attr( $p_vals['limit'] ?? -1 ); ?>" min="-1">
+                            </label>
+                            <?php
+                            $toggles = array(
+                                'show_image' => 'Bild', 'show_date' => 'Datum', 'show_time' => 'Zeit',
+                                'show_location' => 'Ort', 'show_trainer' => 'Trainer', 'show_price' => 'Preis',
+                                'show_excerpt' => 'Auszug', 'show_badge' => 'Badge',
+                            );
+                            foreach ( $toggles as $tkey => $tlabel ) :
+                                $checked = ( $p_vals[ $tkey ] ?? 'true' ) === 'true';
+                            ?>
+                            <label style="flex:0 0 auto;display:flex;align-items:center;gap:4px;font-size:13px;">
+                                <input type="checkbox" name="<?php echo $pfx; ?>[<?php echo $tkey; ?>]" value="1"
+                                    <?php checked( $checked ); ?>>
+                                <?php echo esc_html( $tlabel ); ?>
+                            </label>
+                            <?php endforeach; ?>
+                        </div>
+                        <?php if ( $preset_idx < count( $saved_presets ) - 1 ) : ?>
+                        <div class="tc-stg-divider"></div>
+                        <?php endif; ?>
+                        <?php
+                            $preset_idx++;
+                        endforeach;
+                        ?>
+
+                    </div><!-- .tc-stg-card Presets -->
+                </div><!-- [kalender-presets] -->
 
             </div><!-- .tc-stg-main-pane[kalender] -->
 

@@ -4,13 +4,16 @@
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // ── Time slot boundaries for the week plan (minutes from midnight) ──
+  /* ═══════════════════════════════════════════════════════════════
+   * MODULE 1: Constants & Settings
+   * ═══════════════════════════════════════════════════════════════ */
+
+  // Time slot boundaries for the week plan (minutes from midnight)
   const SLOT_VORMITTAG_START  =     0; //  0:00
   const SLOT_NACHMITTAG_START = 12 * 60; // 12:00
   const SLOT_ABEND_START      = 17 * 60; // 17:00
   const SLOT_MAX              = 24 * 60; // 24:00
 
-  // Standardzeit wenn keine Events vorhanden
   const DEFAULT_SLOT_MIN = '08:00:00';
   const DEFAULT_SLOT_MAX = '20:00:00';
 
@@ -24,16 +27,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalEventTimeDisplay = TF.eventTimeDisplay     || 'none';
   const globalShowWeekNumber   = TF.showWeekNumber      || false;
 
-  // ── Debug: Einstellungen im Browser prüfbar machen ────────────
-  console.log('[TimeCalendar] Settings:', {
-    timeColumnLabel: globalTimeColumnLabel,
-    eventTimeDisplay: globalEventTimeDisplay,
-    mobileView: globalMobileView,
-    defaultView: globalDefaultView,
-    weekStartsOn: globalWeekStart,
-  });
+  /* ═══════════════════════════════════════════════════════════════
+   * MODULE 2: Utilities & Helpers
+   *
+   * Shared functions used by Event Overview, Week Plan, and
+   * Calendar Instance modules. No DOM references here.
+   * ═══════════════════════════════════════════════════════════════ */
 
-  // ── Modul-weite Hilfsfunktionen ────────────────────────────────
   const escHtml = (s) => String(s).replace(/[&<>"']/g, c => ({
     '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
   }[c]));
@@ -108,7 +108,9 @@ document.addEventListener('DOMContentLoaded', () => {
     </div>`;
   };
 
-  // ── Event-Übersicht rendern ─────────────────────────────────────
+  /* ═══════════════════════════════════════════════════════════════
+   * MODULE 3: Event Overview (Kartenliste)
+   * ═══════════════════════════════════════════════════════════════ */
   const tcRenderEventOverview = (container, events, title) => {
     if (!container) return;
 
@@ -179,7 +181,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   };
 
-  // ── Pro Kalender-Instanz ────────────────────────────────────────
+  /* ═══════════════════════════════════════════════════════════════
+   * MODULE 4: Calendar Instance (pro Element)
+   * ═══════════════════════════════════════════════════════════════ */
   document.querySelectorAll('.tc-frontend-calendar').forEach(el => {
     const wrap    = el.closest('.tc-frontend-wrap');
     const uid     = el.id;
@@ -321,7 +325,7 @@ document.addEventListener('DOMContentLoaded', () => {
       calendar.setOption('scrollTime',  minT);
     };
 
-    // ── Week Plan: State & Helper Functions ──────────────────
+    /* ─── MODULE 4a: Week Plan ──────────────────────────────── */
     const weekPlanWrap  = document.getElementById(uid + '-week-plan');
     const weekPlanBody  = weekPlanWrap ? weekPlanWrap.querySelector('.tc-week-plan-body')  : null;
     const weekPlanLabel = weekPlanWrap ? weekPlanWrap.querySelector('.tc-week-plan-label') : null;
@@ -550,7 +554,7 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     };
 
-    // ── Mobile Slider: Klasse & Scroll-Helfer ────────────────
+    /* ─── MODULE 4b: Mobile Logic ───────────────────────────── */
     const useMobileSlider = () => mobileSlider && !forceDesktop && isMobile();
 
     const updateSliderClass = () => {
@@ -623,7 +627,7 @@ document.addEventListener('DOMContentLoaded', () => {
         : { left: 'prev,next today', center: 'title', right: 'dayGridMonth,timeGridWeek,listMonth' };
     };
 
-    // ── Einstellung 1: Zeitspalte links ────────────────────────
+    /* ─── MODULE 4c: FullCalendar Settings Helpers ─────────── */
     const applyTimeColumnLabel = (opts, mode) => {
       if (mode === 'hours') {
         opts.slotLabelInterval = '01:00';
@@ -668,7 +672,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     };
 
-    // ── FullCalendar initialisieren (immer Standard-Darstellung) ──
+    /* ─── MODULE 4d: FullCalendar Init ─────────────────────── */
     const calendar = new FullCalendar.Calendar(el, {
       initialView:   getResponsiveView(),
       initialDate:   (weekOnly || useMobileSlider()) ? new Date() : undefined,

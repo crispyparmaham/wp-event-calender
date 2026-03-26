@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Drag & Drop Event Calendar
  * Description:  Kalenderübersicht für Termine mit Drag & Drop Funktion.
- * Version:      3.3.0
+ * Version:      3.4.0
  * Requires PHP: 8.2
  * Author:       Lucas Dühr | more than ads
  * Author URI:   https://www.morethanads.de
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'TC_PATH',        plugin_dir_path( __FILE__ ) );
 define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
-define( 'TC_VERSION',     '3.3.0' );
+define( 'TC_VERSION',     '3.4.0' );
 
 // ── Wiederholungs- & Rate-Limit-Grenzen ───────────────────────
 define( 'TC_RECURRING_LIMIT',    104 ); // Max. ~5 Jahre wöchentlich
@@ -42,8 +42,7 @@ require_once TC_PATH . 'includes/admin/dashboard.php';
 require_once TC_PATH . 'includes/admin/admin-page.php';
 require_once TC_PATH . 'includes/admin/events-overview.php';
 require_once TC_PATH . 'includes/admin/categories.php';
-require_once TC_PATH . 'includes/admin/migration.php';
-require_once TC_PATH . 'includes/admin/migration-date-type.php';
+
 
 require_once TC_PATH . 'includes/post-type/cpt.php';
 require_once TC_PATH . 'includes/post-type/schema.php';
@@ -54,9 +53,12 @@ require_once TC_PATH . 'includes/shortcodes/shortcode-calendar.php';
 require_once TC_PATH . 'includes/shortcodes/shortcode-events.php';
 require_once TC_PATH . 'includes/shortcodes/shortcode-registration.php';
 require_once TC_PATH . 'includes/shortcodes/shortcode-price-bar.php';
+require_once TC_PATH . 'includes/shortcodes/shortcode-event-info.php';
 require_once TC_PATH . 'includes/shortcodes/ical.php';
 
 require_once TC_PATH . 'includes/registration/registration.php';
+require_once TC_PATH . 'includes/registration/registration-mail.php';
+require_once TC_PATH . 'includes/registration/registration-ajax.php';
 require_once TC_PATH . 'includes/registration/registration-admin-page.php';
 require_once TC_PATH . 'includes/registration/cancel.php';
 require_once TC_PATH . 'includes/registration/export.php';

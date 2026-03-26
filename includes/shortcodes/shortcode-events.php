@@ -38,7 +38,16 @@ add_action( 'wp_enqueue_scripts', function () {
 add_shortcode( 'time_events', 'tc_time_events_shortcode' );
 
 function tc_time_events_shortcode( $atts ): string {
-	$atts = shortcode_atts( [
+	// ── Preset-Logik: Preset als Basis, Shortcode-Atts überschreiben ──
+	$raw_atts    = is_array( $atts ) ? $atts : array();
+	$preset_key  = $raw_atts['preset'] ?? 'default';
+	$presets     = tc_get_setting( 'shortcode_presets', array() );
+	$preset_vals = is_array( $presets ) && isset( $presets[ $preset_key ] )
+		? $presets[ $preset_key ]
+		: array();
+
+	$defaults = [
+		'preset'        => 'default',
 		'category'      => '',
 		'show_past'     => 'false',
 		'limit'         => -1,
@@ -53,7 +62,11 @@ function tc_time_events_shortcode( $atts ): string {
 		'show_price'    => 'true',
 		'show_excerpt'  => 'true',
 		'show_badge'    => 'true',
-	], $atts, 'time_events' );
+	];
+
+	// Preset-Werte in Defaults mergen, dann Shortcode-Atts drüber
+	$merged = array_merge( $defaults, $preset_vals );
+	$atts   = shortcode_atts( $merged, $atts, 'time_events' );
 
 	// Normalize types
 	$show_past = filter_var( $atts['show_past'], FILTER_VALIDATE_BOOLEAN );
