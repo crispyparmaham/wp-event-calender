@@ -244,6 +244,16 @@ add_action( 'acf/include_fields', function () {
                 ) ) ),
                 'sub_fields'   => array(
                     array(
+                        'key'          => 'field_tc_ed_title',
+                        'label'        => 'Titel (optional)',
+                        'name'         => 'title',
+                        'type'         => 'text',
+                        'placeholder'  => 'Leer = Event-Titel wird verwendet',
+                        'instructions' => 'Überschreibt den Event-Titel für diesen einzelnen Termin.',
+                        'required'     => 0,
+                        'wrapper'      => array( 'width' => '100' ),
+                    ),
+                    array(
                         'key'            => 'field_tc_ed_start',
                         'label'          => 'Datum',
                         'name'           => 'date_start',

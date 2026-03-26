@@ -167,6 +167,16 @@
   text-overflow: ellipsis;
 }
 
+/* ── Optionaler Termin-Titel ─────────────────────────────────────── */
+.tc-evlist-date-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tc-text);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
 /* ── Versteckte Extratermine ─────────────────────────────────────── */
 .tc-date-extra {
   display: none;

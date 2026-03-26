@@ -269,10 +269,11 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	$max_p      = (int) ( $fields['max_participants'] ?? 0 );
 
 	// Datum / Zeit aus erstem Repeater-Eintrag
-	$first_date = tc_get_first_event_date( $post->ID );
-	$start_date = $first_date['date_start'] ?? '';
-	$start_time = $first_date['time_start'] ?? '';
-	$end_time   = $first_date['time_end']   ?? '';
+	$first_date       = tc_get_first_event_date( $post->ID );
+	$start_date       = $first_date['date_start'] ?? '';
+	$start_time       = $first_date['time_start'] ?? '';
+	$end_time         = $first_date['time_end']   ?? '';
+	$first_date_title = $first_date['title']      ?? '';
 
 	// ── Capacity check ─────────────────────────────────────────────────────
 	$is_full = false;
@@ -385,6 +386,9 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 				. ' .5.5V5H2V3.5a.5.5 0 0 1 .5-.5H4v1h1V3h6v1h1V3zM2 6h12v6.5a.5.5 0 0 1-.5.5'
 				. 'h-11a.5.5 0 0 1-.5-.5V6z"/></svg>';
 			echo '<span>' . esc_html( tc_events_format_date( $start_date ) ) . $time_str . '</span>';
+			if ( $first_date_title ) {
+				echo '<span class="tc-evlist-date-title">' . esc_html( $first_date_title ) . '</span>';
+			}
 			echo '</li>';
 		} elseif ( $show_time && $start_time ) {
 			echo '<li class="tc-events-meta-item tc-events-meta--date">';

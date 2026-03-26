@@ -80,13 +80,19 @@ function tc_handle_get_events() {
     $events    = array();
     $today_str = wp_date( 'Y-m-d' );
 
+    // Kategorien einmal laden und nach Slug indizieren
+    $all_cats = tc_get_all_categories();
+    $cat_map  = array_column( $all_cats, null, 'slug' );
+
     foreach ( $posts as $post ) {
         // EIN Aufruf statt ~15 einzelne get_field()
         $fields = get_fields( $post->ID ) ?: array();
 
-        $type  = $fields['event_type'] ?? 'training';
-        if ( ! $type ) $type = 'training';
-        $color = tc_get_category_color( $type );
+        $type     = $fields['event_type'] ?? '';
+        if ( ! $type ) $type = '';
+        $cat      = $cat_map[ $type ] ?? null;
+        $color    = $cat ? $cat['color'] : '#4f46e5';
+        $cat_name = $cat ? $cat['name']  : ( $type ? ucfirst( $type ) : '' );
 
         $intro_text      = $fields['event_description']  ?? '';
         $recurring_day   = $fields['recurring_weekday']   ?? false;
@@ -115,6 +121,7 @@ function tc_handle_get_events() {
                         'date_end'   => $ed['date_end']   ?? '',
                         'time_start' => $ed['time_start'] ?? '',
                         'time_end'   => $ed['time_end']   ?? '',
+                        'title'      => $ed['title']      ?? '',
                     );
                 }
             }
@@ -131,6 +138,7 @@ function tc_handle_get_events() {
             'status'  => $post->post_status,
             'extendedProps' => array(
                 'type'             => $type,
+                'categoryName'     => $cat_name,
                 'dateType'         => $date_type,
                 'permalink'        => $permalink,
                 'intro_text'       => $intro_text,
@@ -146,6 +154,7 @@ function tc_handle_get_events() {
                 'endTime'          => '',
                 'eventDates'       => $future_dates,
                 'dateIndex'        => 0,
+                'dateTitle'        => '',
             ),
         );
 
@@ -204,14 +213,17 @@ function tc_handle_get_events() {
                 ? tc_build_iso( $ed['date_end'],   $ed['time_end'] ?? '' )
                 : ( ! empty( $ed['time_end'] ) ? tc_build_iso( $ed['date_start'], $ed['time_end'] ) : null );
 
+            $date_title      = $ed['title'] ?? '';
             $ep              = $shared_props['extendedProps'];
             $ep['startTime'] = $ed['time_start'] ?? '';
             $ep['endTime']   = $ed['time_end']   ?? '';
             $ep['dateIndex'] = $idx;
+            $ep['dateTitle'] = $date_title;
 
             $events[] = array_merge( $shared_props, array(
                 'start'         => $ev_start,
                 'end'           => $ev_end,
+                'title'         => $date_title ?: $post->post_title,
                 'editable'      => true,
                 'extendedProps' => $ep,
             ) );

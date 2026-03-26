@@ -266,6 +266,16 @@
   overflow: hidden;
 }
 
+/* ── Optionaler Termin-Titel (unter Datum in Meta-Zeile) ──────────────────── */
+.tc-evlist-date-title {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--tc-text);
+  margin-top: 2px;
+  line-height: 1.4;
+}
+
 /* ── Meta list ──────────────────────────────────────────────────────────── */
 .tc-events-meta {
   list-style: none;

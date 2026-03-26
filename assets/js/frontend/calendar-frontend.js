@@ -92,7 +92,11 @@ document.addEventListener('DOMContentLoaded', () => {
     dates.forEach((d, i) => {
       const line    = formatDateLine(d.date_start, d.time_start, d.time_end);
       const isExtra = i >= MAX_VISIBLE;
-      itemsHtml += `<span class="tc-evlist-date-row${isExtra ? ' tc-date-extra' : ''}">${escHtml(line)}</span>`;
+      const extraCls = isExtra ? ' tc-date-extra' : '';
+      itemsHtml += `<span class="tc-evlist-date-row${extraCls}">${escHtml(line)}</span>`;
+      if (d.title) {
+        itemsHtml += `<span class="tc-evlist-date-title${extraCls}">${escHtml(d.title)}</span>`;
+      }
     });
 
     const moreBtn = extraCount > 0
@@ -142,7 +146,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const p          = ev.extendedProps || {};
       const color      = ev.color || '#4f46e5';
       const rawTitle   = (ev.title || '').replace('🔁 ', '').trim();
-      const typeLabel  = p.type === 'seminar' ? 'Seminar' : 'Gruppentraining';
+      const typeLabel  = p.categoryName || (p.type ? p.type.charAt(0).toUpperCase() + p.type.slice(1) : '');
       const permalink  = p.permalink ? escHtml(p.permalink) : '#';
       const location   = p.location    ? escHtml(p.location)    : '';
       const leadership = p.leadership  ? escHtml(p.leadership)  : '';
@@ -236,7 +240,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const p     = event.extendedProps;
       const start = event.start ? formatDate(event.start) : '–';
       const end   = event.end   ? formatDate(event.end)   : null;
-      const label = p.type === 'seminar' ? 'Seminar' : 'Gruppentraining';
+      const label = p.categoryName || (p.type ? p.type.charAt(0).toUpperCase() + p.type.slice(1) : 'Event');
 
       popBody.innerHTML = `
         <div class="tc-popover-type tc-popover-type--${p.type || 'training'}">
@@ -470,8 +474,8 @@ document.addEventListener('DOMContentLoaded', () => {
                   const idx    = weekPlanRefs.push(ev) - 1;
                   const color  = ev.color || '#4f46e5';
                   const bg     = hexToRgba(color, 0.13);
-                  const title  = escHtml((ev.title || '').replace('🔁 ', ''));
                   const p      = ev.extendedProps || {};
+                  const title  = escHtml((p.dateTitle || ev.title || '').replace('🔁 ', ''));
                   const sub    = p.leadership ? escHtml(p.leadership) : '';
                   const isPast = p.isPast === true;
                   html += `<button class="tc-wp-event${isPast ? ' tc-wp-event--past' : ''}" data-ev-idx="${idx}" type="button"`;
@@ -522,8 +526,8 @@ document.addEventListener('DOMContentLoaded', () => {
           const idx     = refIdx !== -1 ? refIdx : weekPlanRefs.push(ev) - 1;
           const color   = ev.color || '#4f46e5';
           const bg      = hexToRgba(color, 0.13);
-          const title   = escHtml((ev.title || '').replace('🔁 ', ''));
           const p       = ev.extendedProps || {};
+          const title   = escHtml((p.dateTitle || ev.title || '').replace('🔁 ', ''));
           const sub     = p.leadership ? escHtml(p.leadership) : '';
           const isPast  = p.isPast === true;
           const s       = new Date(ev.start);
