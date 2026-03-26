@@ -353,7 +353,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── Tooltip ───────────────────────────────────────────────
     eventDidMount({ event, el: evEl }) {
-      const p     = event.extendedProps;
+      const p = event.extendedProps;
+
+      // Vergangene Occurrences ausgegraut darstellen
+      if (p.isPast && p.dateIndex === -2) {
+        evEl.style.opacity = '0.4';
+        evEl.style.filter  = 'grayscale(30%)';
+      }
       const lines = [
         p.isRecurring              ? '🔁 Wiederkehrendes Event' : null,
         p.leadership               ? `👤 ${p.leadership}`       : null,

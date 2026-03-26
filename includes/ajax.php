@@ -14,8 +14,9 @@ function tc_build_iso( $date, $time = '' ) {
 // ─────────────────────────────────────────────
 // Helper: Wiederholungs-Occurrences generieren
 //
-// Rollierendes 52-Wochen-Fenster ab heute.
-// Kein Startdatum, kein Enddatum nötig.
+// Rollendes Fenster: 52 Wochen rückwärts bis
+// 52 Wochen vorwärts ab heute.
+// Vergangene Occurrences erhalten 'past' => true.
 // $interval = 1|2|3 Wochen
 // ─────────────────────────────────────────────
 function tc_get_occurrences( string $weekday, string $time_start, string $time_end, int $interval = 1 ): array {
@@ -24,23 +25,24 @@ function tc_get_occurrences( string $weekday, string $time_start, string $time_e
     $interval    = max( 1, min( 3, $interval ) );
 
     try {
-        $today    = new DateTime( 'today' );
-        $until_dt = new DateTime( '+52 weeks 23:59:59' );
+        $today        = new DateTime( 'today' );
+        $window_start = new DateTime( '-52 weeks monday' );
+        $window_end   = new DateTime( '+52 weeks 23:59:59' );
     } catch ( Exception $e ) {
         return $occurrences;
     }
 
-    // Ersten passenden Wochentag ab heute ermitteln
-    $cur     = clone $today;
-    $cur_dow = (int) $cur->format( 'w' );
-    $diff    = ( $weekday_int - $cur_dow + 7 ) % 7;
-    $cur->modify( "+{$diff} days" );
+    // Ersten passenden Wochentag ab window_start ermitteln
+    $cur  = clone $window_start;
+    $diff = ( $weekday_int - (int) $cur->format( 'w' ) + 7 ) % 7;
+    if ( $diff > 0 ) $cur->modify( "+{$diff} days" );
 
     $limit = 0;
-    while ( $cur <= $until_dt && $limit < TC_RECURRING_LIMIT ) {
+    while ( $cur <= $window_end && $limit < TC_RECURRING_LIMIT ) {
         $occurrences[] = array(
             'start' => tc_build_iso( $cur->format( 'Y-m-d' ), $time_start ),
             'end'   => tc_build_iso( $cur->format( 'Y-m-d' ), $time_end ),
+            'past'  => $cur < $today,
         );
         $cur->modify( "+{$interval} weeks" );
         $limit++;
@@ -159,18 +161,31 @@ function tc_handle_get_events() {
 
             $occurrences = tc_get_occurrences( (string) $recurring_day, $time_start, $time_end, $interval );
 
+            // Ersten zukünftigen Termin als editierbare Haupt-Occurrence bestimmen
+            $first_future_idx = null;
+            foreach ( $occurrences as $i => $occ ) {
+                if ( ! ( $occ['past'] ?? false ) ) {
+                    $first_future_idx = $i;
+                    break;
+                }
+            }
+
             foreach ( $occurrences as $idx => $occ ) {
+                $is_past = $occ['past'] ?? false;
+                $is_main = ( $idx === $first_future_idx );
+
                 $ep_occ              = $shared_props['extendedProps'];
                 $ep_occ['startTime'] = $time_start;
                 $ep_occ['endTime']   = $time_end;
-                $ep_occ['dateIndex'] = $idx === 0 ? -1 : -2;
+                $ep_occ['dateIndex'] = $is_main ? -1 : -2;
+                $ep_occ['isPast']    = $is_past;
 
                 $events[] = array_merge( $shared_props, array(
                     'start'         => $occ['start'],
                     'end'           => $occ['end'] ?: null,
                     'title'         => '🔁 ' . $post->post_title,
-                    'editable'      => $idx === 0,
-                    'color'         => $idx === 0 ? $color : $color . 'bb',
+                    'editable'      => $is_main,
+                    'color'         => $is_past ? $color . '55' : $color . 'bb',
                     'extendedProps' => $ep_occ,
                 ) );
             }

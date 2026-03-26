@@ -467,13 +467,14 @@ document.addEventListener('DOMContentLoaded', () => {
               } else {
                 html += '<td class="tc-wp-cell">';
                 dayEvs.forEach(ev => {
-                  const idx   = weekPlanRefs.push(ev) - 1;
-                  const color = ev.color || '#4f46e5';
-                  const bg    = hexToRgba(color, 0.13);
-                  const title = escHtml((ev.title || '').replace('🔁 ', ''));
-                  const p     = ev.extendedProps || {};
-                  const sub   = p.leadership ? escHtml(p.leadership) : '';
-                  html += `<button class="tc-wp-event" data-ev-idx="${idx}" type="button"`;
+                  const idx    = weekPlanRefs.push(ev) - 1;
+                  const color  = ev.color || '#4f46e5';
+                  const bg     = hexToRgba(color, 0.13);
+                  const title  = escHtml((ev.title || '').replace('🔁 ', ''));
+                  const p      = ev.extendedProps || {};
+                  const sub    = p.leadership ? escHtml(p.leadership) : '';
+                  const isPast = p.isPast === true;
+                  html += `<button class="tc-wp-event${isPast ? ' tc-wp-event--past' : ''}" data-ev-idx="${idx}" type="button"`;
                   html += ` style="background:${bg};border-left:3px solid ${color}">`;
                   if (showEventTime) {
                     const tStr = slot.startStr + (slot.endStr ? ` – ${slot.endStr}` : '');
@@ -524,12 +525,13 @@ document.addEventListener('DOMContentLoaded', () => {
           const title   = escHtml((ev.title || '').replace('🔁 ', ''));
           const p       = ev.extendedProps || {};
           const sub     = p.leadership ? escHtml(p.leadership) : '';
+          const isPast  = p.isPast === true;
           const s       = new Date(ev.start);
           const endD    = ev.end ? new Date(ev.end) : null;
           const timeStr = fmtT(s.getHours(), s.getMinutes())
                         + (endD ? ' – ' + fmtT(endD.getHours(), endD.getMinutes()) : '');
 
-          mobileHtml += `<button class="tc-wp-event" data-ev-idx="${idx}" type="button"`;
+          mobileHtml += `<button class="tc-wp-event${isPast ? ' tc-wp-event--past' : ''}" data-ev-idx="${idx}" type="button"`;
           mobileHtml += ` style="background:${bg};border-left:3px solid ${color}">`;
           mobileHtml += `<span class="tc-wp-mobile-time">${timeStr}</span>`;
           mobileHtml += `<strong class="tc-wp-event-title">${title}</strong>`;
@@ -726,6 +728,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
       eventDidMount({ event, el: evEl }) {
         if (!event.startEditable) evEl.style.opacity = '0.8';
+
+        // Vergangene Occurrences zusätzlich ausgegraut und nicht klickbar
+        if (event.extendedProps.isPast) {
+          evEl.style.opacity       = '0.45';
+          evEl.style.filter        = 'grayscale(30%)';
+          evEl.style.pointerEvents = 'none';
+        }
       },
 
       eventClick({ event, jsEvent }) {
