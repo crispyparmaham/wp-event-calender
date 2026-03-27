@@ -51,6 +51,7 @@ add_action( 'admin_init', function () {
             'week_starts_on'          => 'monday',
             'frontend_week_only'      => '0',
             'show_week_number'        => '0',
+            'enable_popup'            => '1',
             'show_event_list'         => '0',
             'event_list_title'        => 'Unsere Events',
             'mobile_calendar_view'    => 'optimized',
@@ -250,6 +251,7 @@ function tc_sanitize_settings( $input ) {
     $clean['reminder_enabled']   = ! empty( $input['reminder_enabled'] )   ? '1' : '0';
     $clean['frontend_week_only'] = ! empty( $input['frontend_week_only'] ) ? '1' : '0';
     $clean['show_week_number']   = ! empty( $input['show_week_number'] )   ? '1' : '0';
+    $clean['enable_popup']       = ! empty( $input['enable_popup'] )       ? '1' : '0';
     $clean['show_event_list']    = ! empty( $input['show_event_list'] )    ? '1' : '0';
     $clean['mobile_hint_box']    = ! empty( $input['mobile_hint_box'] )    ? '1' : '0';
 
@@ -563,6 +565,7 @@ function tc_render_settings_page() {
     $week_starts_on          = tc_get_setting( 'week_starts_on', 'monday' );
     $week_only               = tc_get_setting( 'frontend_week_only', '0' );
     $show_week_number        = tc_get_setting( 'show_week_number', '0' );
+    $enable_popup            = tc_get_setting( 'enable_popup', '1' );
     $show_event_list         = tc_get_setting( 'show_event_list', '0' );
     $event_list_title        = tc_get_setting( 'event_list_title', 'Unsere Events' ) ?: 'Unsere Events';
     $reg_email               = tc_get_setting( 'registration_email', get_option( 'admin_email' ) );
@@ -874,6 +877,22 @@ function tc_render_settings_page() {
                                 <label class="tc-toggle">
                                     <input type="checkbox" name="tc_settings[show_week_number]" value="1"
                                         <?php checked( $show_week_number, '1' ); ?>>
+                                    <span class="tc-toggle-track"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="tc-stg-divider"></div>
+
+                        <div class="tc-stg-row">
+                            <div class="tc-stg-row-left">
+                                <strong>Event-Popup aktivieren</strong>
+                                <span>Beim Klick auf ein Event öffnet sich ein Info-Popup mit Uhrzeit, Ort und Link. Deaktivieren, wenn der Klick direkt zur Event-Seite führen soll.</span>
+                            </div>
+                            <div class="tc-stg-row-right">
+                                <label class="tc-toggle">
+                                    <input type="checkbox" name="tc_settings[enable_popup]" value="1"
+                                        <?php checked( $enable_popup, '1' ); ?>>
                                     <span class="tc-toggle-track"></span>
                                 </label>
                             </div>

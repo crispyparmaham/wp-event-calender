@@ -26,6 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const globalTimeColumnLabel  = TF.timeColumnLabel      || 'hours';
   const globalEventTimeDisplay = TF.eventTimeDisplay     || 'none';
   const globalShowWeekNumber   = TF.showWeekNumber      || false;
+  const globalEnablePopup      = TF.enablePopup !== false;
 
   /* ═══════════════════════════════════════════════════════════════
    * MODULE 2: Utilities & Helpers
@@ -563,7 +564,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       weekPlanBody.querySelectorAll('.tc-wp-event').forEach(btn => {
         btn.addEventListener('click', jsEvent => {
-          openPopoverRaw(weekPlanRefs[+btn.dataset.evIdx], jsEvent);
+          if (globalEnablePopup) openPopoverRaw(weekPlanRefs[+btn.dataset.evIdx], jsEvent);
         });
       });
     };
@@ -733,17 +734,16 @@ document.addEventListener('DOMContentLoaded', () => {
       eventDidMount({ event, el: evEl }) {
         if (!event.startEditable) evEl.style.opacity = '0.8';
 
-        // Vergangene Occurrences zusätzlich ausgegraut und nicht klickbar
+        // Vergangene Occurrences ausgegraut (bleiben aber klickbar)
         if (event.extendedProps.isPast) {
-          evEl.style.opacity       = '0.45';
-          evEl.style.filter        = 'grayscale(30%)';
-          evEl.style.pointerEvents = 'none';
+          evEl.style.opacity = '0.45';
+          evEl.style.filter  = 'grayscale(30%)';
         }
       },
 
       eventClick({ event, jsEvent }) {
         jsEvent.preventDefault();
-        openPopover(event, jsEvent);
+        if (globalEnablePopup) openPopover(event, jsEvent);
       },
     });
 

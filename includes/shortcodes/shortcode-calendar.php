@@ -244,5 +244,6 @@ function tc_enqueue_calendar_assets() {
         'weekStartsOn'     => tc_get_setting( 'week_starts_on', 'monday' ),
         'mobileHintBox'    => tc_get_setting( 'mobile_hint_box', '1' ) === '1',
         'showWeekNumber'   => tc_get_setting( 'show_week_number', '0' ) === '1',
+        'enablePopup'      => tc_get_setting( 'enable_popup', '1' ) === '1',
     ) );
 }

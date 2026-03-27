@@ -639,8 +639,6 @@
 .tc-wp-event--past {
   opacity: 0.4 !important;
   filter: grayscale(30%) !important;
-  pointer-events: none !important;
-  cursor: default !important;
 }
 
 .tc-wp-event-title {
