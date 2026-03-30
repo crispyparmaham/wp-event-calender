@@ -2,7 +2,7 @@
 defined( 'ABSPATH' ) || exit;
 
 // ─────────────────────────────────────────────
-// Settings-Seite registrieren
+// Register settings page in admin menu
 // ─────────────────────────────────────────────
 add_action( 'admin_menu', function () {
     add_submenu_page(
