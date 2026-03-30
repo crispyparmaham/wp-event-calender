@@ -65,8 +65,13 @@ function tc_handle_registration_submission() {
     ) );
     if ( $existing ) {
         $dup_msg = $is_trial
-            ? tc_get_setting( 'label_duplicate_msg_trial', 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.' )
+            ? tc_get_setting( 'label_duplicate_msg_trial', 'Du bist für diese Veranstaltung bereits angemeldet.' )
             : tc_get_setting( 'label_duplicate_msg',       'Sie sind bereits für diese Veranstaltung angemeldet.' );
+        // label_form_duplicate is the canonical new key; fall back to legacy keys above
+        $dup_override = tc_get_setting( 'label_form_duplicate', '' );
+        if ( $dup_override ) {
+            $dup_msg = $dup_override;
+        }
         wp_send_json_error( array( 'message' => $dup_msg ) );
     }
 
@@ -96,7 +101,7 @@ function tc_handle_registration_submission() {
         if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
             error_log( 'TC Registration DB error: ' . $wpdb->last_error );
         }
-        wp_send_json_error( array( 'message' => 'Fehler beim Speichern der Anmeldung.' ) );
+        wp_send_json_error( array( 'message' => tc_get_setting( 'label_form_error', 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.' ) ) );
     }
 
     $new_id = $wpdb->insert_id;
@@ -115,9 +120,15 @@ function tc_handle_registration_submission() {
         'cancel_token' => $cancel_token,
     ) );
 
-    $success_msg = $is_trial
-        ? tc_get_setting( 'label_success_msg_trial', 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.' )
-        : tc_get_setting( 'label_success_msg',       'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.' );
+    // label_form_success is the canonical new key; legacy keys remain for backward compat
+    $success_msg_new = tc_get_setting( 'label_form_success', '' );
+    if ( $success_msg_new ) {
+        $success_msg = $success_msg_new;
+    } else {
+        $success_msg = $is_trial
+            ? tc_get_setting( 'label_success_msg_trial', 'Vielen Dank für deine Anfrage. Wir melden uns zeitnah bei dir.' )
+            : tc_get_setting( 'label_success_msg',       'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.' );
+    }
 
     wp_send_json_success( array(
         'message'         => $success_msg,

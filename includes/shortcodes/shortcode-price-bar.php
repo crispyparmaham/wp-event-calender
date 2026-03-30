@@ -95,7 +95,11 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 
 					<div class="tc-price-bar-info tc-price-bar--free">
 						<span class="tc-price-bar-free-text">
-							<?php echo esc_html( tc_get_setting( 'label_price_bar_free', 'Kostenlose Teilnahme' ) ); ?>
+							<?php
+						$_free_long  = tc_get_setting( 'label_price_bar_free', 'Kostenlose Teilnahme' );
+						$_free_short = tc_get_setting( 'label_price_free', '' );
+						echo esc_html( $_free_short ?: $_free_long );
+						?>
 						</span>
 					</div>
 
@@ -103,7 +107,11 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 
 					<div class="tc-price-bar-info tc-price-bar--request">
 						<span class="tc-price-bar-request-text">
-							<?php echo esc_html( tc_get_setting( 'label_price_bar_request_text', 'Preis auf Anfrage' ) ); ?>
+							<?php
+						$_req_long  = tc_get_setting( 'label_price_bar_request_text', 'Preis auf Anfrage' );
+						$_req_short = tc_get_setting( 'label_price_request', '' );
+						echo esc_html( $_req_short ?: $_req_long );
+						?>
 						</span>
 					</div>
 

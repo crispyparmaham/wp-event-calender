@@ -107,7 +107,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
             $request_btn    = tc_get_setting( 'label_request_btn',    'Jetzt anfragen' );
             $request_notice = tc_get_setting( 'label_request_notice', 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.' );
             ob_start(); ?>
-            <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+            <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
                 <div class="tc-trial-notice">
                     <?php echo esc_html( $request_notice ); ?>
                 </div>
@@ -130,9 +130,9 @@ add_shortcode( 'time_registration', function ( $atts ) {
     $price_type = $event_id ? ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) : 'fixed';
     $is_trial   = in_array( $price_type, array( 'request', 'free' ), true );
 
-    // Formulartitel: bei Probetraining angepasst, sonst Shortcode-Attribut
+    // Form title: adjusted for free/request events, otherwise use shortcode attribute
     $form_title = $is_trial
-        ? tc_get_setting( 'label_form_title_trial', 'Kostenloses Probetraining anfragen' )
+        ? tc_get_setting( 'label_form_title_trial', 'Kostenlos anmelden' )
         : ( $atts['title'] !== 'Anmelden' ? esc_html( $atts['title'] ) : tc_get_setting( 'label_form_title', 'Anmelden' ) );
 
     // Termine aufbereiten: Repeater-Termine haben Vorrang vor Wiederholungen
@@ -169,7 +169,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
     if ( $is_full && $event_id ) {
         $wl_form_id = 'tc-waitlist-form-' . $instance;
         ob_start(); ?>
-        <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+        <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
             <form id="<?php echo esc_attr( $wl_form_id ); ?>" class="tc-registration-form tc-waitlist-form" method="POST">
                 <h2>Warteliste – <?php echo esc_html( get_the_title( $event_id ) ); ?></h2>
                 <div class="tc-waitlist-notice">
@@ -196,26 +196,26 @@ add_shortcode( 'time_registration', function ( $atts ) {
                 <?php endif; ?>
                 <div class="tc-form-row">
                     <div class="tc-form-group">
-                        <label>Vorname <span class="tc-required">*</span></label>
+                        <label><?php echo esc_html( tc_get_setting( 'label_form_firstname', 'Vorname' ) ); ?> <span class="tc-required">*</span></label>
                         <input type="text" name="firstname" class="tc-form-control" required autocomplete="given-name">
                     </div>
                     <div class="tc-form-group">
-                        <label>Nachname <span class="tc-required">*</span></label>
+                        <label><?php echo esc_html( tc_get_setting( 'label_form_lastname', 'Nachname' ) ); ?> <span class="tc-required">*</span></label>
                         <input type="text" name="lastname" class="tc-form-control" required autocomplete="family-name">
                     </div>
                 </div>
                 <div class="tc-form-row">
                     <div class="tc-form-group">
-                        <label>E-Mail <span class="tc-required">*</span></label>
+                        <label><?php echo esc_html( tc_get_setting( 'label_form_email', 'E-Mail-Adresse' ) ); ?> <span class="tc-required">*</span></label>
                         <input type="email" name="email" class="tc-form-control" required autocomplete="email">
                     </div>
                     <div class="tc-form-group">
-                        <label>Telefon</label>
+                        <label><?php echo esc_html( tc_get_setting( 'label_form_phone', 'Telefonnummer' ) ); ?></label>
                         <input type="tel" name="phone" class="tc-form-control" autocomplete="tel">
                     </div>
                 </div>
                 <div class="tc-form-group">
-                    <label>Notizen (optional)</label>
+                    <label><?php echo esc_html( tc_get_setting( 'label_form_message', 'Nachricht (optional)' ) ); ?></label>
                     <textarea name="notes" class="tc-form-control" rows="3"></textarea>
                 </div>
                 <div class="tc-form-group">
@@ -244,7 +244,8 @@ add_shortcode( 'time_registration', function ( $atts ) {
                         $msg.addClass('tc-success').html(res.data.message).show();
                         $btn.hide();
                     } else {
-                        $msg.addClass('tc-error').html(res.data.message || 'Ein Fehler ist aufgetreten.').show();
+                        var fallback = '<?php echo esc_js( tc_get_setting( 'label_form_error', 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.' ) ); ?>';
+                        $msg.addClass('tc-error').html(res.data.message || fallback).show();
                         $btn.find('.tc-btn-text').show();
                         $btn.find('.tc-btn-loader').hide();
                     }
@@ -257,15 +258,14 @@ add_shortcode( 'time_registration', function ( $atts ) {
     }
 
     ob_start(); ?>
-    <div class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+    <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
         <form id="<?php echo esc_attr( $form_id ); ?>" class="tc-registration-form" method="POST">
 
             <h2><?php echo esc_html( $form_title ); ?></h2>
 
             <?php if ( $is_trial ) : ?>
             <div class="tc-trial-notice">
-                <strong>Kostenlos &amp; unverbindlich</strong>
-                Schnupper einfach rein &ndash; ganz ohne Verpflichtungen. Wir melden uns nach deiner Anfrage zeitnah bei dir.
+                <?php echo esc_html( tc_get_setting( 'label_form_intro', 'Melde dich jetzt an – wir freuen uns auf dich.' ) ); ?>
             </div>
             <?php endif; ?>
 
@@ -363,15 +363,15 @@ add_shortcode( 'time_registration', function ( $atts ) {
 
             <?php endif; ?>
 
-            <!-- ── Persoenliche Daten ─────────────────────── -->
+            <!-- ── Personal data ─────────────────────────── -->
             <div class="tc-form-row">
                 <div class="tc-form-group">
-                    <label for="<?php echo esc_attr( $form_id ); ?>-firstname">Vorname <span class="tc-required">*</span></label>
+                    <label for="<?php echo esc_attr( $form_id ); ?>-firstname"><?php echo esc_html( tc_get_setting( 'label_form_firstname', 'Vorname' ) ); ?> <span class="tc-required">*</span></label>
                     <input type="text" id="<?php echo esc_attr( $form_id ); ?>-firstname"
                            name="firstname" class="tc-form-control" required autocomplete="given-name">
                 </div>
                 <div class="tc-form-group">
-                    <label for="<?php echo esc_attr( $form_id ); ?>-lastname">Nachname <span class="tc-required">*</span></label>
+                    <label for="<?php echo esc_attr( $form_id ); ?>-lastname"><?php echo esc_html( tc_get_setting( 'label_form_lastname', 'Nachname' ) ); ?> <span class="tc-required">*</span></label>
                     <input type="text" id="<?php echo esc_attr( $form_id ); ?>-lastname"
                            name="lastname" class="tc-form-control" required autocomplete="family-name">
                 </div>
@@ -379,12 +379,12 @@ add_shortcode( 'time_registration', function ( $atts ) {
 
             <div class="tc-form-row">
                 <div class="tc-form-group">
-                    <label for="<?php echo esc_attr( $form_id ); ?>-email">E-Mail <span class="tc-required">*</span></label>
+                    <label for="<?php echo esc_attr( $form_id ); ?>-email"><?php echo esc_html( tc_get_setting( 'label_form_email', 'E-Mail-Adresse' ) ); ?> <span class="tc-required">*</span></label>
                     <input type="email" id="<?php echo esc_attr( $form_id ); ?>-email"
                            name="email" class="tc-form-control" required autocomplete="email">
                 </div>
                 <div class="tc-form-group">
-                    <label for="<?php echo esc_attr( $form_id ); ?>-phone">Telefon</label>
+                    <label for="<?php echo esc_attr( $form_id ); ?>-phone"><?php echo esc_html( tc_get_setting( 'label_form_phone', 'Telefonnummer' ) ); ?></label>
                     <input type="tel" id="<?php echo esc_attr( $form_id ); ?>-phone"
                            name="phone" class="tc-form-control" autocomplete="tel">
                 </div>
@@ -413,18 +413,17 @@ add_shortcode( 'time_registration', function ( $atts ) {
 
             <div class="tc-form-group">
                 <label for="<?php echo esc_attr( $form_id ); ?>-notes">
-                    <?php echo $is_trial ? 'Nachricht / Fragen (optional)' : 'Besondere Anfragen / Notizen'; ?>
+                    <?php echo esc_html( tc_get_setting( 'label_form_message', 'Nachricht (optional)' ) ); ?>
                 </label>
                 <textarea id="<?php echo esc_attr( $form_id ); ?>-notes"
-                          name="notes" class="tc-form-control" rows="4"
-                          placeholder="<?php echo $is_trial ? 'z.B. Vorerfahrungen, Fragen oder Wunschtermin...' : 'z.B. Spezielle Anforderungen oder Fragen...'; ?>"></textarea>
+                          name="notes" class="tc-form-control" rows="4"></textarea>
             </div>
 
             <div class="tc-form-group">
                 <button type="submit" class="tc-btn tc-btn-primary tc-submit-btn">
                     <span class="tc-btn-text">
                         <?php echo $is_trial
-                            ? esc_html( tc_get_setting( 'label_submit_btn_trial', 'Probetraining anfragen' ) )
+                            ? esc_html( tc_get_setting( 'label_submit_btn_trial', 'Jetzt anfragen' ) )
                             : esc_html( tc_get_setting( 'label_submit_btn', 'Anmeldung absenden' ) ); ?>
                     </span>
                     <span class="tc-btn-loader" style="display:none;">

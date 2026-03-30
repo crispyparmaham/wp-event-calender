@@ -280,6 +280,7 @@
 
 .tc-dates-list__item {
   font-size: 12px;
+  font-weight: 600;
   color: var(--tc-text);
   line-height: 1.45;
 }
@@ -295,6 +296,15 @@
   padding: 0;
   font-size: 11px;
   color: var(--tc-text-muted);
+  line-height: 1.4;
+}
+
+/* "Keine Termine" hint — matches date row font, muted color */
+.tc-no-dates {
+  margin: 2px 0 0;
+  padding: 0;
+  font-size: 13px;
+  color: #ff3434;
   line-height: 1.4;
 }
 

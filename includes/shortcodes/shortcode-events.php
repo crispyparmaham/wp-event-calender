@@ -144,7 +144,7 @@ function tc_time_events_shortcode( $atts ): string {
 	// ── Empty state ────────────────────────────────────────────────────────
 	if ( empty( $posts ) ) {
 		return '<div class="tc-events-wrap' . $dark_class . '"><div class="tc-events-empty">'
-			. '<p>Aktuell sind keine Termine verfügbar.</p>'
+			. '<p>' . esc_html( tc_get_setting( 'label_no_events', 'Aktuell sind keine Veranstaltungen geplant.' ) ) . '</p>'
 			. '</div></div>';
 	}
 
@@ -307,8 +307,11 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	}
 	usort( $upcoming, fn( $a, $b ) => strcmp( $a['date_start'], $b['date_start'] ) );
 
-	// Fallback: no upcoming dates → show the last past date so the card remains visible
-	if ( empty( $upcoming ) && ! empty( $all_dates ) ) {
+	// Track whether all dates are in the past (before fallback assignment)
+	$all_past = empty( $upcoming );
+
+	// Fallback: no upcoming dates → use the last past date so price/seats are still available
+	if ( $all_past && ! empty( $all_dates ) ) {
 		$upcoming = [ $all_dates[ count( $all_dates ) - 1 ] ];
 	}
 
@@ -374,7 +377,9 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 		}
 
 		if ( $is_full ) {
-			echo '<span class="tc-events-sold-out">Ausgebucht</span>';
+			echo '<span class="tc-events-sold-out">'
+				. esc_html( tc_get_setting( 'label_sold_out', 'Ausgebucht' ) )
+				. '</span>';
 		}
 
 		echo '</div>';
@@ -385,7 +390,9 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 
 	// Sold-out badge (fallback when image is hidden)
 	if ( $is_full && ! $show_image ) {
-		echo '<span class="tc-events-sold-out tc-events-sold-out--inline">Ausgebucht</span>';
+		echo '<span class="tc-events-sold-out tc-events-sold-out--inline">'
+			. esc_html( tc_get_setting( 'label_sold_out', 'Ausgebucht' ) )
+			. '</span>';
 	}
 
 	// Category badge
@@ -412,7 +419,12 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	}
 
 	// ── Inline date list — all upcoming dates, max 4, no toggle ───────────
-	if ( $show_date && ! empty( $display_dates ) ) {
+	if ( $show_date && $all_past ) {
+		// All dates are in the past — show a hint text instead of the date list
+		echo '<p class="tc-no-dates">'
+			. esc_html( tc_get_setting( 'label_no_upcoming_dates', 'Aktuell sind keine Termine verfügbar.' ) )
+			. '</p>';
+	} elseif ( $show_date && ! empty( $display_dates ) ) {
 		$is_single = count( $display_dates ) === 1 && $extra_count === 0;
 		echo '<ul class="tc-dates-list' . ( $is_single ? ' tc-dates-list--single' : '' ) . '">';
 		foreach ( $display_dates as $i => $ed ) {
@@ -432,7 +444,10 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 		echo '</ul>';
 
 		if ( $extra_count > 0 ) {
-			echo '<p class="tc-dates-list__more">+' . $extra_count . ' weitere Termine</p>';
+			$more_tpl = tc_get_setting( 'label_more_dates', '+{n} weitere Termine' );
+			echo '<p class="tc-dates-list__more">'
+				. esc_html( str_replace( '{n}', $extra_count, $more_tpl ) )
+				. '</p>';
 		}
 	}
 
@@ -476,12 +491,12 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 			if ( $on_request ) {
 				echo '<li class="tc-events-meta-item tc-events-meta--price">'
 					. $price_icon
-					. '<span>Preis auf Anfrage</span>'
+					. '<span>' . esc_html( tc_get_setting( 'label_price_request', 'Auf Anfrage' ) ) . '</span>'
 					. '</li>';
 			} elseif ( $price_type_ev === 'free' ) {
 				echo '<li class="tc-events-meta-item tc-events-meta--price">'
 					. $price_icon
-					. '<span>Kostenlos</span>'
+					. '<span>' . esc_html( tc_get_setting( 'label_price_free', 'Kostenlos' ) ) . '</span>'
 					. '</li>';
 			} elseif ( $price_raw !== '' && $price_raw !== false ) {
 				$period_suffix = tc_price_period_suffix( $post->ID );

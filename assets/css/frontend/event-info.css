@@ -88,6 +88,88 @@
   font-size: 22px;
 }
 
+/* ── Multi-date accordion ────────────────────────────────────── */
+.tc-event-info-bar .tc-info-dates,
+.tc-event-info-card .tc-info-dates {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tc-info-dates__primary {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.tc-info-dates__label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--tc-text-muted);
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.tc-info-dates__value {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tc-text);
+  flex: 1;
+}
+
+/* Toggle button — no box model, arrow via ::after */
+.tc-info-dates__toggle {
+  all: unset;
+  cursor: pointer;
+  color: var(--tc-text-muted);
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.tc-info-dates__toggle::after {
+  content: '▾';
+  display: inline-block;
+  font-size: 14px;
+  transition: transform 0.2s ease;
+}
+
+.tc-info-dates__toggle[aria-expanded="true"]::after {
+  transform: rotate(180deg);
+}
+
+/* Collapsed list */
+.tc-info-dates__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  color: var(--tc-text-muted);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+}
+
+.tc-info-dates__list.is-open {
+  max-height: 400px;
+}
+
+.tc-info-dates__list li {
+  padding: 2px 0;
+  line-height: 1.4;
+}
+
+/* "Keine Termine" hint inside the info bar/card — same size as value, muted */
+.tc-info-no-dates {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--tc-text-muted);
+}
+
 /* ── Responsive: bar → stack on mobile ──────────────────────── */
 @media (max-width: 600px) {
   .tc-event-info-bar {

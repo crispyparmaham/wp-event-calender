@@ -28,7 +28,7 @@ add_action( 'admin_enqueue_scripts', function ( $hook ) {
         'tabMap' => array(
             'design'      => array( 'design-allgemein', 'design-tokens', 'design-css' ),
             'kalender'    => array( 'kalender-allgemein', 'kalender-desktop', 'kalender-mobile', 'kalender-liste', 'kalender-presets' ),
-            'texte'       => array( 'texte-allgemein', 'texte-mail' ),
+            'texte'       => array( 'texte-allgemein', 'texte-eventliste', 'texte-formular', 'texte-pricebar', 'texte-mail' ),
             'anmeldungen' => array( 'anmeldungen-email', 'anmeldungen-erinnerung' ),
             'seo'         => array( 'seo-schema' ),
             'updates'     => array( 'updates-info' ),
@@ -80,26 +80,55 @@ add_action( 'admin_init', function () {
             // Texte & Labels
             'anrede_mode'                    => 'sie',
             'label_form_title'               => 'Anmelden',
-            'label_form_title_trial'         => 'Kostenloses Probetraining anfragen',
+            'label_form_title_trial'         => 'Kostenlos anmelden',
             'label_submit_btn'               => 'Anmeldung absenden',
-            'label_submit_btn_trial'         => 'Probetraining anfragen',
+            'label_submit_btn_trial'         => 'Jetzt anfragen',
             'label_waitlist_btn'             => 'Auf Warteliste eintragen',
             'label_request_btn'              => 'Jetzt anfragen',
             'label_request_notice'           => 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.',
             'label_full_notice'              => 'Diese Veranstaltung ist leider ausgebucht.',
             'label_full_subtext'             => 'Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.',
             'label_success_msg'              => 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.',
-            'label_success_msg_trial'        => 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.',
+            'label_success_msg_trial'        => 'Vielen Dank für deine Anfrage. Wir melden uns zeitnah bei dir.',
             'label_duplicate_msg'            => 'Sie sind bereits für diese Veranstaltung angemeldet.',
-            'label_duplicate_msg_trial'      => 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.',
+            'label_duplicate_msg_trial'      => 'Du bist für diese Veranstaltung bereits angemeldet.',
             'label_price_bar_full'           => 'Ausgebucht',
             'label_price_bar_full_sub'       => 'Leider keine Plätze mehr verfügbar.',
             'label_price_bar_free'           => 'Kostenlos',
             'label_price_bar_request_headline' => 'Neugierig geworden?',
-            'label_price_bar_request_teaser'   => 'Dann melde dich jetzt für ein kostenloses Probetraining an.',
+            'label_price_bar_request_teaser'   => 'Melde dich jetzt an – wir freuen uns auf dich.',
             'label_price_bar_cta_full'       => 'Ausgebucht',
-            'label_price_bar_cta_request'    => 'Probetraining anfragen',
+            'label_price_bar_cta_request'    => 'Auf Anfrage',
             'label_action_price_badge'       => 'Aktionspreis',
+            // Allgemeine Bezeichnungen
+            'label_event_singular'           => 'Veranstaltung',
+            'label_event_plural'             => 'Veranstaltungen',
+            'label_trainer'                  => 'Veranstalter',
+            'label_participant'              => 'Teilnehmer',
+            'label_sold_out'                 => 'Ausgebucht',
+            'label_seats_available'          => 'Noch {n} Plätze verfügbar',
+            'label_waitlist_badge'           => 'Warteliste',
+            // Event-Liste
+            'label_price_free'               => 'Kostenlos',
+            'label_price_request'            => 'Auf Anfrage',
+            'label_cta_learn_more'           => 'Mehr erfahren',
+            'label_cta_register'             => 'Jetzt anmelden',
+            'label_no_events'                => 'Aktuell sind keine Veranstaltungen geplant.',
+            'label_more_dates'               => '+{n} weitere Termine',
+            'label_next_date'                => 'Nächster Termin',
+            'label_no_upcoming_dates'        => 'Aktuell sind keine Termine verfügbar.',
+            // Anmeldeformular
+            'label_form_intro'               => 'Melde dich jetzt an! Wir freuen uns auf dich.',
+            'label_form_firstname'           => 'Vorname',
+            'label_form_lastname'            => 'Nachname',
+            'label_form_email'               => 'E-Mail-Adresse',
+            'label_form_phone'               => 'Telefonnummer',
+            'label_form_message'             => 'Nachricht (optional)',
+            'label_form_privacy'             => 'Mit der Anmeldung stimmst du unserer Datenschutzerklärung zu.',
+            'label_form_success'             => 'Deine Anmeldung war erfolgreich. Du erhältst in Kürze eine Bestätigung per E-Mail.',
+            'label_form_waitlist'            => 'Du wurdest auf die Warteliste gesetzt. Wir benachrichtigen dich, sobald ein Platz frei wird.',
+            'label_form_error'               => 'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.',
+            'label_form_duplicate'           => 'Du bist für diese Veranstaltung bereits angemeldet.',
             // Mail-Templates
             'mail_thankyou_subject'          => 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}',
             'mail_thankyou_preview'          => 'Wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah.',
@@ -330,6 +359,7 @@ function tc_sanitize_settings( $input ) {
 
     // ── UI-Labels ─────────────────────────────────────────────
     $label_keys = array(
+        // Existing keys — do not rename
         'label_form_title', 'label_form_title_trial', 'label_submit_btn', 'label_submit_btn_trial',
         'label_waitlist_btn', 'label_request_btn', 'label_request_notice',
         'label_full_notice', 'label_full_subtext',
@@ -337,10 +367,30 @@ function tc_sanitize_settings( $input ) {
         'label_duplicate_msg', 'label_duplicate_msg_trial',
         'label_price_bar_full', 'label_price_bar_full_sub', 'label_price_bar_free',
         'label_price_bar_request_headline', 'label_price_bar_request_teaser', 'label_price_bar_cta_full', 'label_price_bar_cta_request',
+        'label_price_bar_price_label', 'label_price_bar_request_text', 'label_price_bar_cta',
+        'label_price_period_once', 'label_price_period_monthly', 'label_price_period_yearly',
         'label_action_price_badge',
+        // New keys — general
+        'label_event_singular', 'label_event_plural', 'label_trainer', 'label_participant',
+        'label_sold_out', 'label_seats_available', 'label_waitlist_badge',
+        // New keys — event list
+        'label_price_free', 'label_price_request', 'label_cta_learn_more', 'label_cta_register',
+        'label_no_events', 'label_more_dates', 'label_next_date', 'label_no_upcoming_dates',
+        // New keys — registration form
+        'label_form_firstname', 'label_form_lastname', 'label_form_email', 'label_form_phone',
+        'label_form_message', 'label_form_duplicate',
     );
     foreach ( $label_keys as $k ) {
         $clean[ $k ] = isset( $input[ $k ] ) ? sanitize_text_field( wp_unslash( $input[ $k ] ) ) : '';
+    }
+
+    // Textarea labels (allow newlines)
+    $textarea_label_keys = array(
+        'label_form_intro', 'label_form_privacy',
+        'label_form_success', 'label_form_waitlist', 'label_form_error',
+    );
+    foreach ( $textarea_label_keys as $k ) {
+        $clean[ $k ] = isset( $input[ $k ] ) ? sanitize_textarea_field( wp_unslash( $input[ $k ] ) ) : '';
     }
 
     // ── Mail-Templates ────────────────────────────────────────
@@ -1188,16 +1238,55 @@ function tc_render_settings_page() {
             <div class="tc-stg-main-pane" id="pane-texte" role="tabpanel" aria-labelledby="tab-texte" tabindex="-1" data-main-tab="texte">
 
                 <nav class="tc-stg-tabs tc-stg-tabs--sub" role="tablist" aria-label="Texte-Bereiche">
-                    <button type="button" class="tc-stg-tab" data-sub-tab="texte-allgemein" id="tab-texte-allgemein" aria-controls="pane-texte-allgemein" role="tab" aria-selected="false" tabindex="-1">Allgemein</button>
-                    <button type="button" class="tc-stg-tab" data-sub-tab="texte-mail"      id="tab-texte-mail"      aria-controls="pane-texte-mail"      role="tab" aria-selected="false" tabindex="-1">E-Mail-Templates</button>
+                    <button type="button" class="tc-stg-tab" data-sub-tab="texte-allgemein"    id="tab-texte-allgemein"    aria-controls="pane-texte-allgemein"    role="tab" aria-selected="false" tabindex="-1">Allgemein</button>
+                    <button type="button" class="tc-stg-tab" data-sub-tab="texte-eventliste"   id="tab-texte-eventliste"   aria-controls="pane-texte-eventliste"   role="tab" aria-selected="false" tabindex="-1">Event-Liste</button>
+                    <button type="button" class="tc-stg-tab" data-sub-tab="texte-formular"     id="tab-texte-formular"     aria-controls="pane-texte-formular"     role="tab" aria-selected="false" tabindex="-1">Anmeldeformular</button>
+                    <button type="button" class="tc-stg-tab" data-sub-tab="texte-pricebar"     id="tab-texte-pricebar"     aria-controls="pane-texte-pricebar"     role="tab" aria-selected="false" tabindex="-1">Price-Bar</button>
+                    <button type="button" class="tc-stg-tab" data-sub-tab="texte-mail"         id="tab-texte-mail"         aria-controls="pane-texte-mail"         role="tab" aria-selected="false" tabindex="-1">E-Mail-Templates</button>
                 </nav>
+
+                <?php
+                // Shared helper: single-line text input row
+                $tc_text_row = function( $label, $hint, $key, $default ) {
+                    $val = tc_get_setting( $key, $default ); ?>
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong><?php echo esc_html( $label ); ?></strong>
+                            <?php if ( $hint ) echo '<span>' . esc_html( $hint ) . '</span>'; ?>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <input type="text" name="tc_settings[<?php echo esc_attr( $key ); ?>]"
+                                class="tc-stg-input" value="<?php echo esc_attr( $val ); ?>">
+                            <p class="tc-stg-hint">Standard: <?php echo esc_html( $default ); ?></p>
+                        </div>
+                    </div>
+                    <div class="tc-stg-divider"></div>
+                <?php };
+
+                // Shared helper: textarea row
+                $tc_textarea_row = function( $label, $hint, $key, $default ) {
+                    $val = tc_get_setting( $key, $default ); ?>
+                    <div class="tc-stg-row">
+                        <div class="tc-stg-row-left">
+                            <strong><?php echo esc_html( $label ); ?></strong>
+                            <?php if ( $hint ) echo '<span>' . esc_html( $hint ) . '</span>'; ?>
+                        </div>
+                        <div class="tc-stg-row-right">
+                            <textarea name="tc_settings[<?php echo esc_attr( $key ); ?>]"
+                                class="tc-stg-input" rows="3"><?php echo esc_textarea( $val ); ?></textarea>
+                            <p class="tc-stg-hint">Standard: <?php echo esc_html( $default ); ?></p>
+                        </div>
+                    </div>
+                    <div class="tc-stg-divider"></div>
+                <?php };
+                ?>
 
                 <!-- ── Sub-Pane: texte-allgemein ──────────────── -->
                 <div class="tc-stg-pane" id="pane-texte-allgemein" role="tabpanel" aria-labelledby="tab-texte-allgemein" tabindex="-1" data-sub-tab="texte-allgemein">
 
-                    <!-- Card: Allgemein -->
+                    <!-- Card: Anrede -->
                     <div class="tc-stg-card">
-                        <h3 class="tc-stg-section-title">Allgemein</h3>
+                        <h3 class="tc-stg-section-title">Anrede</h3>
 
                         <div class="tc-stg-row">
                             <div class="tc-stg-row-left">
@@ -1220,87 +1309,28 @@ function tc_render_settings_page() {
                             </div>
                         </div>
 
-                        <div class="tc-stg-divider"></div>
+                    </div><!-- .tc-stg-card Anrede -->
 
-                        <div class="tc-stg-row">
-                            <div class="tc-stg-row-left">
-                                <strong>Formulartitel (Standard)</strong>
-                                <span>Überschrift des Anmeldeformulars.</span>
-                            </div>
-                            <div class="tc-stg-row-right">
-                                <input type="text" name="tc_settings[label_form_title]" class="tc-stg-input"
-                                    value="<?php echo esc_attr( tc_get_setting( 'label_form_title', 'Anmelden' ) ); ?>">
-                                <p class="tc-stg-hint">Standard: Anmelden</p>
-                            </div>
-                        </div>
-
-                        <div class="tc-stg-divider"></div>
-
-                        <div class="tc-stg-row">
-                            <div class="tc-stg-row-left">
-                                <strong>Formulartitel (Probetraining)</strong>
-                                <span>Bei <code>event_price_type = request</code>.</span>
-                            </div>
-                            <div class="tc-stg-row-right">
-                                <input type="text" name="tc_settings[label_form_title_trial]" class="tc-stg-input"
-                                    value="<?php echo esc_attr( tc_get_setting( 'label_form_title_trial', 'Kostenloses Probetraining anfragen' ) ); ?>">
-                                <p class="tc-stg-hint">Standard: Kostenloses Probetraining anfragen</p>
-                            </div>
-                        </div>
-
-                    </div><!-- .tc-stg-card Allgemein -->
-
-                    <!-- Card: Buttons & Status-Texte -->
+                    <!-- Card: Allgemeine Bezeichnungen -->
                     <div class="tc-stg-card">
-                        <h3 class="tc-stg-section-title">Buttons &amp; Status-Texte</h3>
-                        <?php
-                        $tc_text_row = function( $label, $hint, $key, $default ) {
-                            $val = tc_get_setting( $key, $default ); ?>
-                            <div class="tc-stg-row">
-                                <div class="tc-stg-row-left">
-                                    <strong><?php echo esc_html( $label ); ?></strong>
-                                    <?php if ( $hint ) echo '<span>' . esc_html( $hint ) . '</span>'; ?>
-                                </div>
-                                <div class="tc-stg-row-right">
-                                    <input type="text" name="tc_settings[<?php echo esc_attr( $key ); ?>]"
-                                        class="tc-stg-input" value="<?php echo esc_attr( $val ); ?>">
-                                    <p class="tc-stg-hint">Standard: <?php echo esc_html( $default ); ?></p>
-                                </div>
-                            </div>
-                            <div class="tc-stg-divider"></div>
-                        <?php };
-
-                        $tc_text_row( 'Absenden-Button', '', 'label_submit_btn', 'Anmeldung absenden' );
-                        $tc_text_row( 'Absenden-Button (Probetraining)', 'Bei event_price_type = request.', 'label_submit_btn_trial', 'Probetraining anfragen' );
-                        $tc_text_row( 'Wartelisten-Button', '', 'label_waitlist_btn', 'Auf Warteliste eintragen' );
-                        $tc_text_row( 'Anfragen-Button (Modus „Auf Anfrage")', 'Wenn registration_mode = request.', 'label_request_btn', 'Jetzt anfragen' );
-                        $tc_text_row( 'Hinweistext (Modus „Auf Anfrage")', '', 'label_request_notice', 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.' );
-                        $tc_text_row( 'Ausgebucht – Hauptzeile', '', 'label_full_notice', 'Diese Veranstaltung ist leider ausgebucht.' );
-                        $tc_text_row( 'Ausgebucht – Untertext', '', 'label_full_subtext', 'Tragen Sie sich auf die Warteliste ein – wir benachrichtigen Sie, sobald ein Platz frei wird.' );
-                        $tc_text_row( 'Erfolgsmeldung', 'Nach dem Absenden des Formulars.', 'label_success_msg', 'Vielen Dank! Ihre Anmeldung wurde erfolgreich gespeichert.' );
-                        $tc_text_row( 'Erfolgsmeldung (Probetraining)', '', 'label_success_msg_trial', 'Vielen Dank! Deine Anfrage für ein Probetraining wurde erfolgreich übermittelt. Wir melden uns zeitnah bei dir.' );
-                        $tc_text_row( 'Duplikat-Hinweis', 'E-Mail-Adresse bereits angemeldet.', 'label_duplicate_msg', 'Sie sind bereits für diese Veranstaltung angemeldet.' );
-                        $tc_text_row( 'Duplikat-Hinweis (Probetraining)', '', 'label_duplicate_msg_trial', 'Du hast bereits eine Probetraining-Anfrage für diese Veranstaltung gestellt.' );
-                        ?>
-
-                        <p class="tc-stg-sub-label">Preisleiste (Price Bar)</p>
-                        <div class="tc-stg-divider"></div>
+                        <h3 class="tc-stg-section-title">Allgemeine Bezeichnungen</h3>
+                        <p class="tc-stg-card-desc">Branchenspezifische Begriffe, die im gesamten Plugin verwendet werden.</p>
 
                         <?php
-                        $tc_text_row( 'Ausgebucht – Label', '', 'label_price_bar_full', 'Ausgebucht' );
-                        $tc_text_row( 'Ausgebucht – Untertext', '', 'label_price_bar_full_sub', 'Leider keine Plätze mehr verfügbar.' );
-                        $tc_text_row( 'Kostenlos – Text', 'Bei event_price_type = free.', 'label_price_bar_free', 'Kostenlos' );
-                        $tc_text_row( 'Probetraining – Headline', 'Fett, in Primärfarbe. Z. B. „Neugierig geworden?"', 'label_price_bar_request_headline', 'Neugierig geworden?' );
-                        $tc_text_row( 'Probetraining – Teaser-Text', 'Erscheint nach der Headline.', 'label_price_bar_request_teaser', 'Dann melde dich jetzt für ein kostenloses Probetraining an.' );
-                        $tc_text_row( 'CTA-Button – Ausgebucht', '', 'label_price_bar_cta_full', 'Ausgebucht' );
-                        $tc_text_row( 'CTA-Button – Probetraining', '', 'label_price_bar_cta_request', 'Probetraining anfragen' );
-                        $tc_text_row( 'Aktionspreis – Badge-Text', 'Text des farbigen Badges über dem Aktionspreis.', 'label_action_price_badge', 'Aktionspreis' );
+                        $tc_text_row( 'Bezeichnung „Veranstaltung" (Singular)', 'Singular-Begriff für ein einzelnes Event.',     'label_event_singular',  'Veranstaltung' );
+                        $tc_text_row( 'Bezeichnung „Veranstaltungen" (Plural)', 'Plural-Begriff für mehrere Events.',            'label_event_plural',    'Veranstaltungen' );
+                        $tc_text_row( 'Bezeichnung „Veranstalter / Host"',       'Person oder Organisation, die leitet.',         'label_trainer',         'Veranstalter' );
+                        $tc_text_row( 'Bezeichnung „Teilnehmer"',                'Person, die sich anmeldet.',                    'label_participant',     'Teilnehmer' );
+                        $tc_text_row( '„Ausgebucht"-Text',                       'Badge und Statusmeldung bei vollen Events.',    'label_sold_out',        'Ausgebucht' );
+                        $tc_text_row( '„Noch {n} Plätze frei"-Text',             '{n} wird durch die Zahl ersetzt.',              'label_seats_available', 'Noch {n} Plätze verfügbar' );
+                        $tc_text_row( '„Warteliste"-Badge',                      'Kurzer Badge-Text bei Wartelisten-Einträgen.', 'label_waitlist_badge',  'Warteliste' );
                         ?>
-                    </div><!-- .tc-stg-card Buttons & Status-Texte -->
+
+                    </div><!-- .tc-stg-card Allgemeine Bezeichnungen -->
 
                     <!-- Card: Platzhalter-Referenz -->
                     <div class="tc-stg-card">
-                        <h3 class="tc-stg-section-title">Verfügbare Platzhalter</h3>
+                        <h3 class="tc-stg-section-title">Verfügbare Mail-Platzhalter</h3>
                         <p class="tc-stg-card-desc">Können in Betreff, Vorschautext und Body der Mail-Templates verwendet werden. Werden beim Versand automatisch ersetzt.</p>
                         <div style="padding:0 28px 20px;">
                             <table style="width:100%;border-collapse:collapse;font-size:13px;">
@@ -1342,6 +1372,90 @@ function tc_render_settings_page() {
                     </div><!-- .tc-stg-card Platzhalter -->
 
                 </div><!-- [texte-allgemein] -->
+
+                <!-- ── Sub-Pane: texte-eventliste ────────────── -->
+                <div class="tc-stg-pane" id="pane-texte-eventliste" role="tabpanel" aria-labelledby="tab-texte-eventliste" tabindex="-1" data-sub-tab="texte-eventliste">
+
+                    <div class="tc-stg-card">
+                        <h3 class="tc-stg-section-title">Event-Liste &amp; Info-Bar</h3>
+                        <p class="tc-stg-card-desc">Texte für <code>[time_events]</code> und <code>[time_event_info]</code>.</p>
+
+                        <?php
+                        $tc_text_row( '„Kostenlos"-Label',           'In der Kachel-Metazeile bei kostenfreien Events.',                        'label_price_free',     'Kostenlos' );
+                        $tc_text_row( '„Auf Anfrage"-Label',         'In der Kachel-Metazeile bei Events mit Preis auf Anfrage.',              'label_price_request',  'Auf Anfrage' );
+                        $tc_text_row( '„Mehr erfahren"-Button',      'CTA-Link zu kostenlosen oder regulären Event-Seiten.',                    'label_cta_learn_more', 'Mehr erfahren' );
+                        $tc_text_row( '„Jetzt anmelden"-Button',     'CTA-Link zu kostenpflichtigen Event-Seiten.',                            'label_cta_register',   'Jetzt anmelden' );
+                        $tc_text_row( '„Keine Events gefunden"-Text','Wird angezeigt wenn keine Veranstaltungen vorhanden sind.',              'label_no_events',      'Aktuell sind keine Veranstaltungen geplant.' );
+                        $tc_text_row( '„+N weitere Termine"-Text',   '{n} wird durch die tatsächliche Anzahl ersetzt.',                        'label_more_dates',     '+{n} weitere Termine' );
+                        $tc_text_row( '„Nächster Termin"-Label',     'Label in der Info-Bar wenn ein Event mehrere Termine hat.',              'label_next_date',          'Nächster Termin' );
+                        $tc_text_row( '„Keine Termine"-Hinweis',    'Wird bei Events mit ausschließlich vergangenen Terminen angezeigt.',      'label_no_upcoming_dates',  'Aktuell sind keine Termine verfügbar.' );
+                        ?>
+
+                    </div><!-- .tc-stg-card Event-Liste -->
+
+                </div><!-- [texte-eventliste] -->
+
+                <!-- ── Sub-Pane: texte-formular ──────────────── -->
+                <div class="tc-stg-pane" id="pane-texte-formular" role="tabpanel" aria-labelledby="tab-texte-formular" tabindex="-1" data-sub-tab="texte-formular">
+
+                    <div class="tc-stg-card">
+                        <h3 class="tc-stg-section-title">Anmeldeformular</h3>
+                        <p class="tc-stg-card-desc">Texte für <code>[time_registration]</code>.</p>
+
+                        <?php
+                        $tc_text_row( 'Formular-Titel',                   'Überschrift des Anmeldeformulars.',                      'label_form_title',     'Anmelden' );
+                        $tc_text_row( 'Formular-Titel (kostenlos/Anfrage)', 'Bei event_price_type = free oder request.',            'label_form_title_trial', 'Kostenlos anmelden' );
+                        $tc_textarea_row( 'Einleitungstext',              'Kurzer Intro-Text direkt unter der Überschrift.',         'label_form_intro',     'Melde dich jetzt an! Wir freuen uns auf dich.' );
+                        $tc_text_row( 'Vorname-Label',                    '',                                                        'label_form_firstname', 'Vorname' );
+                        $tc_text_row( 'Nachname-Label',                   '',                                                        'label_form_lastname',  'Nachname' );
+                        $tc_text_row( 'E-Mail-Label',                     '',                                                        'label_form_email',     'E-Mail-Adresse' );
+                        $tc_text_row( 'Telefon-Label',                    '',                                                        'label_form_phone',     'Telefonnummer' );
+                        $tc_text_row( 'Nachricht-Label',                  '',                                                        'label_form_message',   'Nachricht (optional)' );
+                        $tc_textarea_row( 'Datenschutz-Hinweis',          'Erscheint unter dem Formular.',                          'label_form_privacy',   'Mit der Anmeldung stimmst du unserer Datenschutzerklärung zu.' );
+                        $tc_text_row( 'Absenden-Button',                  '',                                                        'label_submit_btn',     'Anmeldung absenden' );
+                        $tc_text_row( 'Absenden-Button (kostenlos/Anfrage)', 'Bei event_price_type = free oder request.',          'label_submit_btn_trial', 'Jetzt anfragen' );
+                        $tc_text_row( 'Wartelisten-Button',               '',                                                        'label_waitlist_btn',   'Auf Warteliste eintragen' );
+                        $tc_text_row( 'Anfragen-Button (Modus „Auf Anfrage")', 'Wenn registration_mode = request.',               'label_request_btn',    'Jetzt anfragen' );
+                        $tc_text_row( 'Hinweistext (Modus „Auf Anfrage")', '',                                                      'label_request_notice', 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.' );
+                        $tc_text_row( 'Ausgebucht – Hauptzeile',          '',                                                        'label_full_notice',    'Diese Veranstaltung ist leider ausgebucht.' );
+                        $tc_text_row( 'Ausgebucht – Untertext',           '',                                                        'label_full_subtext',   'Tragen Sie sich auf die Warteliste ein. Wir benachrichtigen Sie, sobald ein Platz frei wird.' );
+                        $tc_textarea_row( 'Erfolgs-Meldung',              'Erscheint nach erfolgreichem Absenden.',                  'label_form_success',   'Deine Anmeldung war erfolgreich. Du erhältst in Kürze eine Best\ätigung per E-Mail.' );
+                        $tc_textarea_row( 'Wartelisten-Meldung',          'Erscheint wenn das Event ausgebucht war.',               'label_form_waitlist',  'Du wurdest auf die Warteliste gesetzt. Wir benachrichtigen dich, sobald ein Platz frei wird.' );
+                        $tc_textarea_row( 'Fehler-Meldung allgemein',     'Erscheint bei einem unerwarteten Serverfehler.',          'label_form_error',     'Es ist ein Fehler aufgetreten. Bitte versuche es erneut.' );
+                        $tc_text_row( '„Bereits angemeldet"-Meldung',     'Erscheint wenn die E-Mail-Adresse bereits genutzt wurde.', 'label_form_duplicate', 'Du bist für diese Veranstaltung bereits angemeldet.' );
+                        ?>
+
+                    </div><!-- .tc-stg-card Anmeldeformular -->
+
+                </div><!-- [texte-formular] -->
+
+                <!-- ── Sub-Pane: texte-pricebar ──────────────── -->
+                <div class="tc-stg-pane" id="pane-texte-pricebar" role="tabpanel" aria-labelledby="tab-texte-pricebar" tabindex="-1" data-sub-tab="texte-pricebar">
+
+                    <div class="tc-stg-card">
+                        <h3 class="tc-stg-section-title">Price-Bar</h3>
+                        <p class="tc-stg-card-desc">Texte für <code>[time_price_bar]</code>.</p>
+
+                        <?php
+                        $tc_text_row( 'CTA-Button-Text',                     'Standard-Beschriftung des Anmelde-Buttons.',             'label_price_bar_cta',           'Jetzt anmelden' );
+                        $tc_text_row( '„Kostenlos"-Text',                     'Bei event_price_type = free.',                           'label_price_bar_free',          'Kostenlose Teilnahme' );
+                        $tc_text_row( '„Auf Anfrage"-Text',                   'Infotext bei event_price_type = request.',               'label_price_bar_request_text',  'Preis auf Anfrage' );
+                        $tc_text_row( 'Preis-Label',                          'Label links neben dem Betrag.',                          'label_price_bar_price_label',   'Preis' );
+                        $tc_text_row( 'Periode „einmalig"',                   '',                                                        'label_price_period_once',       'einmalig' );
+                        $tc_text_row( 'Periode „monatlich"',                  '',                                                        'label_price_period_monthly',    '/ Monat' );
+                        $tc_text_row( 'Periode „jährlich"',                   '',                                                        'label_price_period_yearly',     '/ Jahr' );
+                        $tc_text_row( 'CTA-Button – Ausgebucht',              'Wenn keine Plätze verfügbar.',                           'label_price_bar_cta_full',      'Ausgebucht' );
+                        $tc_text_row( 'CTA-Button – Auf Anfrage',             'Bei event_price_type = request.',                        'label_price_bar_cta_request',   'Auf Anfrage' );
+                        $tc_text_row( 'Ausgebucht – Label',                   '',                                                        'label_price_bar_full',          'Ausgebucht' );
+                        $tc_text_row( 'Ausgebucht – Untertext',               '',                                                        'label_price_bar_full_sub',      'Leider keine Plätze mehr verfügbar.' );
+                        $tc_text_row( 'Headline (Auf-Anfrage-Bereich)',       'Fett, in Primärfarbe.',                                  'label_price_bar_request_headline', 'Neugierig geworden?' );
+                        $tc_text_row( 'Teaser-Text (Auf-Anfrage-Bereich)',    'Erscheint unter der Headline.',                          'label_price_bar_request_teaser',   'Melde dich jetzt an \u2013 wir freuen uns auf dich.' );
+                        $tc_text_row( 'Aktionspreis – Badge-Text',            'Text des farbigen Badges über dem Aktionspreis.',        'label_action_price_badge',      'Aktionspreis' );
+                        ?>
+
+                    </div><!-- .tc-stg-card Price-Bar -->
+
+                </div><!-- [texte-pricebar] -->
 
                 <!-- ── Sub-Pane: texte-mail ───────────────────── -->
                 <div class="tc-stg-pane" id="pane-texte-mail" role="tabpanel" aria-labelledby="tab-texte-mail" tabindex="-1" data-sub-tab="texte-mail">

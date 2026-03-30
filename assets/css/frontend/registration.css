@@ -19,7 +19,7 @@
 .tc-registration-wrap .tc-registration-form {
     background-color: var(--tc-bg) !important;
     border: 1px solid var(--tc-border) !important;
-    border-radius: 8px !important;
+    border-radius: var(--tc-radius) !important;
     padding: 2rem !important;
     box-shadow: var(--tc-shadow-sm) !important;
     box-sizing: border-box;
