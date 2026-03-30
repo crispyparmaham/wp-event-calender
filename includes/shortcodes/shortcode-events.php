@@ -64,7 +64,7 @@ function tc_time_events_shortcode( $atts ): string {
 		'show_badge'    => 'true',
 	];
 
-	// Preset-Werte in Defaults mergen, dann Shortcode-Atts drüber
+	// Merge preset values into defaults, then let shortcode atts win
 	$merged = array_merge( $defaults, $preset_vals );
 	$atts   = shortcode_atts( $merged, $atts, 'time_events' );
 
@@ -98,15 +98,33 @@ function tc_time_events_shortcode( $atts ): string {
 		'meta_query'     => $meta_query,
 	] );
 
-	// Datum aus Repeater lesen, filtern und sortieren
+	// For each post determine the primary date (next upcoming or last fallback).
+	// show_past=false → skip events that have no upcoming date at all.
 	$today       = wp_date( 'Y-m-d' );
 	$dated_posts = [];
+
 	foreach ( $all_posts as $post ) {
-		$first = tc_get_first_event_date( $post->ID );
-		$date  = $first['date_start'] ?? '';
-		if ( ! $date ) continue;
-		if ( ! $show_past && $date < $today ) continue;
-		$dated_posts[] = [ 'post' => $post, 'date' => $date ];
+		$fields    = get_fields( $post->ID ) ?: [];
+		$all_dates = $fields['event_dates'] ?? [];
+		if ( empty( $all_dates ) ) continue; // Recurring or dateless — skip
+
+		$result    = tc_get_primary_date_entry( $all_dates, $today );
+		$sort_date = $result['entry']['date_start'] ?? '';
+		if ( ! $sort_date ) continue;
+
+		if ( ! $show_past ) {
+			// Skip events where every date is in the past
+			$has_upcoming = false;
+			foreach ( $all_dates as $ed ) {
+				if ( ! empty( $ed['date_start'] ) && $ed['date_start'] >= $today ) {
+					$has_upcoming = true;
+					break;
+				}
+			}
+			if ( ! $has_upcoming ) continue;
+		}
+
+		$dated_posts[] = [ 'post' => $post, 'date' => $sort_date ];
 	}
 
 	usort( $dated_posts, fn( $a, $b ) => strcmp( $a['date'], $b['date'] ) );
@@ -150,6 +168,7 @@ function tc_time_events_shortcode( $atts ): string {
 	}
 
 	echo '</div>'; // .tc-events-wrap
+
 	return ob_get_clean();
 }
 
@@ -162,14 +181,16 @@ function tc_events_render_grouped( array $posts, array $atts ): void {
 		'10' => 'Oktober',   '11' => 'November', '12' => 'Dezember',
 	];
 
+	$today  = wp_date( 'Y-m-d' );
 	$groups = [];
 
 	foreach ( $posts as $post ) {
-		$first = tc_get_first_event_date( $post->ID );
-		$date  = $first['date_start'] ?? '';
-		if ( ! $date ) {
-			continue;
-		}
+		$fields    = get_fields( $post->ID ) ?: [];
+		$all_dates = $fields['event_dates'] ?? [];
+		$result    = tc_get_primary_date_entry( $all_dates, $today );
+		$date      = $result['entry']['date_start'] ?? '';
+		if ( ! $date ) continue;
+
 		try {
 			$dt    = new DateTime( $date );
 			$key   = $dt->format( 'Y-m' );
@@ -207,13 +228,17 @@ function tc_events_render_grouped_inline( array $posts, array $atts ): void {
 		'10' => 'Oktober',   '11' => 'November', '12' => 'Dezember',
 	];
 
+	$today   = wp_date( 'Y-m-d' );
 	$columns = max( 1, (int) ( $atts['columns'] ?? 3 ) );
 	$groups  = [];
 
 	foreach ( $posts as $post ) {
-		$first = tc_get_first_event_date( $post->ID );
-		$date  = $first['date_start'] ?? '';
+		$fields    = get_fields( $post->ID ) ?: [];
+		$all_dates = $fields['event_dates'] ?? [];
+		$result    = tc_get_primary_date_entry( $all_dates, $today );
+		$date      = $result['entry']['date_start'] ?? '';
 		if ( ! $date ) continue;
+
 		try {
 			$dt    = new DateTime( $date );
 			$key   = $dt->format( 'Y-m' );
@@ -222,6 +247,7 @@ function tc_events_render_grouped_inline( array $posts, array $atts ): void {
 		} catch ( Exception $e ) {
 			continue;
 		}
+
 		if ( ! isset( $groups[ $key ] ) ) {
 			$groups[ $key ] = [ 'label' => $label, 'posts' => [] ];
 		}
@@ -258,32 +284,53 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	$layout        = $atts['layout'] ?? 'grid';
 
 	// ── ACF fields ────────────────────────────────────────────────────────
-	$fields     = get_fields( $post->ID ) ?: [];
-	$event_type = $fields['event_type']         ?? '';
-	$location   = $fields['location']           ?? '';
-	$trainer    = $fields['event_host']         ?? '';
-	$price_raw  = $fields['event_price']        ?? '';
-	$price_type_ev = $fields['event_price_type'] ?? 'fixed';
-	$on_request = ( $price_type_ev === 'request' );
-	$track_p    = ! empty( $fields['registration_limit'] );
-	$max_p      = (int) ( $fields['max_participants'] ?? 0 );
+	$fields        = get_fields( $post->ID ) ?: [];
+	$event_type    = $fields['event_type']          ?? '';
+	$location      = $fields['location']            ?? '';
+	$trainer       = $fields['event_host']          ?? '';
+	$price_type_ev = $fields['event_price_type']    ?? 'fixed';
+	$on_request    = ( $price_type_ev === 'request' );
+	$track_p       = ! empty( $fields['registration_limit'] );
+	$max_p         = (int) ( $fields['max_participants'] ?? 0 );
 
-	// Datum / Zeit aus erstem Repeater-Eintrag
-	$first_date       = tc_get_first_event_date( $post->ID );
-	$start_date       = $first_date['date_start'] ?? '';
-	$start_time       = $first_date['time_start'] ?? '';
-	$end_time         = $first_date['time_end']   ?? '';
-	$first_date_title = $first_date['title']      ?? '';
+	// ── Dates: collect upcoming, sort ascending, limit to 4 visible ───────
+	// Recurring events (event_date_type === 'recurring') have no event_dates
+	// repeater and are already filtered out in the main query loop.
+	$today_str = wp_date( 'Y-m-d' );
+	$all_dates = $fields['event_dates'] ?? [];
 
-	// ── Capacity check ─────────────────────────────────────────────────────
+	$upcoming = [];
+	foreach ( $all_dates as $ed ) {
+		if ( ! empty( $ed['date_start'] ) && $ed['date_start'] >= $today_str ) {
+			$upcoming[] = $ed;
+		}
+	}
+	usort( $upcoming, fn( $a, $b ) => strcmp( $a['date_start'], $b['date_start'] ) );
+
+	// Fallback: no upcoming dates → show the last past date so the card remains visible
+	if ( empty( $upcoming ) && ! empty( $all_dates ) ) {
+		$upcoming = [ $all_dates[ count( $all_dates ) - 1 ] ];
+	}
+
+	$extra_count   = max( 0, count( $upcoming ) - 4 );
+	$display_dates = array_slice( $upcoming, 0, 4 );
+	$primary       = $display_dates[0] ?? []; // first upcoming date drives price/seats
+
+	// ── Price: per-date override, falls back to global post field ─────────
+	$price_raw = $primary['price'] ?? $fields['event_price'] ?? '';
+
+	// ── Capacity check — per-date seats override global max ───────────────
+	$per_date_seats = (int) ( $primary['seats'] ?? 0 );
+	$effective_max  = $per_date_seats ?: $max_p;
+
 	$is_full = false;
-	if ( $track_p && $max_p > 0 ) {
+	if ( $track_p && $effective_max > 0 ) {
 		$cur_p = (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations
 			 WHERE event_id = %d AND status IN ('pending','confirmed')",
 			$post->ID
 		) );
-		$is_full = $cur_p >= $max_p;
+		$is_full = $cur_p >= $effective_max;
 	}
 
 	// ── Category data ──────────────────────────────────────────────────────
@@ -364,40 +411,36 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 		}
 	}
 
-	// ── Meta list ──────────────────────────────────────────────────────────
-	$has_meta = $show_date || $show_time || $show_location || $show_trainer || $show_price;
+	// ── Inline date list — all upcoming dates, max 4, no toggle ───────────
+	if ( $show_date && ! empty( $display_dates ) ) {
+		$is_single = count( $display_dates ) === 1 && $extra_count === 0;
+		echo '<ul class="tc-dates-list' . ( $is_single ? ' tc-dates-list--single' : '' ) . '">';
+		foreach ( $display_dates as $i => $ed ) {
+			$date_label = tc_events_format_date( $ed['date_start'] );
+			$time_label = '';
+			if ( $show_time && ! empty( $ed['time_start'] ) ) {
+				$t_start    = substr( $ed['time_start'], 0, 5 );
+				$time_label = ! empty( $ed['time_end'] )
+					? ' · ' . $t_start . ' – ' . substr( $ed['time_end'], 0, 5 ) . ' Uhr'
+					: ' · ' . $t_start . ' Uhr';
+			}
+			$item_class = $i > 0 ? ' tc-dates-list__item--muted' : '';
+			echo '<li class="tc-dates-list__item' . $item_class . '">'
+				. esc_html( $date_label . $time_label )
+				. '</li>';
+		}
+		echo '</ul>';
+
+		if ( $extra_count > 0 ) {
+			echo '<p class="tc-dates-list__more">+' . $extra_count . ' weitere Termine</p>';
+		}
+	}
+
+	// ── Meta list (location, trainer, price only) ──────────────────────────
+	$has_meta = $show_location || $show_trainer || $show_price;
 
 	if ( $has_meta ) {
 		echo '<ul class="tc-events-meta">';
-
-		// Date (and optionally time)
-		if ( $show_date && $start_date ) {
-			$time_str = '';
-			if ( $show_time && $start_time ) {
-				$t_start  = esc_html( substr( $start_time, 0, 5 ) );
-				$time_str = $end_time
-					? ' · ' . $t_start . '–' . esc_html( substr( $end_time, 0, 5 ) ) . ' Uhr'
-					: ' · ' . $t_start . ' Uhr';
-			}
-			echo '<li class="tc-events-meta-item tc-events-meta--date">';
-			echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">'
-				. '<path d="M11 1v1H5V1H4v1H2.5A1.5 1.5 0 0 0 1 3.5v9A1.5 1.5 0 0 0 2.5 14h11'
-				. 'a1.5 1.5 0 0 0 1.5-1.5v-9A1.5 1.5 0 0 0 13.5 2H12V1h-1zm1 2h1.5a.5.5 0 0 1'
-				. ' .5.5V5H2V3.5a.5.5 0 0 1 .5-.5H4v1h1V3h6v1h1V3zM2 6h12v6.5a.5.5 0 0 1-.5.5'
-				. 'h-11a.5.5 0 0 1-.5-.5V6z"/></svg>';
-			echo '<span>' . esc_html( tc_events_format_date( $start_date ) ) . $time_str . '</span>';
-			if ( $first_date_title ) {
-				echo '<span class="tc-evlist-date-title">' . esc_html( $first_date_title ) . '</span>';
-			}
-			echo '</li>';
-		} elseif ( $show_time && $start_time ) {
-			echo '<li class="tc-events-meta-item tc-events-meta--date">';
-			echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">'
-				. '<path d="M8 1a7 7 0 1 0 0 14A7 7 0 0 0 8 1zm0 1a6 6 0 1 1 0 12A6 6 0 0 1 8 2z'
-				. 'M7.5 4.5h1v4.25l3.25 1.87-.5.87L7.5 9.28V4.5z"/></svg>';
-			echo '<span>' . esc_html( substr( $start_time, 0, 5 ) ) . ' Uhr</span>';
-			echo '</li>';
-		}
 
 		// Location
 		if ( $show_location && $location ) {
@@ -455,6 +498,23 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 
 	echo '</div>'; // .tc-events-card-body
 	echo '</article>';
+}
+
+// ── Helper: primary date entry ────────────────────────────────────────────
+// Returns ['entry' => row_array, 'idx' => int].
+// Picks the next upcoming date; falls back to the last entry if all are past.
+// Used by grouping functions to determine sort month.
+function tc_get_primary_date_entry( array $all_dates, string $today ): array {
+	foreach ( $all_dates as $i => $ed ) {
+		if ( ! empty( $ed['date_start'] ) && $ed['date_start'] >= $today ) {
+			return [ 'entry' => $ed, 'idx' => $i ];
+		}
+	}
+	if ( ! empty( $all_dates ) ) {
+		$last = count( $all_dates ) - 1;
+		return [ 'entry' => $all_dates[ $last ], 'idx' => $last ];
+	}
+	return [ 'entry' => [], 'idx' => -1 ];
 }
 
 // ── Helper: German date format ─────────────────────────────────────────────

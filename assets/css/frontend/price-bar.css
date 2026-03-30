@@ -1,9 +1,16 @@
 /*
  * Time Calendar – Price Bar
- * Alle Farben über var(--tc-*) aus design-system.css.
+ * All colors via var(--tc-*) from design-system.css.
+ *
+ * Layout variants (set on .tc-price-bar-info):
+ *   .tc-price-bar--fixed    – numeric price with label
+ *   .tc-price-bar--action   – modifier on --fixed: struck original + action price
+ *   .tc-price-bar--free     – free text, no label
+ *   .tc-price-bar--request  – request text, no label
+ *   .tc-price-bar--full     – sold-out state
  */
 
-/* ─── Price Bar ───────────────────────────────────────────────── */
+/* ─── Bar ─────────────────────────────────────────────────────── */
 .tc-price-bar {
   position: fixed;
   bottom: 0;
@@ -29,101 +36,96 @@
   gap: 20px;
 }
 
-/* ─── Info-Bereich ────────────────────────────────────────────── */
+/* ─── Info area ───────────────────────────────────────────────── */
 .tc-price-bar-info {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   flex-wrap: wrap;
 }
 
+/* ─── Fixed variant — label ───────────────────────────────────── */
 .tc-price-bar-label {
-  font-size: 14px;
+  font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: .06em;
   color: var(--tc-text-muted);
+  flex-shrink: 0;
 }
 
-/* Early Bird Badge — Grün bleibt immer */
-.tc-price-bar-badge {
-  display: inline-block;
-  background: #a4d61f;
-  color: #1a2e00;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  padding: 3px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
-/* Preis */
+/* ─── Fixed variant — amount ──────────────────────────────────── */
 .tc-price-bar-amount {
   font-size: 2.2rem;
   font-weight: 800;
   color: var(--tc-text);
   line-height: 1;
   white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
 }
 
-.tc-price-bar-amount--early {
-  color: #5a7a00;
-}
-
-.tc-price-bar-amount--request {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--tc-text-muted);
-}
-
-.tc-price-bar-label--full {
-  color: var(--tc-danger);
-  font-size: 16px;
-}
-
-.tc-price-bar-amount--full {
-  font-size: 1.1rem;
-  font-weight: 700;
-  color: var(--tc-danger) !important;
-}
-
-/* Kein Preis – Teaser-Text */
-.tc-price-bar-teaser {
-  font-size: 16px;
-  color: var(--tc-text-muted);
-  max-width: 420px;
-  line-height: 1.5;
-}
-
-.tc-price-bar-teaser strong {
-  display: block;
-  color: #90c012;
-  font-weight: 600;
-  font-size: 22px;
-  margin-bottom: 2px;
-}
-
-.tc-price-bar-amount span {
-  font-size: 14px;
+/* Period text (small, sits next to the amount) */
+.tc-price-bar-period {
+  font-size: 13px;
   font-weight: 400;
-  color: var(--tc-text-subtle);
-  margin-left: 4px;
+  color: var(--tc-text-muted);
 }
 
-/* Deadline-Hinweis */
-.tc-price-bar-deadline {
-  font-size: 14px;
+/* ─── Action price variant ────────────────────────────────────── */
+.tc-price-bar-price-group {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+/* Struck-through original price */
+.tc-price-bar-original {
+  text-decoration: line-through;
+  font-size: 1.1rem;
+  font-weight: 400;
   color: var(--tc-text-muted);
   white-space: nowrap;
 }
 
-.tc-price-bar-deadline strong {
+/* Action price — accent color, slightly larger than base amount */
+.tc-price-bar-action-amount {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: var(--tc-primary);
+  line-height: 1;
+  white-space: nowrap;
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+/* ─── Free & request variants ────────────────────────────────── */
+.tc-price-bar-free-text,
+.tc-price-bar-request-text {
+  font-size: 1.3rem;
+  font-weight: 500;
   color: var(--tc-text);
 }
 
-/* ─── CTA-Button ──────────────────────────────────────────────── */
+/* ─── Full (sold-out) state ───────────────────────────────────── */
+.tc-price-bar-full-label {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--tc-danger);
+}
+
+.tc-price-bar-full-sub {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--tc-danger);
+}
+
+/* ─── CTA Button ──────────────────────────────────────────────── */
 .tc-price-bar-btn {
   display: inline-block;
   flex-shrink: 0;
@@ -143,15 +145,10 @@
   color: #fff;
 }
 
-/* Early Bird Variante – behält grün */
-.tc-price-bar-btn--early {
-  background: #a4d61f;
-  color: #1a2e00;
-}
-
-.tc-price-bar-btn--early:hover {
-  background: #90c012;
-  color: #1a2e00;
+.tc-price-bar-btn--disabled {
+  pointer-events: none;
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 /* ─── Responsive ──────────────────────────────────────────────── */
@@ -162,16 +159,12 @@
 
   .tc-price-bar-inner {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 12px;
   }
 
   .tc-price-bar-btn {
     width: 100%;
     text-align: center;
-  }
-
-  .tc-price-bar-deadline {
-    white-space: normal;
   }
 }
