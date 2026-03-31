@@ -2,16 +2,16 @@
  * Time Calendar – Price Bar
  * All colors via var(--tc-*) from design-system.css.
  *
- * Layout variants (set on .tc-price-bar-info):
- *   .tc-price-bar--fixed    – numeric price with label
- *   .tc-price-bar--action   – modifier on --fixed: struck original + action price
+ * Variant classes (set on .tc-price-bar):
+ *   .tc-price-bar--fixed    – numeric price, amount + period
+ *   .tc-price-bar--action   – modifier on --fixed: badge + struck original + action price
  *   .tc-price-bar--free     – free text, no label
- *   .tc-price-bar--request  – request text, no label
- *   .tc-price-bar--full     – sold-out state
+ *   .tc-price-bar--request  – request text, outline button
+ *   .tc-price-bar--full     – sold-out state, overrides all price variants
  */
 
-/* ─── Bar ─────────────────────────────────────────────────────── */
-.tc-price-bar {
+/* ─── Sticky outer wrapper ────────────────────────────────────── */
+.tc-price-bar-wrapper {
   position: fixed;
   bottom: 0;
   left: 0;
@@ -23,95 +23,89 @@
   padding: 14px 24px;
 }
 
-.tc-dark .tc-price-bar {
+.tc-dark .tc-price-bar-wrapper {
   box-shadow: 0 -4px 24px rgba(0, 0, 0, .35);
 }
 
-.tc-price-bar-inner {
+/* ─── Inner flex container ────────────────────────────────────── */
+.tc-price-bar {
   max-width: 1000px;
   margin: 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 20px;
+  gap: 24px;
 }
 
-/* ─── Info area ───────────────────────────────────────────────── */
-.tc-price-bar-info {
+/* ─── Left column ─────────────────────────────────────────────── */
+.tc-price-bar__left {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 2px;
 }
 
-/* ─── Fixed variant — label ───────────────────────────────────── */
-.tc-price-bar-label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: .06em;
-  color: var(--tc-text-muted);
-  flex-shrink: 0;
+/* ─── Action badge ────────────────────────────────────────────── */
+.tc-price-bar__badge {
+  background: var(--tc-primary);
+  color: #fff;
+  font-size: 0.7rem;
+  font-weight: 500;
+  padding: 2px 8px;
+  border-radius: 4px;
+  align-self: flex-start;
+  margin-bottom: 4px;
 }
 
-/* ─── Fixed variant — amount ──────────────────────────────────── */
-.tc-price-bar-amount {
-  font-size: 2.2rem;
-  font-weight: 800;
-  color: var(--tc-text);
-  line-height: 1;
-  white-space: nowrap;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
-}
-
-/* Period text (small, sits next to the amount) */
-.tc-price-bar-period {
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--tc-text-muted);
-}
-
-/* ─── Action price variant ────────────────────────────────────── */
-.tc-price-bar-price-group {
+/* ─── Price row (amount + period, optionally with struck original) */
+.tc-price-bar__prices {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
-/* Struck-through original price */
-.tc-price-bar-original {
-  text-decoration: line-through;
-  font-size: 1.1rem;
-  font-weight: 400;
-  color: var(--tc-text-muted);
-  white-space: nowrap;
-}
-
-/* Action price — accent color, slightly larger than base amount */
-.tc-price-bar-action-amount {
-  font-size: 2.4rem;
-  font-weight: 800;
-  color: var(--tc-primary);
+.tc-price-bar__amount {
+  font-size: 1.7rem;
+  font-weight: 700;
+  color: var(--tc-text);
   line-height: 1;
   white-space: nowrap;
-  display: flex;
-  align-items: baseline;
-  gap: 6px;
 }
 
-/* ─── Free & request variants ────────────────────────────────── */
-.tc-price-bar-free-text,
-.tc-price-bar-request-text {
-  font-size: 1.3rem;
+.tc-price-bar__amount--accent {
+  color: var(--tc-primary);
+}
+
+/* Struck-through original price (action variant) */
+.tc-price-bar__strike {
+  font-size: 0.9rem;
+  font-weight: 400;
+  color: var(--tc-text-muted);
+  text-decoration: line-through;
+  white-space: nowrap;
+}
+
+/* Period suffix: "einmalig", "/ Monat", "/ Jahr" */
+.tc-price-bar__period {
+  font-size: 0.8rem;
+  color: var(--tc-text-muted);
+}
+
+/* Action price deadline */
+.tc-price-bar__deadline {
+  font-size: 0.7rem;
+  color: var(--tc-text);
+}
+
+/* ─── Free & request text ─────────────────────────────────────── */
+.tc-price-bar__free-text,
+.tc-price-bar__request-text {
+  font-size: 1.25rem;
   font-weight: 500;
   color: var(--tc-text);
 }
 
-/* ─── Full (sold-out) state ───────────────────────────────────── */
-.tc-price-bar-full-label {
+/* ─── Sold-out (full) state ───────────────────────────────────── */
+.tc-price-bar__full-label {
   font-size: 16px;
   font-weight: 600;
   text-transform: uppercase;
@@ -119,51 +113,66 @@
   color: var(--tc-danger);
 }
 
-.tc-price-bar-full-sub {
+.tc-price-bar__full-sub {
   font-size: 1.05rem;
   font-weight: 500;
   color: var(--tc-danger);
 }
 
 /* ─── CTA Button ──────────────────────────────────────────────── */
-.tc-price-bar-btn {
+.tc-price-bar__btn {
   display: inline-block;
   flex-shrink: 0;
-  padding: 13px 28px;
   background: var(--tc-primary);
   color: #fff;
-  font-size: 15px;
-  font-weight: 700;
-  border-radius: 8px;
-  text-decoration: none;
-  transition: background .2s;
+  border: none;
+  border-radius: var(--tc-border-radius, 6px);
+  padding: 10px 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
   white-space: nowrap;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background .2s, color .2s;
 }
 
-.tc-price-bar-btn:hover {
+.tc-price-bar__btn:hover {
   background: var(--tc-primary-dark);
   color: #fff;
 }
 
-.tc-price-bar-btn--disabled {
+/* Outline variant for "request" type */
+.tc-price-bar__btn--outline {
+  background: transparent;
+  color: var(--tc-text);
+  border: 1px solid var(--tc-border);
+}
+
+.tc-price-bar__btn--outline:hover {
+  background: var(--tc-bg-muted, rgba(0, 0, 0, .04));
+  color: var(--tc-text);
+}
+
+/* Disabled state for sold-out */
+.tc-price-bar__btn--disabled {
   pointer-events: none;
   opacity: .5;
   cursor: not-allowed;
 }
 
 /* ─── Responsive ──────────────────────────────────────────────── */
-@media (max-width: 640px) {
-  .tc-price-bar {
+@media (max-width: 600px) {
+  .tc-price-bar-wrapper {
     padding: 12px 16px;
   }
 
-  .tc-price-bar-inner {
+  .tc-price-bar {
     flex-direction: column;
     align-items: stretch;
     gap: 12px;
   }
 
-  .tc-price-bar-btn {
+  .tc-price-bar__btn {
     width: 100%;
     text-align: center;
   }
