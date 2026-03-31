@@ -216,19 +216,7 @@ time-calendar/
 
 ---
 
-## Changelog
-
-### 3.4.0
-
-- New `[time_event_info]` shortcode (bar & cards layouts)
-- Shortcode presets for `[time_events]` (configurable in Settings)
-- `tc_get_setting()` static cache for performance
-- `get_fields()` batch loading in AJAX handler
-- `registration.php` split into 3 focused files
-- `calendar-frontend.js` reorganized into named modules
-- Removed legacy migration files
-
-See [CHANGELOG.md](./CHANGELOG.md) for full history.
+### 3.4.4
 
 ---
 
