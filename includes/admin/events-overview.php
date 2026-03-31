@@ -73,7 +73,6 @@ function tc_render_events_overview_page() {
                 <tr>
                     <th>Event</th>
                     <th>Typ</th>
-                    <th>Datum</th>
                     <th>Ort</th>
                     <th style="text-align:center;">Anmeldungen</th>
                     <th style="text-align:center;">Kapazität</th>
@@ -182,7 +181,6 @@ function tc_render_events_overview_page() {
                             <?php echo esc_html( $cat_name ); ?>
                         </span>
                     </td>
-                    <td style="font-size:13px;"><?php echo esc_html( $date_str ); ?></td>
                     <td style="font-size:13px;max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;" title="<?php echo esc_attr( $location ); ?>">
                         <?php echo esc_html( $location ); ?>
                     </td>

@@ -130,8 +130,9 @@ add_action( 'acf/include_fields', function () {
                 'key'   => 'field_tc_location',
                 'label' => 'Ort',
                 'name'  => 'location',
-                'type'  => 'wysiwyg',
-                'tabs'  => 'all',
+                'type'  => 'textarea',
+                'rows'      => 4,
+                'new_lines' => 'wpautop',
             ),
 
             // ── TAB: Termine (konsolidiert) ────────────────
