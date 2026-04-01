@@ -117,6 +117,7 @@ add_action( 'admin_init', function () {
             'label_more_dates'               => '+{n} weitere Termine',
             'label_next_date'                => 'Nächster Termin',
             'label_no_upcoming_dates'        => 'Aktuell sind keine Termine verfügbar.',
+            'label_price_from'               => 'ab',
             // Anmeldeformular
             'label_form_intro'               => 'Melde dich jetzt an! Wir freuen uns auf dich.',
             'label_form_firstname'           => 'Vorname',
@@ -375,7 +376,7 @@ function tc_sanitize_settings( $input ) {
         'label_sold_out', 'label_seats_available', 'label_waitlist_badge',
         // New keys — event list
         'label_price_free', 'label_price_request', 'label_cta_learn_more', 'label_cta_register',
-        'label_no_events', 'label_more_dates', 'label_next_date', 'label_no_upcoming_dates',
+        'label_no_events', 'label_more_dates', 'label_next_date', 'label_no_upcoming_dates', 'label_price_from',
         // New keys — registration form
         'label_form_firstname', 'label_form_lastname', 'label_form_email', 'label_form_phone',
         'label_form_message', 'label_form_duplicate',
@@ -1451,6 +1452,7 @@ function tc_render_settings_page() {
                         $tc_text_row( 'Headline (Auf-Anfrage-Bereich)',       'Fett, in Primärfarbe.',                                  'label_price_bar_request_headline', 'Neugierig geworden?' );
                         $tc_text_row( 'Teaser-Text (Auf-Anfrage-Bereich)',    'Erscheint unter der Headline.',                          'label_price_bar_request_teaser',   'Melde dich jetzt an \u2013 wir freuen uns auf dich.' );
                         $tc_text_row( 'Aktionspreis – Badge-Text',            'Text des farbigen Badges über dem Aktionspreis.',        'label_action_price_badge',      'Aktionspreis' );
+                        $tc_text_row( '„ab"-Prefix',                          'Wird dem Preis vorangestellt wenn „ab"-Preis aktiv.',     'label_price_from',              'ab' );
                         ?>
 
                     </div><!-- .tc-stg-card Price-Bar -->

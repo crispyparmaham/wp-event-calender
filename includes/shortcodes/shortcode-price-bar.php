@@ -34,6 +34,8 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 
 	$price_type   = $fields['event_price_type'] ?? 'fixed';
 	$normal_price = $fields['event_price']      ?? '';
+	$price_from   = ! empty( $fields['price_from'] );
+	$price_prefix = ( $price_type === 'fixed' && $price_from ) ? tc_get_setting( 'label_price_from', 'ab' ) . ' ' : '';
 
 	// Action price (ACF group field)
 	$action_group = $fields['action_price']             ?? [];
@@ -131,7 +133,7 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 							<span class="tc-price-bar__strike"><?php echo esc_html( $normal_fmt ); ?></span>
 						<?php endif; ?>
 						<span class="tc-price-bar__amount tc-price-bar__amount--accent">
-							<?php echo esc_html( $action_fmt ); ?>
+							<?php echo esc_html( $price_prefix . $action_fmt ); ?>
 						</span>
 						<span class="tc-price-bar__period"><?php echo esc_html( $period_label ); ?></span>
 					</div>
@@ -150,7 +152,7 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 
 				<div class="tc-price-bar__left">
 					<div class="tc-price-bar__prices">
-						<span class="tc-price-bar__amount"><?php echo esc_html( $normal_fmt ); ?></span>
+						<span class="tc-price-bar__amount"><?php echo esc_html( $price_prefix . $normal_fmt ); ?></span>
 						<span class="tc-price-bar__period"><?php echo esc_html( $period_label ); ?></span>
 					</div>
 				</div>

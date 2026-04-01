@@ -410,6 +410,21 @@ add_action( 'acf/include_fields', function () {
                 ),
             ),
 
+            // "ab"-price prefix — only visible for fixed price type
+            array(
+                'key'           => 'field_tc_price_from',
+                'label'         => 'Preis als „ab"-Preis anzeigen',
+                'name'          => 'price_from',
+                'type'          => 'true_false',
+                'default_value' => 0,
+                'instructions'  => 'Aktivieren um dem Preis „ab" voranzustellen (z.B. ab 99 €).',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_event_price_type',
+                    'operator' => '==',
+                    'value'    => 'fixed',
+                ) ) ),
+            ),
+
         ),
         'location' => array( array( array(
             'param'    => 'post_type',

@@ -65,6 +65,7 @@ function tc_time_event_info_shortcode( $atts ): string {
     $time_str      = '';
     $date_html     = ''; // overridden for multi-date accordion
     $is_multi_date = false;
+    $all_past      = false;
 
     if ( $date_type === 'recurring' ) {
         $weekdays = array( 'Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag' );
@@ -199,7 +200,10 @@ function tc_time_event_info_shortcode( $atts ): string {
         $items[] = array( 'icon' => "\xF0\x9F\x95\x90", 'label' => 'Uhrzeit', 'value' => $time_str, 'class' => '', 'html' => '' );
     }
     if ( $show_location && $location ) {
-        $items[] = array( 'icon' => "\xF0\x9F\x93\x8D", 'label' => 'Ort', 'value' => $location, 'class' => '', 'html' => '' );
+        $maps_url      = 'https://maps.google.com/?q=' . urlencode( $location );
+        $location_html = '<span class="tc-event-info-value"><a href="' . esc_url( $maps_url )
+            . '" target="_blank" rel="noopener noreferrer">' . esc_html( $location ) . '</a></span>';
+        $items[] = array( 'icon' => "\xF0\x9F\x93\x8D", 'label' => 'Ort', 'value' => '', 'class' => '', 'html' => $location_html );
     }
     if ( $show_host && $host ) {
         $items[] = array( 'icon' => "\xF0\x9F\x91\xA4", 'label' => 'Leitung', 'value' => $host, 'class' => '', 'html' => '' );

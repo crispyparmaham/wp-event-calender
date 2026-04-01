@@ -290,6 +290,7 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	$trainer       = $fields['event_host']          ?? '';
 	$price_type_ev = $fields['event_price_type']    ?? 'fixed';
 	$on_request    = ( $price_type_ev === 'request' );
+	$price_from    = ! empty( $fields['price_from'] );
 	$track_p       = ! empty( $fields['registration_limit'] );
 	$max_p         = (int) ( $fields['max_participants'] ?? 0 );
 
@@ -457,13 +458,15 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	if ( $has_meta ) {
 		echo '<ul class="tc-events-meta">';
 
-		// Location
+		// Location — linked to Google Maps
 		if ( $show_location && $location ) {
+			$maps_url = 'https://maps.google.com/?q=' . urlencode( wp_strip_all_tags( $location ) );
 			echo '<li class="tc-events-meta-item tc-events-meta--location">';
 			echo '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" aria-hidden="true">'
 				. '<path d="M8 1a5 5 0 0 0-5 5c0 3.5 5 9 5 9s5-5.5 5-9a5 5 0 0 0-5-5zm0 7a2 2 0 1'
 				. ' 1 0-4 2 2 0 0 1 0 4z"/></svg>';
-			echo '<span>' . esc_html( wp_strip_all_tags( $location ) ) . '</span>';
+			echo '<a href="' . esc_url( $maps_url ) . '" target="_blank" rel="noopener noreferrer">'
+				. esc_html( wp_strip_all_tags( $location ) ) . '</a>';
 			echo '</li>';
 		}
 
@@ -500,7 +503,8 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 					. '</li>';
 			} elseif ( $price_raw !== '' && $price_raw !== false ) {
 				$period_suffix = tc_price_period_suffix( $post->ID );
-				$price_fmt     = number_format( (float) $price_raw, 2, ',', '.' ) . ' €' . $period_suffix;
+				$price_prefix  = $price_from ? tc_get_setting( 'label_price_from', 'ab' ) . ' ' : '';
+				$price_fmt     = $price_prefix . number_format( (float) $price_raw, 2, ',', '.' ) . ' €' . $period_suffix;
 				echo '<li class="tc-events-meta-item tc-events-meta--price">'
 					. $price_icon
 					. '<span>' . esc_html( $price_fmt ) . '</span>'

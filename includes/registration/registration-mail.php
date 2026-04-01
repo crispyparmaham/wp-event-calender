@@ -32,6 +32,22 @@ function tc_resolve_placeholders( string $text, array $data, int $event_id = 0, 
         ? esc_url( add_query_arg( 'tc_cancel', $data['cancel_token'], home_url( '/' ) ) )
         : '';
 
+    // Resolve {{event_price}} — plain text, includes "ab" prefix when price_from is active
+    $mail_price = '';
+    if ( $event_id ) {
+        $ev_fields    = get_fields( $event_id ) ?: [];
+        $ev_type      = $ev_fields['event_price_type'] ?? 'fixed';
+        $ev_price_raw = $ev_fields['event_price']      ?? '';
+        if ( $ev_type === 'fixed' && $ev_price_raw !== '' && $ev_price_raw !== false ) {
+            $ev_prefix  = ! empty( $ev_fields['price_from'] ) ? tc_get_setting( 'label_price_from', 'ab' ) . ' ' : '';
+            $mail_price = $ev_prefix . number_format( (float) $ev_price_raw, 2, ',', '.' ) . ' €';
+        } elseif ( $ev_type === 'free' ) {
+            $mail_price = tc_get_setting( 'label_price_free', 'Kostenlos' );
+        } elseif ( $ev_type === 'request' ) {
+            $mail_price = tc_get_setting( 'label_price_request', 'Auf Anfrage' );
+        }
+    }
+
     $pairs = array(
         '{{anrede}}'           => esc_html( $anrede_vals['anrede'] ),
         '{{anrede_possessiv}}' => esc_html( $anrede_vals['anrede_possessiv'] ),
@@ -43,6 +59,7 @@ function tc_resolve_placeholders( string $text, array $data, int $event_id = 0, 
         '{{event_title}}'      => esc_html( $info['title'] ),
         '{{event_date}}'       => esc_html( $info['date'] ),
         '{{event_location}}'   => esc_html( $info['location'] ),
+        '{{event_price}}'      => esc_html( $mail_price ),
         '{{storno_url}}'       => $storno_url,
         '{{blogname}}'         => esc_html( get_option( 'blogname' ) ),
     );
