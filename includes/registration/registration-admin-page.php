@@ -68,6 +68,70 @@ function tc_render_registrations_page() {
         </a>
     </p>
 
+    <?php
+    // ── Manual registration form ──────────────────────────────────────
+    $manual_nonce   = wp_create_nonce( 'tc_manual_registration' );
+    $all_events     = get_posts( array(
+        'post_type'      => 'time_event',
+        'post_status'    => 'publish',
+        'posts_per_page' => -1,
+        'orderby'        => 'title',
+        'order'          => 'ASC',
+    ) );
+    ?>
+    <p>
+        <button type="button" id="tc-manual-reg-toggle" class="button">＋ Anmeldung manuell anlegen</button>
+    </p>
+
+    <div id="tc-manual-reg-form" style="display:none;">
+        <h3>Neue Anmeldung manuell anlegen</h3>
+        <form id="tc-manual-form">
+            <input type="hidden" id="tc_manual_nonce" value="<?php echo esc_attr( $manual_nonce ); ?>">
+            <div class="tc-mf-grid">
+                <div class="tc-mf-row">
+                    <label for="tc-mf-firstname">Vorname <span style="color:red">*</span></label>
+                    <input type="text" id="tc-mf-firstname" name="firstname" required>
+                </div>
+                <div class="tc-mf-row">
+                    <label for="tc-mf-lastname">Nachname <span style="color:red">*</span></label>
+                    <input type="text" id="tc-mf-lastname" name="lastname" required>
+                </div>
+                <div class="tc-mf-row">
+                    <label for="tc-mf-email">E-Mail <span style="color:red">*</span></label>
+                    <input type="email" id="tc-mf-email" name="email" required>
+                </div>
+                <div class="tc-mf-row">
+                    <label for="tc-mf-phone">Telefon</label>
+                    <input type="text" id="tc-mf-phone" name="phone">
+                </div>
+                <div class="tc-mf-row full">
+                    <label for="tc-manual-event">Veranstaltung <span style="color:red">*</span></label>
+                    <select id="tc-manual-event" name="event_id" required>
+                        <option value="">– Event wählen –</option>
+                        <?php foreach ( $all_events as $ev ) : ?>
+                            <option value="<?php echo esc_attr( $ev->ID ); ?>"><?php echo esc_html( $ev->post_title ); ?></option>
+                        <?php endforeach; ?>
+                    </select>
+                </div>
+                <div class="tc-mf-row full" id="tc-date-field-wrap" style="display:none;">
+                    <label id="tc-date-field-label">Termin-Datum <span style="color:red">*</span></label>
+                    <div id="tc-date-field-inner">
+                        <!-- populated by JS -->
+                    </div>
+                </div>
+                <div class="tc-mf-row full">
+                    <label for="tc-mf-notes">Notiz</label>
+                    <textarea id="tc-mf-notes" name="notes"></textarea>
+                </div>
+            </div>
+            <div class="tc-mf-footer">
+                <button type="submit" class="button button-primary tc-mf-submit">Speichern</button>
+                <button type="button" id="tc-manual-reg-cancel" class="button">Abbrechen</button>
+                <span id="tc-manual-msg" style="display:none;"></span>
+            </div>
+        </form>
+    </div>
+
     <?php if ( empty( $registrations ) ) : ?>
             <p>Keine Anmeldungen vorhanden.</p>
         <?php else : ?>
@@ -81,6 +145,7 @@ function tc_render_registrations_page() {
                     <th>Datum</th>
                     <th>Status</th>
                     <th>Angemeldet am</th>
+                    <th>Quelle</th>
                     <th>Aktionen</th>
                 </tr>
             </thead>
@@ -128,6 +193,16 @@ function tc_render_registrations_page() {
                         </span>
                     </td>
                     <td><?php echo esc_html( date_i18n( 'd.m.Y H:i', $reg['created_at'] ) ); ?></td>
+                    <td>
+                        <?php
+                        $source       = $reg['source'] ?? 'form';
+                        $source_label = $source === 'manual' ? 'Manuell' : 'Formular';
+                        $source_class = $source === 'manual' ? 'tc-source-manual' : 'tc-source-form';
+                        ?>
+                        <span class="tc-status-badge <?php echo esc_attr( $source_class ); ?>">
+                            <?php echo esc_html( $source_label ); ?>
+                        </span>
+                    </td>
                     <td class="tc-action-btns">
                         <?php if ( $status !== 'confirmed' ) : ?>
                             <button class="tc-btn-confirm button button-small"
@@ -181,6 +256,111 @@ function tc_render_registrations_page() {
                 } else {
                     alert(res.data || 'Fehler.');
                     $btn.prop('disabled', false).text('✓');
+                }
+            });
+        });
+
+        // ── Manual registration form ──────────────────────────────
+        var currentDateType = '';
+
+        $('#tc-manual-reg-toggle').on('click', function() {
+            var $form = $('#tc-manual-reg-form');
+            var visible = $form.is(':visible');
+            $form.slideToggle(150);
+            $(this).text(visible ? '＋ Anmeldung manuell anlegen' : '✕ Formular schließen');
+        });
+
+        $('#tc-manual-reg-cancel').on('click', function() {
+            $('#tc-manual-reg-form').slideUp(150);
+            $('#tc-manual-reg-toggle').text('＋ Anmeldung manuell anlegen');
+        });
+
+        $('#tc-manual-event').on('change', function() {
+            var eventId = $(this).val();
+            var $wrap   = $('#tc-date-field-wrap');
+            var $inner  = $('#tc-date-field-inner');
+            var $label  = $('#tc-date-field-label');
+
+            $wrap.hide();
+            $inner.empty();
+            currentDateType = '';
+            if (!eventId) return;
+
+            $.post(ajaxurl, {
+                action:   'tc_get_event_date_info',
+                event_id: eventId,
+                nonce:    $('#tc_manual_nonce').val()
+            }, function(res) {
+                if (!res.success) return;
+                var data = res.data;
+                currentDateType = data.type;
+
+                if (data.type === 'recurring') {
+                    $label.html('Termin');
+                    $inner.html('<p style="margin:4px 0;color:#6b7280;font-size:13px;">Wiederkehrender Kurs — kein spezifischer Termin erforderlich.</p>');
+                } else {
+                    $label.html('Termin-Datum <span style="color:red">*</span>');
+                    var $sel = $('<select id="tc-date-select" name="event_date" required>').append(
+                        $('<option>', { value: '', text: '– Datum wählen –' })
+                    );
+                    if (data.dates && data.dates.length) {
+                        $.each(data.dates, function(i, item) {
+                            $sel.append($('<option>').val(item.value).text(item.label));
+                        });
+                    } else {
+                        $sel.append($('<option>', { value: '', disabled: true, text: 'Keine Termine gefunden' }));
+                    }
+                    $inner.append($sel);
+                }
+                $wrap.show();
+            });
+        });
+
+        $('#tc-manual-form').on('submit', function(e) {
+            e.preventDefault();
+            var $form   = $(this);
+            var $submit = $form.find('.tc-mf-submit');
+            var $msg    = $('#tc-manual-msg');
+
+            var firstname  = $form.find('[name=firstname]').val().trim();
+            var lastname   = $form.find('[name=lastname]').val().trim();
+            var email      = $form.find('[name=email]').val().trim();
+            var event_id   = $form.find('[name=event_id]').val();
+            var event_date = currentDateType === 'recurring' ? '' : ($form.find('[name=event_date]').val() || '');
+
+            if (!firstname || !lastname || !email || !event_id) {
+                $msg.text('Bitte alle Pflichtfelder ausfüllen.').css('color', '#dc2626').show();
+                return;
+            }
+            if (currentDateType !== 'recurring' && !event_date) {
+                $msg.text('Bitte einen Termin auswählen.').css('color', '#dc2626').show();
+                return;
+            }
+
+            $submit.prop('disabled', true).text('Speichern…');
+            $msg.hide();
+
+            $.post(ajaxurl, {
+                action:     'tc_save_manual_registration',
+                nonce:      $('#tc_manual_nonce').val(),
+                firstname:  firstname,
+                lastname:   lastname,
+                email:      email,
+                phone:      $form.find('[name=phone]').val().trim(),
+                event_id:   event_id,
+                event_date: event_date,
+                notes:      $form.find('[name=notes]').val().trim()
+            }, function(res) {
+                if (res.success) {
+                    $msg.text(res.data.message || 'Gespeichert.').css('color', '#065f46').show();
+                    $form[0].reset();
+                    $('#tc-date-field-wrap').hide();
+                    $('#tc-date-field-inner').empty();
+                    currentDateType = '';
+                    setTimeout(function() { location.reload(); }, 900);
+                } else {
+                    $msg.text(res.data || 'Fehler beim Speichern.').css('color', '#dc2626').show();
+                    $submit.prop('disabled', false).text('Speichern');
                 }
             });
         });
@@ -381,5 +561,25 @@ add_action( 'admin_head', function () { ?>
             background: #dc2626; border-color: #b91c1c; color: #fff; font-weight: 700; min-width: 30px;
         }
         .tc-btn-cancel.button:hover { background: #b91c1c; color: #fff; }
+        /* Source badges */
+        .tc-source-manual { background: #fef3c7; color: #92400e; }
+        .tc-source-form   { background: #f3f4f6; color: #6b7280; }
+        /* Manual registration form */
+        #tc-manual-reg-form {
+            background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px;
+            padding: 20px 24px; margin: 12px 0 24px; max-width: 760px;
+        }
+        #tc-manual-reg-form h3 { margin: 0 0 16px; font-size: 15px; color: #111827; }
+        .tc-mf-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px 24px; }
+        .tc-mf-row { display: flex; flex-direction: column; gap: 4px; }
+        .tc-mf-row.full { grid-column: 1 / -1; }
+        .tc-mf-row label { font-size: 13px; font-weight: 600; color: #374151; }
+        .tc-mf-row input, .tc-mf-row select, .tc-mf-row textarea {
+            border: 1px solid #d1d5db; border-radius: 4px;
+            padding: 6px 10px; font-size: 13px; width: 100%; box-sizing: border-box;
+        }
+        .tc-mf-row textarea { resize: vertical; min-height: 70px; }
+        .tc-mf-footer { margin-top: 16px; display: flex; gap: 10px; align-items: center; }
+        #tc-manual-msg { font-size: 13px; font-weight: 600; }
     </style>
 <?php } );

@@ -209,3 +209,138 @@ function tc_get_event_details_ajax() {
         'is_full'               => $is_full,
     ) );
 }
+
+// ---------------------------------------------
+// AJAX (admin): Event-Typ + Termine für Terminauswahl laden
+// ---------------------------------------------
+add_action( 'wp_ajax_tc_get_event_date_info', function () {
+    check_ajax_referer( 'tc_manual_registration', 'nonce' );
+
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( 'Keine Berechtigung.' );
+    }
+
+    $event_id = absint( $_POST['event_id'] ?? 0 );
+    if ( ! $event_id || get_post_type( $event_id ) !== 'time_event' ) {
+        wp_send_json_error( 'Event nicht gefunden.' );
+    }
+
+    $fields    = get_fields( $event_id ) ?: array();
+    $date_type = $fields['event_date_type'] ?? 'single';
+
+    // Recurring — no specific date needed
+    if ( $date_type === 'recurring' ) {
+        wp_send_json_success( array( 'type' => 'recurring' ) );
+    }
+
+    // Single — build list from event_dates repeater
+    $rows   = $fields['event_dates'] ?? array();
+    $result = array();
+
+    foreach ( $rows as $row ) {
+        if ( empty( $row['date_start'] ) ) continue;
+
+        try {
+            $dt    = new DateTime( $row['date_start'] );
+            $label = $dt->format( 'd.m.Y' );
+            if ( ! empty( $row['time_start'] ) ) {
+                $label .= ', ' . substr( $row['time_start'], 0, 5 );
+                if ( ! empty( $row['time_end'] ) ) {
+                    $label .= ' – ' . substr( $row['time_end'], 0, 5 ) . ' Uhr';
+                } else {
+                    $label .= ' Uhr';
+                }
+            }
+        } catch ( Exception $e ) {
+            $label = $row['date_start'];
+        }
+
+        $result[] = array(
+            'value' => $row['date_start'],
+            'label' => $label,
+        );
+    }
+
+    wp_send_json_success( array(
+        'type'  => 'single',
+        'dates' => $result,
+    ) );
+} );
+
+// ---------------------------------------------
+// AJAX (admin): Manuelle Anmeldung speichern
+// ---------------------------------------------
+add_action( 'wp_ajax_tc_save_manual_registration', function () {
+    check_ajax_referer( 'tc_manual_registration', 'nonce' );
+
+    if ( ! current_user_can( 'manage_options' ) ) {
+        wp_send_json_error( 'Keine Berechtigung.' );
+    }
+
+    $firstname  = sanitize_text_field(     $_POST['firstname']  ?? '' );
+    $lastname   = sanitize_text_field(     $_POST['lastname']   ?? '' );
+    $email      = sanitize_email(          $_POST['email']      ?? '' );
+    $phone      = sanitize_text_field(     $_POST['phone']      ?? '' );
+    $event_id   = absint(                  $_POST['event_id']   ?? 0  );
+    $event_date = sanitize_text_field(     $_POST['event_date'] ?? '' );
+    $notes      = sanitize_textarea_field( $_POST['notes']      ?? '' );
+
+    if ( ! $firstname || ! $lastname || ! $email || ! $event_id ) {
+        wp_send_json_error( 'Bitte alle Pflichtfelder ausfüllen.' );
+    }
+
+    if ( ! is_email( $email ) ) {
+        wp_send_json_error( 'Ungültige E-Mail-Adresse.' );
+    }
+
+    if ( get_post_type( $event_id ) !== 'time_event' ) {
+        wp_send_json_error( 'Event nicht gefunden.' );
+    }
+
+    // For single events, event_date is required
+    $date_type = get_field( 'event_date_type', $event_id );
+    if ( $date_type !== 'recurring' && ! $event_date ) {
+        wp_send_json_error( 'Bitte einen Termin auswählen.' );
+    }
+
+    $cancel_token = bin2hex( random_bytes( 32 ) );
+
+    global $wpdb;
+    $table   = $wpdb->prefix . 'tc_registrations';
+    $columns = array_flip( $wpdb->get_col( "DESCRIBE {$table}" ) );
+
+    $candidate = array(
+        'event_id'     => $event_id,
+        'event_date'   => $event_date ?: null,
+        'firstname'    => $firstname,
+        'lastname'     => $lastname,
+        'email'        => $email,
+        'phone'        => $phone,
+        'notes'        => $notes,
+        'status'       => 'confirmed',
+        'source'       => 'manual',
+        'cancel_token' => $cancel_token,
+        'created_at'   => time(),
+    );
+    $int_cols = array( 'event_id', 'created_at' );
+
+    $data   = array();
+    $format = array();
+    foreach ( $candidate as $col => $val ) {
+        if ( ! isset( $columns[ $col ] ) ) continue;
+        $data[ $col ] = $val;
+        $format[]     = in_array( $col, $int_cols, true ) ? '%d' : '%s';
+    }
+
+    $inserted = $wpdb->insert( $table, $data, $format );
+
+    if ( $inserted === false ) {
+        wp_send_json_error( 'Datenbankfehler: ' . $wpdb->last_error );
+    }
+
+    wp_send_json_success( array(
+        'message' => 'Anmeldung wurde gespeichert.',
+        'id'      => $wpdb->insert_id,
+    ) );
+} );
+// No email dispatch — manual registrations are admin-only inserts.

@@ -636,10 +636,6 @@
   box-shadow: 0 0 0 2px currentColor;
 }
 
-.tc-wp-event--past {
-  opacity: 0.4 !important;
-  filter: grayscale(30%) !important;
-}
 
 .tc-wp-event-title {
   display: block;

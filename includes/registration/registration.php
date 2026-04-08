@@ -21,6 +21,7 @@ function tc_create_registrations_table() {
         event_id bigint(20) NOT NULL,
         event_date date DEFAULT NULL,
         status varchar(20) DEFAULT 'pending',
+        source varchar(50) DEFAULT 'form',
         notes longtext,
         reminder_sent tinyint(1) NOT NULL DEFAULT 0,
         cancel_token varchar(64) DEFAULT NULL,
@@ -35,6 +36,9 @@ function tc_create_registrations_table() {
 
     require_once ABSPATH . 'wp-admin/includes/upgrade.php';
     dbDelta( $sql );
+
+    // Migration for existing installs: add source column if missing
+    $wpdb->query( "ALTER TABLE {$table_name} ADD COLUMN IF NOT EXISTS `source` VARCHAR(50) DEFAULT 'form' AFTER `status`" );
 }
 
 // ---------------------------------------------
