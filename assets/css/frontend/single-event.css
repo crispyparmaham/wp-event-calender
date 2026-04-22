@@ -61,6 +61,15 @@
   margin-bottom: 12px;
   letter-spacing: .02em;
   text-transform: uppercase;
+  background: color-mix(in srgb, var(--badge-color, var(--tc-primary)) 12%, transparent);
+  color: var(--badge-color, var(--tc-primary));
+}
+
+@supports not (color: color-mix(in srgb, red 50%, blue)) {
+  .tc-se-badge {
+    background: var(--tc-primary-light);
+    color: var(--tc-primary);
+  }
 }
 
 .tc-se-badge-dot {
@@ -68,6 +77,7 @@
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
+  background: var(--badge-color, var(--tc-primary));
 }
 
 /* ── Titel ─────────────────────────────────────────────────────── */

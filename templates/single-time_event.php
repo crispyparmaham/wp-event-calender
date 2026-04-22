@@ -104,8 +104,8 @@ if ( $date_type === 'recurring' ) {
 
         <div class="tc-se-hero-content">
             <?php if ( $cat_name ) : ?>
-            <span class="tc-se-badge" style="background:<?php echo esc_attr( $cat_col . '22' ); ?>;color:<?php echo esc_attr( $cat_col ); ?>;">
-                <span class="tc-se-badge-dot" style="background:<?php echo esc_attr( $cat_col ); ?>;"></span>
+            <span class="tc-se-badge" style="--badge-color:<?php echo esc_attr( $cat_col ); ?>;">
+                <span class="tc-se-badge-dot"></span>
                 <?php echo esc_html( $cat_name ); ?>
             </span>
             <?php endif; ?>

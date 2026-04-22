@@ -209,28 +209,7 @@
 }
 
 /* ── Badge ──────────────────────────────────────────────────────────────── */
-.tc-events-badge {
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: .04em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border-radius: 4px;
-  background: color-mix(in srgb, var(--badge-color, var(--tc-primary)) 12%, transparent);
-  color: var(--badge-color, var(--tc-primary));
-  position: relative;
-  z-index: 2;
-}
-
-/* Fallback for browsers without color-mix */
-@supports not (color: color-mix(in srgb, red 50%, blue)) {
-  .tc-events-badge {
-    background: var(--tc-primary-light);
-  }
-}
+/* Styling is now provided by the shared .tc-badge class in design-system.css. */
 
 /* ── Title ──────────────────────────────────────────────────────────────── */
 .tc-events-card-title {
