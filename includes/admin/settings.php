@@ -99,6 +99,8 @@ add_action( 'admin_init', function () {
             'label_price_bar_request_teaser'   => 'Melde dich jetzt an – wir freuen uns auf dich.',
             'label_price_bar_cta_full'       => 'Ausgebucht',
             'label_price_bar_cta_request'    => 'Auf Anfrage',
+            'tc_waitlist_button_text'        => 'Auf Warteliste eintragen',
+            'tc_waitlist_button_link'        => '#anmelden',
             'label_action_price_badge'       => 'Aktionspreis',
             // Allgemeine Bezeichnungen
             'label_event_singular'           => 'Veranstaltung',
@@ -369,6 +371,7 @@ function tc_sanitize_settings( $input ) {
         'label_price_bar_full', 'label_price_bar_full_sub', 'label_price_bar_free',
         'label_price_bar_request_headline', 'label_price_bar_request_teaser', 'label_price_bar_cta_full', 'label_price_bar_cta_request',
         'label_price_bar_price_label', 'label_price_bar_request_text', 'label_price_bar_cta',
+        'tc_waitlist_button_text', 'tc_waitlist_button_link',
         'label_price_period_once', 'label_price_period_monthly', 'label_price_period_yearly',
         'label_action_price_badge',
         // New keys — general
@@ -1447,6 +1450,8 @@ function tc_render_settings_page() {
                         $tc_text_row( 'Periode „jährlich"',                   '',                                                        'label_price_period_yearly',     '/ Jahr' );
                         $tc_text_row( 'CTA-Button – Ausgebucht',              'Wenn keine Plätze verfügbar.',                           'label_price_bar_cta_full',      'Ausgebucht' );
                         $tc_text_row( 'CTA-Button – Auf Anfrage',             'Bei event_price_type = request.',                        'label_price_bar_cta_request',   'Auf Anfrage' );
+                        $tc_text_row( 'Wartelisten-Button Text',              'Button-Beschriftung wenn der Kurs voll ist.',             'tc_waitlist_button_text',       'Auf Warteliste eintragen' );
+                        $tc_text_row( 'Wartelisten-Button Link',              'Ziel-URL oder Anker des Wartelisten-Buttons.',            'tc_waitlist_button_link',       '#anmelden' );
                         $tc_text_row( 'Ausgebucht – Label',                   '',                                                        'label_price_bar_full',          'Ausgebucht' );
                         $tc_text_row( 'Ausgebucht – Untertext',               '',                                                        'label_price_bar_full_sub',      'Leider keine Plätze mehr verfügbar.' );
                         $tc_text_row( 'Headline (Auf-Anfrage-Bereich)',       'Fett, in Primärfarbe.',                                  'label_price_bar_request_headline', 'Neugierig geworden?' );

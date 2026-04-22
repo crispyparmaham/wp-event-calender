@@ -20,14 +20,24 @@ defined( 'ABSPATH' ) || exit;
 add_shortcode( 'time_price_bar', function ( $atts ) {
 
 	$atts = shortcode_atts( [
-		'post_id'   => get_the_ID(),
-		'link'      => '#anmelden',
-		'link_text' => tc_get_setting( 'label_price_bar_cta', 'Jetzt anmelden' ),
+		'post_id'            => get_the_ID(),
+		'link'               => '#anmelden',
+		'link_text'          => tc_get_setting( 'label_price_bar_cta', 'Jetzt anmelden' ),
+		'waitlist_link'      => '',
+		'waitlist_link_text' => '',
 	], $atts, 'time_price_bar' );
 
 	$post_id   = intval( $atts['post_id'] );
 	$link      = esc_url( $atts['link'] );
 	$link_text = esc_html( $atts['link_text'] );
+
+	$waitlist_link = ! empty( $atts['waitlist_link'] )
+		? esc_url( $atts['waitlist_link'] )
+		: esc_url( tc_get_setting( 'tc_waitlist_button_link', '#anmelden' ) ?: '#anmelden' );
+
+	$waitlist_text = ! empty( $atts['waitlist_link_text'] )
+		? esc_html( $atts['waitlist_link_text'] )
+		: esc_html( tc_get_setting( 'tc_waitlist_button_text', 'Auf Warteliste eintragen' ) ?: 'Auf Warteliste eintragen' );
 
 	$today  = wp_date( 'Y-m-d' );
 	$fields = get_fields( $post_id ) ?: [];
@@ -159,22 +169,24 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 
 			<?php endif; ?>
 
+			<?php if ( $is_full ) : ?>
+			<a href="<?php echo $waitlist_link; ?>" class="tc-price-bar__btn tc-price-bar__btn--waitlist">
+				<?php echo $waitlist_text; ?>
+			</a>
+			<?php else : ?>
 			<a href="<?php echo $link; ?>"
 			   class="tc-price-bar__btn<?php
-					if ( $price_type === 'request' && ! $is_full ) echo ' tc-price-bar__btn--outline';
-					if ( $is_full ) echo ' tc-price-bar__btn--disabled';
-			   ?>"
-			   <?php echo $is_full ? 'aria-disabled="true" tabindex="-1"' : ''; ?>>
+					if ( $price_type === 'request' ) echo ' tc-price-bar__btn--outline';
+			   ?>">
 				<?php
-				if ( $is_full ) :
-					echo esc_html( tc_get_setting( 'label_price_bar_cta_full', 'Ausgebucht' ) );
-				elseif ( $price_type === 'request' ) :
+				if ( $price_type === 'request' ) :
 					echo esc_html( tc_get_setting( 'label_price_bar_cta_request', 'Anfrage senden' ) );
 				else :
 					echo $link_text;
 				endif;
 				?>
 			</a>
+			<?php endif; ?>
 
 		</div><!-- /.tc-price-bar -->
 	</div><!-- /.tc-price-bar-wrapper -->

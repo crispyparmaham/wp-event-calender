@@ -7,7 +7,7 @@
  *   .tc-price-bar--action   – modifier on --fixed: badge + struck original + action price
  *   .tc-price-bar--free     – free text, no label
  *   .tc-price-bar--request  – request text, outline button
- *   .tc-price-bar--full     – sold-out state, overrides all price variants
+ *   .tc-price-bar--full     – sold-out state, shows waitlist button
  */
 
 /* ─── Sticky outer wrapper ────────────────────────────────────── */
@@ -153,11 +153,16 @@
   color: var(--tc-text);
 }
 
-/* Disabled state for sold-out */
-.tc-price-bar__btn--disabled {
-  pointer-events: none;
-  opacity: .5;
-  cursor: not-allowed;
+/* Waitlist state — secondary/outline style */
+.tc-price-bar__btn--waitlist {
+  background: transparent;
+  color: var(--tc-primary);
+  border: 1.5px solid var(--tc-primary);
+}
+
+.tc-price-bar__btn--waitlist:hover {
+  background: var(--tc-primary);
+  color: #fff;
 }
 
 /* ─── Responsive ──────────────────────────────────────────────── */
