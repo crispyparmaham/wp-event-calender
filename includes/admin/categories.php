@@ -142,6 +142,7 @@ add_action( 'admin_init', function () {
                 $wpdb->prefix . 'tc_event_categories',
                 array( 'name' => $name, 'slug' => $slug, 'color' => $color, 'sort_order' => 99 )
             );
+            tc_clear_events_cache();
         }
         wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'saved' => '1' ), admin_url( 'edit.php?post_type=time_event' ) ) );
         exit;
@@ -162,6 +163,7 @@ add_action( 'admin_init', function () {
                 array( 'name' => $name, 'slug' => $slug, 'color' => $color, 'sort_order' => $order ),
                 array( 'id'   => $id )
             );
+            tc_clear_events_cache();
         }
         wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'saved' => '1' ), admin_url( 'edit.php?post_type=time_event' ) ) );
         exit;
@@ -175,6 +177,7 @@ add_action( 'admin_init', function () {
             $wpdb->prefix . 'tc_event_categories',
             array( 'id' => absint( $_GET['tc_cat_delete'] ) )
         );
+        tc_clear_events_cache();
         wp_redirect( add_query_arg( array( 'page' => 'tc-event-categories', 'deleted' => '1' ), admin_url( 'edit.php?post_type=time_event' ) ) );
         exit;
     }
@@ -435,6 +438,8 @@ add_action( 'wp_ajax_tc_create_category', function () {
     if ( ! $result ) {
         wp_send_json_error( array( 'message' => 'Kategorie konnte nicht angelegt werden.' ) );
     }
+
+    tc_clear_events_cache();
 
     wp_send_json_success( array(
         'id'    => $wpdb->insert_id,
