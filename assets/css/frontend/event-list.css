@@ -90,14 +90,20 @@
 
 /* ── Kategorie-Badge ─────────────────────────────────────────────── */
 .tc-evlist-badge {
-  display: inline-block;
-  font-size: 11px;
-  font-weight: 700;
-  letter-spacing: .05em;
-  text-transform: uppercase;
-  padding: 2px 9px;
-  border-radius: 999px;
-  width: fit-content;
+    display: inline-flex;
+    align-items: center;
+    align-self: flex-start;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+    padding: 3px 8px;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--badge-color, var(--tc-primary)) 12%, transparent);
+    color: var(--badge-color, var(--tc-primary));
+    position: relative;
+    z-index: 2;
+    width: fit-content;
 }
 
 /* ── Titel ───────────────────────────────────────────────────────── */
