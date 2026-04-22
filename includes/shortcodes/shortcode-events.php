@@ -396,9 +396,9 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 			. '</span>';
 	}
 
-	// Category badge
+	// Category badge — tc_badge_color() darkens light colors for readability
 	if ( $show_badge && $cat_name ) {
-		echo '<span class="tc-badge" style="--badge-color:' . esc_attr( $color ) . '">'
+		echo '<span class="tc-badge" style="--badge-color:' . esc_attr( tc_badge_color( $color ) ) . '">'
 			. esc_html( $cat_name ) . '</span>';
 	}
 

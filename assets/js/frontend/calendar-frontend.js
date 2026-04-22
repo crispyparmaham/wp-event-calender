@@ -48,6 +48,26 @@ document.addEventListener('DOMContentLoaded', () => {
     return `rgba(${r},${g},${b},${alpha})`;
   };
 
+  // Returns a badge-safe 6-digit hex color.
+  // Strips any alpha suffix (e.g. #4f46e5bb → #4f46e5) and darkens
+  // light colors (luminance > 0.5) by ~40% for readable badge text.
+  const getBadgeColor = (hex) => {
+    let h = (hex || '#4f46e5').replace('#', '');
+    if (h.length === 3) h = h.split('').map(c => c + c).join('');
+    h = h.slice(0, 6); // strip alpha suffix if present (e.g. from recurring event colors)
+    const r = parseInt(h.slice(0, 2), 16) || 79;
+    const g = parseInt(h.slice(2, 4), 16) || 70;
+    const b = parseInt(h.slice(4, 6), 16) || 229;
+    const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+    if (luminance > 0.5) {
+      const dr = Math.round(r * 0.6);
+      const dg = Math.round(g * 0.6);
+      const db = Math.round(b * 0.6);
+      return '#' + [dr, dg, db].map(v => v.toString(16).padStart(2, '0')).join('');
+    }
+    return '#' + h; // always return 6-digit hex
+  };
+
   // ── Hilfsfunktionen für Terminanzeige ──────────────────────────
   const WEEKDAY_LABELS = ['Sonntag','Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag'];
   const DAY_SHORT      = ['So','Mo','Di','Mi','Do','Fr','Sa'];
@@ -151,14 +171,13 @@ document.addEventListener('DOMContentLoaded', () => {
       const permalink  = p.permalink ? escHtml(p.permalink) : '#';
       const location   = p.location    ? escHtml(p.location)    : '';
       const leadership = p.leadership  ? escHtml(p.leadership)  : '';
-      const bgColor    = hexToRgba(color, 0.12);
       const datesHtml  = buildDatesHtml(p, idx);
 
       html += `
         <a class="tc-evlist-card" href="${permalink}">
           <div class="tc-evlist-stripe" style="background:${color}"></div>
           <div class="tc-evlist-card-body">
-            <span class="tc-evlist-badge" style="color:${color};background:${bgColor}">${typeLabel}</span>
+            <span class="tc-badge" style="--badge-color:${getBadgeColor(color)}">${typeLabel}</span>
             <h3 class="tc-evlist-card-title">${escHtml(rawTitle)}</h3>
             ${datesHtml}
             <div class="tc-evlist-card-meta">

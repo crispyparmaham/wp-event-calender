@@ -69,6 +69,31 @@ function tc_get_category_color( $slug ) {
     return $cat ? $cat['color'] : '#4f46e5';
 }
 
+/**
+ * Returns a badge-safe version of a category hex color.
+ * Light colors (perceived luminance > 0.5) are darkened by ~40%
+ * so the color remains readable as text on a tinted background.
+ */
+function tc_badge_color( string $hex ): string {
+    $hex = ltrim( $hex, '#' );
+    if ( strlen( $hex ) === 3 ) {
+        $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
+    }
+    if ( strlen( $hex ) !== 6 ) {
+        return '#' . ( $hex ?: '4f46e5' );
+    }
+    $r = hexdec( substr( $hex, 0, 2 ) );
+    $g = hexdec( substr( $hex, 2, 2 ) );
+    $b = hexdec( substr( $hex, 4, 2 ) );
+    $luminance = ( 0.299 * $r + 0.587 * $g + 0.114 * $b ) / 255;
+    if ( $luminance > 0.5 ) {
+        $r = (int) round( $r * 0.6 );
+        $g = (int) round( $g * 0.6 );
+        $b = (int) round( $b * 0.6 );
+    }
+    return sprintf( '#%02x%02x%02x', $r, $g, $b );
+}
+
 // ─────────────────────────────────────────────
 // Admin-Menü registrieren
 // ─────────────────────────────────────────────
