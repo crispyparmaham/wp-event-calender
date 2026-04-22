@@ -70,21 +70,34 @@ function tc_get_category_color( $slug ) {
 }
 
 /**
- * Returns a badge-safe version of a category hex color.
- * Light colors (perceived luminance > 0.5) are darkened by ~40%
- * so the color remains readable as text on a tinted background.
+ * Returns a clean 6-digit hex color string.
+ * Strips any alpha suffix (e.g. #4f46e5bb → #4f46e5) and expands
+ * shorthand notation (e.g. #abc → #aabbcc).
  */
-function tc_badge_color( string $hex ): string {
+function tc_sanitize_hex_color( string $hex ): string {
     $hex = ltrim( $hex, '#' );
     if ( strlen( $hex ) === 3 ) {
         $hex = $hex[0] . $hex[0] . $hex[1] . $hex[1] . $hex[2] . $hex[2];
     }
-    if ( strlen( $hex ) !== 6 ) {
-        return '#' . ( $hex ?: '4f46e5' );
+    if ( strlen( $hex ) === 8 ) {
+        $hex = substr( $hex, 0, 6 ); // strip alpha suffix
     }
-    $r = hexdec( substr( $hex, 0, 2 ) );
-    $g = hexdec( substr( $hex, 2, 2 ) );
-    $b = hexdec( substr( $hex, 4, 2 ) );
+    if ( strlen( $hex ) !== 6 ) {
+        return '#4f46e5'; // fallback to default
+    }
+    return '#' . strtolower( $hex );
+}
+
+/**
+ * Returns a badge-safe hex color.
+ * Sanitizes the input first, then darkens light colors (luminance > 0.5)
+ * by ~40% so the text remains readable on a 12%-opacity background.
+ */
+function tc_badge_color( string $hex ): string {
+    $hex = ltrim( tc_sanitize_hex_color( $hex ), '#' );
+    $r   = hexdec( substr( $hex, 0, 2 ) );
+    $g   = hexdec( substr( $hex, 2, 2 ) );
+    $b   = hexdec( substr( $hex, 4, 2 ) );
     $luminance = ( 0.299 * $r + 0.587 * $g + 0.114 * $b ) / 255;
     if ( $luminance > 0.5 ) {
         $r = (int) round( $r * 0.6 );

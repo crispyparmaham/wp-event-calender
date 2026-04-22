@@ -91,7 +91,7 @@ function tc_handle_get_events() {
         $type     = $fields['event_type'] ?? '';
         if ( ! $type ) $type = '';
         $cat      = $cat_map[ $type ] ?? null;
-        $color    = $cat ? $cat['color'] : '#4f46e5';
+        $color    = tc_sanitize_hex_color( $cat ? $cat['color'] : '#4f46e5' );
         $cat_name = $cat ? $cat['name']  : ( $type ? ucfirst( $type ) : '' );
 
         $intro_text      = $fields['event_description']  ?? '';
@@ -194,7 +194,7 @@ function tc_handle_get_events() {
                     'end'           => $occ['end'] ?: null,
                     'title'         => '🔁 ' . $post->post_title,
                     'editable'      => $is_main,
-                    'color'         => $is_past ? $color . '55' : $color . 'bb',
+                    'color'         => $color,
                     'extendedProps' => $ep_occ,
                 ) );
             }
