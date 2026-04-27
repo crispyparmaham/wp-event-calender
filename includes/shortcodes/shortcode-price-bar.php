@@ -85,8 +85,12 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 		$is_full = $cur_p >= $max_p;
 	}
 
+	$is_expired = tc_event_has_expired( $post_id );
+
 	// Determine variant modifier class
-	if ( $is_full ) {
+	if ( $is_expired ) {
+		$variant = 'tc-price-bar--expired';
+	} elseif ( $is_full ) {
 		$variant = 'tc-price-bar--full';
 	} elseif ( $price_type === 'free' ) {
 		$variant = 'tc-price-bar--free';
@@ -105,7 +109,15 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 	<div class="tc-price-bar-wrapper <?php echo esc_attr( $dark_class ); ?>">
 		<div class="tc-price-bar <?php echo esc_attr( $variant ); ?>">
 
-			<?php if ( $is_full ) : ?>
+			<?php if ( $is_expired ) : ?>
+
+				<div class="tc-price-bar__left">
+					<span class="tc-price-bar__expired-label">
+						<?php echo esc_html( tc_get_setting( 'label_expired', 'Veranstaltung abgelaufen' ) ); ?>
+					</span>
+				</div>
+
+			<?php elseif ( $is_full ) : ?>
 
 				<div class="tc-price-bar__left">
 					<span class="tc-price-bar__full-label">
@@ -169,7 +181,9 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 
 			<?php endif; ?>
 
-			<?php if ( $is_full ) : ?>
+			<?php if ( $is_expired ) : ?>
+			<?php /* no CTA for past events */ ?>
+			<?php elseif ( $is_full ) : ?>
 			<a href="<?php echo $waitlist_link; ?>" class="tc-price-bar__btn tc-price-bar__btn--waitlist">
 				<?php echo $waitlist_text; ?>
 			</a>

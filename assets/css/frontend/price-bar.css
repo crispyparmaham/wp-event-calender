@@ -165,6 +165,15 @@
   color: #fff;
 }
 
+/* ─── Expired state ──────────────────────────────────────────── */
+.tc-price-bar__expired-label {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+  color: var(--tc-text-muted);
+}
+
 /* ─── Responsive ──────────────────────────────────────────────── */
 @media (max-width: 600px) {
   .tc-price-bar-wrapper {

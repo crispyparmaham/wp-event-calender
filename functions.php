@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Drag & Drop Event Calendar
  * Description:  Kalenderübersicht für Termine mit Drag & Drop Funktion.
- * Version:      3.6.1
+ * Version:      3.6.2
  * Requires PHP: 8.2
  * Author:       Lucas Dühr | more than ads
  * Author URI:   https://www.morethanads.de
@@ -19,13 +19,14 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'TC_PATH',        plugin_dir_path( __FILE__ ) );
 define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
-define( 'TC_VERSION',     '3.6.1' );
+define( 'TC_VERSION',     '3.6.2' );
 
 // ── Wiederholungs- & Rate-Limit-Grenzen ───────────────────────
 define( 'TC_RECURRING_LIMIT',    208 ); // 52 Wochen rückwärts + 52 vorwärts × Puffer
 define( 'TC_RATE_LIMIT_COUNT',   5   ); // Anmeldungen pro Zeitfenster
 define( 'TC_RATE_LIMIT_SECONDS', 900 ); // Zeitfenster: 15 Minuten (in Sek.)
 define( 'TC_EVENTS_CACHE_TTL',   300 ); // Events-Cache: 5 Minuten (in Sek.)
+define( 'TC_EXPIRED_WEEKS',      4   ); // Wochen nach letztem Termin, ab denen ein Event als abgelaufen gilt
 
 // ── AJAX-Action-Namen ─────────────────────────────────────────
 define( 'TC_AJAX_GET_EVENTS',          'tc_get_events' );
@@ -69,6 +70,31 @@ require_once TC_PATH . 'includes/registration/reminder.php';
 // ── Helper: Dark-Mode-Klasse ────────────────────────────────────
 function tc_dark_class() {
     return tc_get_setting( 'calendar_mode', 'light' ) === 'dark' ? 'tc-dark' : '';
+}
+
+// ── Helper: Event abgelaufen? ────────────────────────────────────
+// Single: abgelaufen, wenn alle Termine in der Vergangenheit liegen.
+// Recurring: abgelaufen, wenn recurring_until mehr als TC_EXPIRED_WEEKS Wochen zurückliegt.
+function tc_event_has_expired( int $event_id ): bool {
+    $date_type = get_field( 'event_date_type', $event_id ) ?: 'single';
+
+    if ( $date_type === 'recurring' ) {
+        $until = get_field( 'recurring_until', $event_id );
+        if ( ! $until ) return false;
+        $threshold = new DateTime( '-' . TC_EXPIRED_WEEKS . ' weeks' );
+        $until_dt  = new DateTime( $until );
+        return $until_dt < $threshold;
+    }
+
+    $rows = get_field( 'event_dates', $event_id );
+    if ( empty( $rows ) ) return false;
+
+    $today = wp_date( 'Y-m-d' );
+    foreach ( $rows as $row ) {
+        $end = ! empty( $row['date_end'] ) ? $row['date_end'] : ( $row['date_start'] ?? '' );
+        if ( $end >= $today ) return false;
+    }
+    return true;
 }
 
 // ── Design System CSS global laden ──────────────────────────────

@@ -119,6 +119,22 @@ add_shortcode( 'time_registration', function ( $atts ) {
             <?php
             return ob_get_clean();
         }
+
+        // ── Abgelaufen? ──────────────────────────────────────────────
+        if ( tc_event_has_expired( $event_id ) ) {
+            $expired_notice = tc_get_setting( 'label_expired_notice', 'Diese Veranstaltung hat bereits stattgefunden.' );
+            $dark_class     = tc_dark_class();
+            ob_start(); ?>
+            <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+                <div class="tc-registration-form tc-registration-form--disabled">
+                    <div class="tc-expired-notice">
+                        <?php echo esc_html( $expired_notice ); ?>
+                    </div>
+                </div>
+            </div>
+            <?php
+            return ob_get_clean();
+        }
     }
 
     static $instance = 0;
