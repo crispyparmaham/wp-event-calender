@@ -256,11 +256,25 @@ document.addEventListener('DOMContentLoaded', () => {
       hour: '2-digit', minute: '2-digit',
     });
 
+    const formatTime = (d) => d.toLocaleTimeString('de-DE', {
+      hour: '2-digit', minute: '2-digit',
+    });
+
     const openPopover = (event, jsEvent) => {
       const p     = event.extendedProps;
-      const start = event.start ? formatDate(event.start) : '–';
-      const end   = event.end   ? formatDate(event.end)   : null;
       const label = p.categoryName || (p.type ? p.type.charAt(0).toUpperCase() + p.type.slice(1) : 'Event');
+
+      let dateStr;
+      if (p.isRecurring && event.start) {
+        const weekday   = event.start.toLocaleDateString('de-DE', { weekday: 'long' }) + 's';
+        const startTime = formatTime(event.start);
+        const endTime   = event.end ? ' – ' + formatTime(event.end) + ' Uhr' : ' Uhr';
+        dateStr = weekday + ', ' + startTime + endTime;
+      } else {
+        const start = event.start ? formatDate(event.start) : '–';
+        const end   = event.end   ? formatDate(event.end)   : null;
+        dateStr = start + (end ? ' – ' + end : '');
+      }
 
       popBody.innerHTML = `
         <div class="tc-popover-type tc-popover-type--${p.type || 'training'}">
@@ -268,7 +282,7 @@ document.addEventListener('DOMContentLoaded', () => {
         </div>
         <h3 class="tc-popover-title">${escHtml(event.title.replace('🔁 ', ''))}</h3>
         <ul class="tc-popover-meta">
-          <li><span>📅</span>${start}${end ? ' – ' + end : ''}</li>
+          <li><span>📅</span>${dateStr}</li>
           ${p.leadership   ? `<li><span>👤</span>${escHtml(p.leadership)}</li>`      : ''}
           ${p.location     ? `<li><span>📍</span>${escHtml(p.location)}</li>`        : ''}
           ${p.participants ? `<li><span>👥</span>${escHtml(p.participants)}</li>`     : ''}
