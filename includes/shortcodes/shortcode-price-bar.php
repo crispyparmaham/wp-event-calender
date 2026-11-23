@@ -79,7 +79,7 @@ add_shortcode( 'time_price_bar', function ( $atts ) {
 	if ( $track_p && $max_p > 0 ) {
 		global $wpdb;
 		$cur_p = (int) $wpdb->get_var( $wpdb->prepare(
-			"SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN ('pending','confirmed')",
+			"SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN (" . tc_active_statuses_sql() . ")",
 			$post_id
 		) );
 		$is_full = $cur_p >= $max_p;

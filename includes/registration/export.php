@@ -34,14 +34,15 @@ add_action( 'admin_init', function () {
 
     fputcsv( $out, [
         'Vorname', 'Nachname', 'E-Mail', 'Telefon', 'Unternehmen',
-        'Veranstaltung', 'Datum', 'Status', 'Angemeldet am', 'Notizen',
+        'Veranstaltung', 'Datum', 'Status', 'Anmelde-Ablauf', 'Angemeldet am', 'Notizen',
     ], ';' );
 
     $status_map = [
-        'confirmed' => 'Bestätigt',
-        'cancelled' => 'Storniert',
-        'pending'   => 'Ausstehend',
-        'waitlist'  => 'Warteliste',
+        'confirmed'  => 'Bestätigt',
+        'registered' => 'Angemeldet',
+        'cancelled'  => 'Storniert',
+        'pending'    => 'Ausstehend',
+        'waitlist'   => 'Warteliste',
     ];
 
     foreach ( $registrations as $reg ) {
@@ -68,6 +69,7 @@ add_action( 'admin_init', function () {
             $event_title,
             $date_str,
             $status_map[ $reg['status'] ] ?? $reg['status'],
+            ( $reg['flow'] ?? 'direct' ) === 'trial' ? 'Probetraining' : 'Direktbuchung',
             date_i18n( 'd.m.Y H:i', $reg['created_at'] ),
             $reg['notes'] ?: '',
         ], ';' );

@@ -28,7 +28,7 @@ function tc_send_event_reminders() {
 
     $registrations = $wpdb->get_results(
         "SELECT * FROM {$table}
-         WHERE status = 'confirmed'
+         WHERE status IN ('confirmed','registered')
            AND reminder_sent = 0",
         ARRAY_A
     );

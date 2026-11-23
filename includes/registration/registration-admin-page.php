@@ -185,12 +185,16 @@ function tc_render_registrations_page() {
                     <td>
                         <span class="tc-status-badge tc-status-<?php echo esc_attr( $status ); ?>">
                             <?php echo match( $status ) {
-                                'confirmed' => '✓ Bestätigt',
-                                'cancelled' => '✗ Storniert',
-                                'waitlist'  => '⏸ Warteliste',
-                                default     => '⏳ Ausstehend',
+                                'registered' => '★ Angemeldet',
+                                'confirmed'  => '✓ Bestätigt',
+                                'cancelled'  => '✗ Storniert',
+                                'waitlist'   => '⏸ Warteliste',
+                                default      => '⏳ Ausstehend',
                             }; ?>
                         </span>
+                        <?php if ( ( $reg['flow'] ?? 'direct' ) === 'trial' ) : ?>
+                            <span class="tc-status-badge tc-flow-trial">Probetraining</span>
+                        <?php endif; ?>
                     </td>
                     <td><?php echo esc_html( date_i18n( 'd.m.Y H:i', $reg['created_at'] ) ); ?></td>
                     <td>
@@ -204,11 +208,17 @@ function tc_render_registrations_page() {
                         </span>
                     </td>
                     <td class="tc-action-btns">
-                        <?php if ( $status !== 'confirmed' ) : ?>
+                        <?php if ( ! in_array( $status, array( 'confirmed', 'registered' ), true ) ) : ?>
                             <button class="tc-btn-confirm button button-small"
                                     data-id="<?php echo esc_attr( $reg['id'] ); ?>"
                                     data-nonce="<?php echo esc_attr( $nonce_confirm ); ?>"
                                     title="Bestätigen &amp; Bestätigungsmail senden">✓</button>
+                        <?php endif; ?>
+                        <?php if ( $status !== 'registered' ) : ?>
+                            <button class="tc-btn-registered button button-small"
+                                    data-id="<?php echo esc_attr( $reg['id'] ); ?>"
+                                    data-nonce="<?php echo esc_attr( $nonce_confirm ); ?>"
+                                    title="Als verbindlich angemeldet markieren">★</button>
                         <?php endif; ?>
                         <?php if ( $status !== 'cancelled' ) : ?>
                             <button class="tc-btn-cancel button button-small"
@@ -249,13 +259,40 @@ function tc_render_registrations_page() {
             }, function(res) {
                 if ( res.success ) {
                     var $row = $('#tc-reg-row-' + id);
-                    $row.find('.tc-status-badge')
+                    $row.find('.tc-status-badge').first()
                         .attr('class', 'tc-status-badge tc-status-confirmed')
                         .text('✓ Bestätigt');
                     $btn.remove();
                 } else {
                     alert(res.data || 'Fehler.');
                     $btn.prop('disabled', false).text('✓');
+                }
+            });
+        });
+
+        $(document).on('click', '.tc-btn-registered', function() {
+            var $btn = $(this);
+            var id   = $btn.data('id');
+            if ( ! confirm('Teilnehmer als verbindlich angemeldet markieren?') ) return;
+            var sendMail = confirm('Soll dazu eine Bestätigungsmail an den Teilnehmer gesendet werden?\n\nOK = Mail senden · Abbrechen = ohne Mail');
+            $btn.prop('disabled', true).text('…');
+            $.post(ajaxurl, {
+                action: 'tc_update_registration_status',
+                nonce:  $btn.data('nonce'),
+                registration_id: id,
+                status: 'registered',
+                send_confirmation_mail: sendMail ? 1 : 0
+            }, function(res) {
+                if ( res.success ) {
+                    var $row = $('#tc-reg-row-' + id);
+                    $row.find('.tc-status-badge').first()
+                        .attr('class', 'tc-status-badge tc-status-registered')
+                        .text('★ Angemeldet');
+                    $row.find('.tc-btn-confirm').remove();
+                    $btn.remove();
+                } else {
+                    alert(res.data || 'Fehler.');
+                    $btn.prop('disabled', false).text('★');
                 }
             });
         });
@@ -379,7 +416,7 @@ function tc_render_registrations_page() {
             }, function(res) {
                 if ( res.success ) {
                     var $row = $('#tc-reg-row-' + id);
-                    $row.find('.tc-status-badge')
+                    $row.find('.tc-status-badge').first()
                         .attr('class', 'tc-status-badge tc-status-cancelled')
                         .text('✗ Storniert');
                     $btn.remove();
@@ -408,7 +445,7 @@ add_action( 'wp_ajax_tc_update_registration_status', function () {
     $new_status = sanitize_text_field( $_POST['status'] ?? '' );
     $send_mail  = ! empty( $_POST['send_confirmation_mail'] );
 
-    if ( ! $id || ! in_array( $new_status, array( 'pending', 'confirmed', 'cancelled', 'waitlist' ), true ) ) {
+    if ( ! $id || ! in_array( $new_status, array( 'pending', 'confirmed', 'registered', 'cancelled', 'waitlist' ), true ) ) {
         wp_send_json_error( 'Ungültige Daten.' );
     }
 
@@ -421,11 +458,15 @@ add_action( 'wp_ajax_tc_update_registration_status', function () {
         tc_send_confirmation_mail( $id );
     }
 
+    if ( $new_status === 'registered' && $send_mail ) {
+        tc_send_registered_mail( $id );
+    }
+
     if ( $new_status === 'cancelled' && $send_mail ) {
         tc_send_cancellation_mail( $id );
     }
 
-    if ( $new_status === 'cancelled' && $old_status === 'confirmed' ) {
+    if ( $new_status === 'cancelled' && in_array( $old_status, array( 'confirmed', 'registered' ), true ) ) {
         do_action( 'tc_registration_cancelled', $id );
     }
 
@@ -456,6 +497,7 @@ function tc_render_registration_form( $registration_id ) {
             'event_id'   => absint(                  $_POST['event_id']   ?? 0  ),
             'event_date' => sanitize_text_field(     $_POST['event_date'] ?? '' ),
             'status'     => sanitize_text_field(     $_POST['status']     ?? 'pending' ),
+            'flow'       => ( ( $_POST['flow'] ?? '' ) === 'trial' ) ? 'trial' : 'direct',
             'notes'      => sanitize_textarea_field( $_POST['notes']      ?? '' ),
         );
         if ( $update['firstname'] && $update['lastname'] && $update['email'] ) {
@@ -512,8 +554,18 @@ function tc_render_registration_form( $registration_id ) {
                         <select id="status" name="status">
                             <option value="pending"   <?php selected( $reg['status'], 'pending' ); ?>>Ausstehend</option>
                             <option value="confirmed" <?php selected( $reg['status'], 'confirmed' ); ?>>Bestätigt</option>
+                            <option value="registered" <?php selected( $reg['status'], 'registered' ); ?>>Angemeldet</option>
                             <option value="cancelled" <?php selected( $reg['status'], 'cancelled' ); ?>>Storniert</option>
                             <option value="waitlist"  <?php selected( $reg['status'], 'waitlist' ); ?>>Warteliste</option>
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <th><label for="flow">Anmelde-Ablauf</label></th>
+                    <td>
+                        <select id="flow" name="flow">
+                            <option value="direct" <?php selected( $reg['flow'] ?? 'direct', 'direct' ); ?>>Direktbuchung</option>
+                            <option value="trial"  <?php selected( $reg['flow'] ?? 'direct', 'trial' ); ?>>Probetraining</option>
                         </select>
                     </td>
                 </tr>
@@ -552,6 +604,8 @@ add_action( 'admin_head', function () { ?>
         .tc-status-confirmed { background: #d1fae5; color: #065f46; }
         .tc-status-cancelled { background: #fee2e2; color: #991b1b; }
         .tc-status-waitlist  { background: #ede9fe; color: #5b21b6; }
+        .tc-status-registered { background: #dbeafe; color: #1e40af; }
+        .tc-flow-trial       { background: #fff7ed; color: #9a3412; margin-left: 4px; }
         .tc-action-btns { white-space: nowrap; display: flex; gap: 4px; align-items: center; }
         .tc-btn-confirm.button {
             background: #059669; border-color: #047857; color: #fff; font-weight: 700; min-width: 30px;
@@ -561,6 +615,10 @@ add_action( 'admin_head', function () { ?>
             background: #dc2626; border-color: #b91c1c; color: #fff; font-weight: 700; min-width: 30px;
         }
         .tc-btn-cancel.button:hover { background: #b91c1c; color: #fff; }
+        .tc-btn-registered.button {
+            background: #2563eb; border-color: #1d4ed8; color: #fff; font-weight: 700; min-width: 30px;
+        }
+        .tc-btn-registered.button:hover { background: #1d4ed8; color: #fff; }
         /* Source badges */
         .tc-source-manual { background: #fef3c7; color: #92400e; }
         .tc-source-form   { background: #f3f4f6; color: #6b7280; }

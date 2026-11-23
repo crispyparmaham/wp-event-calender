@@ -43,7 +43,7 @@ function tc_render_events_overview_page() {
     $counts_raw = $wpdb->get_results(
         "SELECT event_id,
                 COUNT(*) AS total,
-                SUM(status = 'confirmed') AS confirmed,
+                SUM(status IN ('confirmed','registered')) AS confirmed,
                 SUM(status = 'pending')   AS pending,
                 SUM(status = 'cancelled') AS cancelled
          FROM {$table}

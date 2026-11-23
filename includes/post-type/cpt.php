@@ -119,6 +119,24 @@ add_action( 'acf/include_fields', function () {
                 'instructions'  => 'Steuert, ob und wie Besucher sich anmelden können.',
             ),
             array(
+                'key'           => 'field_tc_registration_flow',
+                'label'         => 'Anmelde-Ablauf',
+                'name'          => 'registration_flow',
+                'type'          => 'select',
+                'choices'       => array(
+                    'direct' => 'Direkt buchen – verbindliche Anmeldung',
+                    'trial'  => 'Probetraining – erst zum Probetermin anmelden',
+                ),
+                'default_value' => 'direct',
+                'return_format' => 'value',
+                'instructions'  => 'Bei „Probetraining" meldet sich der Interessent zunächst nur zum Probetermin an. Nach dem Termin wird die Anmeldung im Backend manuell auf „Angemeldet" gesetzt.',
+                'conditional_logic' => array( array( array(
+                    'field'    => 'field_tc_registration_mode',
+                    'operator' => '==',
+                    'value'    => 'open',
+                ) ) ),
+            ),
+            array(
                 'key'          => 'field_tc_difficulty',
                 'label'        => 'Für wen geeignet',
                 'name'         => 'difficulty',

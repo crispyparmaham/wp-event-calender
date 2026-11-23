@@ -140,7 +140,7 @@ function tc_time_event_info_shortcode( $atts ): string {
     if ( $show_seats && $track_p && $max_p > 0 ) {
         global $wpdb;
         $cur  = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN ('pending','confirmed')",
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN (" . tc_active_statuses_sql() . ")",
             $event_id
         ) );
         $free = $max_p - $cur;

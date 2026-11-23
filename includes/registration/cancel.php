@@ -81,6 +81,11 @@ function tc_send_self_cancel_admin_notification( array $reg ) {
     $info        = tc_get_event_mail_info( $reg['event_id'], $reg['event_date'] ?? '' );
     $blogname    = get_option( 'blogname' );
     $headers     = array( 'Content-Type: text/html; charset=UTF-8' );
+
+    // Antwort geht direkt an den Teilnehmer, nicht an den SMTP-Absender
+    $reply_to = tc_mail_reply_to_header( $reg['email'] ?? '', trim( $reg['firstname'] . ' ' . $reg['lastname'] ) );
+    if ( $reply_to ) $headers[] = $reply_to;
+
     $subject     = 'Selbststornierung: ' . $reg['firstname'] . ' ' . $reg['lastname'] . ' – ' . $info['title'];
 
     $msg  = tc_mail_wrapper_open( $blogname );

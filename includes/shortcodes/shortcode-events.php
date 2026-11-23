@@ -331,7 +331,7 @@ function tc_render_event_card( WP_Post $post, array $atts ): void {
 	if ( $track_p && $effective_max > 0 ) {
 		$cur_p = (int) $wpdb->get_var( $wpdb->prepare(
 			"SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations
-			 WHERE event_id = %d AND status IN ('pending','confirmed')",
+			 WHERE event_id = %d AND status IN (" . tc_active_statuses_sql() . ")",
 			$post->ID
 		) );
 		$is_full = $cur_p >= $effective_max;

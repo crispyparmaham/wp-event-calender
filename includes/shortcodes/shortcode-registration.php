@@ -142,9 +142,8 @@ add_shortcode( 'time_registration', function ( $atts ) {
     $form_id = 'tc-registration-form-' . $instance;
     $nonce   = wp_create_nonce( 'tc_registration_nonce' );
 
-    // Preistyp ermitteln (request → Probetraining-Modus)
-    $price_type = $event_id ? ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) : 'fixed';
-    $is_trial   = in_array( $price_type, array( 'request', 'free' ), true );
+    // Anmelde-Ablauf ermitteln (Probetraining → schlankes Formular)
+    $is_trial = $event_id ? tc_is_trial_registration( $event_id ) : false;
 
     // Form title: adjusted for free/request events, otherwise use shortcode attribute
     $form_title = $is_trial
@@ -170,7 +169,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
         if ( $track_p && $max_p ) {
             global $wpdb;
             $cur_p   = (int) $wpdb->get_var( $wpdb->prepare(
-                "SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN ('pending','confirmed')",
+                "SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN (" . tc_active_statuses_sql() . ")",
                 $event_id
             ) );
             $is_full = $cur_p >= (int) $max_p;

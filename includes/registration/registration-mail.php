@@ -85,6 +85,22 @@ function tc_mail_default( string $mail_id, string $field ): string {
                 'abschluss'  => "Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.\n\nMöchten {{anrede}} {{anrede_possessiv}} Anmeldung stornieren? {{storno_url}}",
                 'signatur'   => $sig,
             ),
+            'trial'         => array(
+                'subject'    => 'Vielen Dank für {{anrede_possessiv}} Anmeldung zum Probetraining – {{event_title}}',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'vielen Dank für {{anrede_possessiv}} Anmeldung zum Probetraining. Wir haben {{anrede_possessiv}} Anfrage erhalten und melden uns zeitnah mit einer Bestätigung bei {{anrede_dativ}}.',
+                'show_event' => '1',
+                'abschluss'  => "Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.\n\nMöchten {{anrede}} {{anrede_possessiv}} Anmeldung stornieren? {{storno_url}}",
+                'signatur'   => $sig,
+            ),
+            'registered'    => array(
+                'subject'    => 'Willkommen – {{anrede_possessiv}} Anmeldung für {{event_title}}',
+                'anrede'     => 'Hallo {{firstname}} {{lastname}},',
+                'haupttext'  => 'herzlich willkommen! {{anrede_possessiv}} Anmeldung ist jetzt aktiv. Wir freuen uns auf {{anrede_akkusativ}}!',
+                'show_event' => '1',
+                'abschluss'  => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
+                'signatur'   => $sig,
+            ),
             'confirm'       => array(
                 'subject'    => '{{anrede_possessiv}} Anmeldung ist bestätigt – {{event_title}}',
                 'anrede'     => 'Hallo {{firstname}} {{lastname}},',
@@ -164,9 +180,13 @@ function tc_send_thank_you_mail( $data ) {
     $event_date = $data['event_date'] ?? '';
     $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
 
-    $subject_tpl = tc_get_mail_setting( 'thankyou', 'subject' );
+    // Probetraining-Events bekommen eine eigene Vorlage
+    $flow    = $data['flow'] ?? tc_get_registration_flow( $event_id );
+    $mail_id = $flow === 'trial' ? 'trial' : 'thankyou';
+
+    $subject_tpl = tc_get_mail_setting( $mail_id, 'subject' );
     $subject     = tc_resolve_placeholders( $subject_tpl, $data, $event_id, $event_date );
-    $msg         = tc_build_mail_body( 'thankyou', $data, $event_id, $event_date );
+    $msg         = tc_build_mail_body( $mail_id, $data, $event_id, $event_date );
 
     wp_mail( $data['email'], $subject, $msg, $headers );
 }
@@ -185,6 +205,24 @@ function tc_send_confirmation_mail( $registration_id ) {
     $subject_tpl = tc_get_mail_setting( 'confirm', 'subject' );
     $subject     = tc_resolve_placeholders( $subject_tpl, $reg, $event_id, $event_date );
     $msg         = tc_build_mail_body( 'confirm', $reg, $event_id, $event_date );
+
+    wp_mail( $reg['email'], $subject, $msg, $headers );
+}
+
+// ---------------------------------------------
+// Mail 2b: Verbindliche Anmeldung (nach Probetraining)
+// ---------------------------------------------
+function tc_send_registered_mail( $registration_id ) {
+    $reg = tc_get_registration( $registration_id );
+    if ( ! $reg ) return;
+
+    $event_id   = (int) $reg['event_id'];
+    $event_date = $reg['event_date'] ?? '';
+    $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
+
+    $subject_tpl = tc_get_mail_setting( 'registered', 'subject' );
+    $subject     = tc_resolve_placeholders( $subject_tpl, $reg, $event_id, $event_date );
+    $msg         = tc_build_mail_body( 'registered', $reg, $event_id, $event_date );
 
     wp_mail( $reg['email'], $subject, $msg, $headers );
 }
@@ -218,6 +256,10 @@ function tc_send_admin_notification( $data ) {
     $event_date = $data['event_date'] ?? '';
     $headers    = array( 'Content-Type: text/html; charset=UTF-8' );
 
+    // Antwort geht direkt an den Interessenten, nicht an den SMTP-Absender
+    $reply_to = tc_mail_reply_to_header( $data['email'] ?? '', trim( ( $data['firstname'] ?? '' ) . ' ' . ( $data['lastname'] ?? '' ) ) );
+    if ( $reply_to ) $headers[] = $reply_to;
+
     $subject_tpl = tc_get_mail_setting( 'admin', 'subject' );
     $subject     = tc_resolve_placeholders( $subject_tpl, $data, $event_id, $event_date );
     $msg         = tc_build_mail_body( 'admin', $data, $event_id, $event_date );
@@ -228,6 +270,21 @@ function tc_send_admin_notification( $data ) {
 // ---------------------------------------------
 // Mail-Hilfsfunktionen (DRY)
 // ---------------------------------------------
+/**
+ * Baut einen Reply-To-Header. Gibt '' zurück, wenn die Adresse ungültig ist.
+ */
+function tc_mail_reply_to_header( string $email, string $name = '' ): string {
+    $email = sanitize_email( $email );
+    if ( ! $email || ! is_email( $email ) ) return '';
+
+    // Header-Injection verhindern
+    $name = trim( str_replace( array( "\r", "\n", '"', '<', '>', ',', ';' ), ' ', $name ) );
+
+    return $name
+        ? sprintf( 'Reply-To: "%s" <%s>', $name, $email )
+        : 'Reply-To: ' . $email;
+}
+
 function tc_mail_wrapper_open( $blogname ) {
     return '<html><body style="font-family:Arial,sans-serif;line-height:1.6;color:#333;margin:0;padding:0;">'
          . '<div style="max-width:600px;margin:0 auto;padding:24px;background:#f9f9f9;'

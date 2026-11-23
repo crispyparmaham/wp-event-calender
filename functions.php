@@ -2,7 +2,7 @@
 /**
  * Plugin Name:  Drag & Drop Event Calendar
  * Description:  Kalenderübersicht für Termine mit Drag & Drop Funktion.
- * Version:      3.6.3
+ * Version:      3.7.0
  * Requires PHP: 8.2
  * Author:       Lucas Dühr | more than ads
  * Author URI:   https://www.morethanads.de
@@ -19,7 +19,7 @@ defined( 'ABSPATH' ) || exit;
 
 define( 'TC_PATH',        plugin_dir_path( __FILE__ ) );
 define( 'TC_URL',         plugin_dir_url( __FILE__ ) );
-define( 'TC_VERSION',     '3.6.3' );
+define( 'TC_VERSION',     '3.7.0' );
 
 // ── Wiederholungs- & Rate-Limit-Grenzen ───────────────────────
 define( 'TC_RECURRING_LIMIT',    208 ); // 52 Wochen rückwärts + 52 vorwärts × Puffer
@@ -127,9 +127,20 @@ function tc_run_db_setup() {
     tc_create_categories_table();
     // iCal-Rewrite-Regeln flush
     tc_flush_rewrite_rules_for_ical();
+    update_option( 'tc_db_version', TC_VERSION );
     // Setup-Wizard beim nächsten Admin-Aufruf anzeigen
     update_option( 'tc_wizard_completed', '0' );
 }
+
+// ── DB-Schema nach einem Plugin-Update nachziehen ─────────────
+// register_activation_hook läuft bei Updates nicht — ohne diesen
+// Check fehlen nach einem Update neu hinzugekommene Spalten.
+add_action( 'plugins_loaded', function () {
+    if ( get_option( 'tc_db_version' ) === TC_VERSION ) return;
+    tc_create_registrations_table();
+    tc_create_categories_table();
+    update_option( 'tc_db_version', TC_VERSION );
+} );
 
 // ── Cron beim Deaktivieren abmelden ───────────────────────────
 register_deactivation_hook( __FILE__, 'tc_deactivate_reminder_cron' );

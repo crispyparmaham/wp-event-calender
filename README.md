@@ -1,6 +1,6 @@
 # Time Calendar
 
-![Version](https://img.shields.io/badge/version-3.4.0-blue)
+![Version](https://img.shields.io/badge/version-3.7.0-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777bb4)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0-green)
@@ -13,6 +13,7 @@
 
 - **Flexible event management** — single, multi-date, and recurring events
 - **Registration forms** with waitlist, cancellation links, and rate limiting
+- **Trial-session flow** — per event: book directly or register for a trial first, then mark as registered manually
 - **Customizable email templates** — structured editor or full HTML expert mode
 - **Design token system** — light/dark mode, all colors via CSS Custom Properties
 - **Admin dashboard** with KPIs, upcoming events, and 30-day registration chart
@@ -215,6 +216,16 @@ time-calendar/
 ```
 
 ---
+
+### 3.7.0
+
+- New per-event field **Anmelde-Ablauf** (`registration_flow`): `direct` (binding booking) or `trial` (trial session first).
+  Existing events without the field keep their previous behaviour (price type `free`/`request` = trial).
+- New registration status **`registered`** ("Angemeldet") — set manually in the backend once a contract is signed,
+  optionally with a confirmation mail. Counts towards capacity like `confirmed`.
+- New mail templates: **Dankes-Mail (Probetraining)** and **Anmelde-Mail (verbindlich angemeldet)**.
+- Admin notification mails now carry a **Reply-To** header with the registrant's address.
+- DB schema is now migrated on plugin updates, not only on activation (`tc_db_version` option).
 
 ### 3.4.4
 

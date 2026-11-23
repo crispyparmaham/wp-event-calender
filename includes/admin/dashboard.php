@@ -139,6 +139,7 @@ add_action( 'admin_head', function () {
     .tc-status-confirmed { background: #d1fae5; color: #065f46; }
     .tc-status-cancelled { background: #fee2e2; color: #991b1b; }
     .tc-status-waitlist  { background: #ede9fe; color: #5b21b6; }
+    .tc-status-registered { background: #dbeafe; color: #1e40af; }
     .tc-type-training    { background: #ede9fe; color: #5b21b6; }
     .tc-type-seminar     { background: #dbeafe; color: #1d4ed8; }
 
@@ -211,11 +212,10 @@ function tc_dashboard_get_kpis() {
         $month_start, $month_end
     ) );
 
-    // Gesamte Anmeldungen (confirmed + pending)
-    $regs_active = (int) $wpdb->get_var( $wpdb->prepare(
-        "SELECT COUNT(*) FROM {$table} WHERE status IN (%s,%s)",
-        'confirmed', 'pending'
-    ) );
+    // Gesamte Anmeldungen (confirmed + registered + pending)
+    $regs_active = (int) $wpdb->get_var(
+        "SELECT COUNT(*) FROM {$table} WHERE status IN (" . tc_active_statuses_sql() . ")"
+    );
 
     // Offene Anmeldungen (pending)
     $regs_pending = (int) $wpdb->get_var( $wpdb->prepare(
@@ -245,7 +245,7 @@ function tc_dashboard_get_kpis() {
             $wpdb->prepare(
                 "SELECT COUNT(*) FROM {$table}
                  WHERE event_id IN ({$placeholders})
-                   AND status IN ('confirmed','pending')",
+                   AND status IN (" . tc_active_statuses_sql() . ")",
                 ...$tracked_ids
             )
         );
@@ -298,13 +298,14 @@ function tc_dashboard_get_next_events() {
             $rows = $wpdb->get_results( $wpdb->prepare(
                 "SELECT status, COUNT(*) AS cnt
                  FROM {$table}
-                 WHERE event_id = %d AND status IN ('confirmed','pending')
+                 WHERE event_id = %d AND status IN (" . tc_active_statuses_sql() . ")
                  GROUP BY status",
                 $eid
             ) );
             foreach ( $rows as $r ) {
-                if ( $r->status === 'confirmed' ) $confirmed = (int) $r->cnt;
-                if ( $r->status === 'pending'   ) $pending   = (int) $r->cnt;
+                // Verbindlich Angemeldete zählen wie Bestätigte
+                if ( in_array( $r->status, array( 'confirmed', 'registered' ), true ) ) $confirmed += (int) $r->cnt;
+                if ( $r->status === 'pending' ) $pending = (int) $r->cnt;
             }
         }
 
@@ -345,7 +346,7 @@ function tc_dashboard_get_chart_data() {
         "SELECT DATE(FROM_UNIXTIME(created_at)) AS day, status, COUNT(*) AS cnt
          FROM {$wpdb->prefix}tc_registrations
          WHERE created_at >= %d
-           AND status IN ('confirmed','pending','cancelled')
+           AND status IN ('confirmed','registered','pending','cancelled')
          GROUP BY day, status
          ORDER BY day ASC",
         $since
@@ -362,8 +363,10 @@ function tc_dashboard_get_chart_data() {
     }
 
     foreach ( $rows as $row ) {
-        if ( isset( $data[ $row['day'] ][ $row['status'] ] ) ) {
-            $data[ $row['day'] ][ $row['status'] ] = (int) $row['cnt'];
+        // Verbindlich Angemeldete laufen im Chart unter „Bestätigt"
+        $status = $row['status'] === 'registered' ? 'confirmed' : $row['status'];
+        if ( isset( $data[ $row['day'] ][ $status ] ) ) {
+            $data[ $row['day'] ][ $status ] += (int) $row['cnt'];
         }
     }
 
@@ -701,15 +704,16 @@ function tc_render_dashboard_page() {
                         <td>
                             <span class="tc-status-badge tc-status-<?php echo esc_attr( $status ); ?>">
                                 <?php echo match( $status ) {
-                                    'confirmed' => '&#10003; Best&auml;tigt',
-                                    'cancelled' => '&#10007; Storniert',
-                                    'waitlist'  => '&#9208; Warteliste',
-                                    default     => '&#9203; Ausstehend',
+                                    'registered' => '&#9733; Angemeldet',
+                                    'confirmed'  => '&#10003; Best&auml;tigt',
+                                    'cancelled'  => '&#10007; Storniert',
+                                    'waitlist'   => '&#9208; Warteliste',
+                                    default      => '&#9203; Ausstehend',
                                 }; ?>
                             </span>
                         </td>
                         <td class="tc-action-cell">
-                            <?php if ( $status !== 'confirmed' ) : ?>
+                            <?php if ( ! in_array( $status, array( 'confirmed', 'registered' ), true ) ) : ?>
                             <button class="tc-btn-confirm button button-small"
                                     data-id="<?php echo esc_attr( $reg['id'] ); ?>"
                                     data-nonce="<?php echo esc_attr( $nonce ); ?>"

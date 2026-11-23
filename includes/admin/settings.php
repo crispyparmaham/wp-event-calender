@@ -136,6 +136,12 @@ add_action( 'admin_init', function () {
             'mail_thankyou_subject'          => 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}',
             'mail_thankyou_preview'          => 'Wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah.',
             'mail_thankyou_body'             => '',
+            'mail_trial_subject'             => 'Vielen Dank für {{anrede_possessiv}} Anmeldung zum Probetraining – {{event_title}}',
+            'mail_trial_preview'             => 'Wir haben {{anrede_possessiv}} Anmeldung zum Probetraining erhalten.',
+            'mail_trial_body'                => '',
+            'mail_registered_subject'        => 'Willkommen – {{anrede_possessiv}} Anmeldung für {{event_title}}',
+            'mail_registered_preview'        => '{{anrede_possessiv}} Anmeldung ist jetzt aktiv.',
+            'mail_registered_body'           => '',
             'mail_confirm_subject'           => '{{anrede_possessiv}} Anmeldung ist bestätigt – {{event_title}}',
             'mail_confirm_preview'           => 'Wir freuen uns auf {{anrede_akkusativ}}!',
             'mail_confirm_body'              => '',
@@ -162,6 +168,20 @@ add_action( 'admin_init', function () {
             'mail_thankyou_signatur'         => '',
             'mail_thankyou_expert_mode'      => '0',
             'mail_thankyou_expert_html'      => '',
+            'mail_trial_anrede'              => '',
+            'mail_trial_haupttext'           => '',
+            'mail_trial_show_event'          => '1',
+            'mail_trial_abschluss'           => '',
+            'mail_trial_signatur'            => '',
+            'mail_trial_expert_mode'         => '0',
+            'mail_trial_expert_html'         => '',
+            'mail_registered_anrede'         => '',
+            'mail_registered_haupttext'      => '',
+            'mail_registered_show_event'     => '1',
+            'mail_registered_abschluss'      => '',
+            'mail_registered_signatur'       => '',
+            'mail_registered_expert_mode'    => '0',
+            'mail_registered_expert_html'    => '',
             'mail_confirm_anrede'            => '',
             'mail_confirm_haupttext'         => '',
             'mail_confirm_show_event'        => '1',
@@ -398,7 +418,7 @@ function tc_sanitize_settings( $input ) {
     }
 
     // ── Mail-Templates ────────────────────────────────────────
-    $mail_ids = array( 'thankyou', 'confirm', 'cancel', 'waitlist', 'waitlist_slot', 'reminder', 'admin' );
+    $mail_ids = array( 'thankyou', 'trial', 'registered', 'confirm', 'cancel', 'waitlist', 'waitlist_slot', 'reminder', 'admin' );
     foreach ( $mail_ids as $id ) {
         $pfx = 'mail_' . $id . '_';
         $clean[ $pfx . 'subject' ] = isset( $input[ $pfx . 'subject' ] )
@@ -1475,6 +1495,24 @@ function tc_render_settings_page() {
                             'ph_subject'   => 'Vielen Dank für {{anrede_possessiv}} Anmeldung – {{event_title}}',
                             'ph_anrede'    => 'Hallo {{firstname}} {{lastname}},',
                             'ph_haupttext' => 'wir haben {{anrede_possessiv}} Anmeldung erhalten und melden uns zeitnah mit einer Bestätigung bei {{anrede_dativ}}.',
+                            'ph_abschluss' => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
+                            'ph_signatur'  => 'Mit freundlichen Grüßen',
+                        ),
+                        'trial'         => array(
+                            'label'        => 'Dankes-Mail (Probetraining)',
+                            'hint'         => 'Ersetzt die Dankes-Mail bei Events mit Anmelde-Ablauf „Probetraining".',
+                            'ph_subject'   => 'Vielen Dank für {{anrede_possessiv}} Anmeldung zum Probetraining – {{event_title}}',
+                            'ph_anrede'    => 'Hallo {{firstname}} {{lastname}},',
+                            'ph_haupttext' => 'vielen Dank für {{anrede_possessiv}} Anmeldung zum Probetraining. Wir melden uns zeitnah mit einer Bestätigung.',
+                            'ph_abschluss' => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
+                            'ph_signatur'  => 'Mit freundlichen Grüßen',
+                        ),
+                        'registered'    => array(
+                            'label'        => 'Anmelde-Mail (verbindlich angemeldet)',
+                            'hint'         => 'Optional versendbar, wenn eine Anmeldung im Backend auf „Angemeldet" gesetzt wird – z.B. nach dem Probetraining.',
+                            'ph_subject'   => 'Willkommen – {{anrede_possessiv}} Anmeldung für {{event_title}}',
+                            'ph_anrede'    => 'Hallo {{firstname}} {{lastname}},',
+                            'ph_haupttext' => 'herzlich willkommen! {{anrede_possessiv}} Anmeldung ist jetzt aktiv.',
                             'ph_abschluss' => 'Bei Fragen stehen wir {{anrede_dativ}} gerne zur Verfügung.',
                             'ph_signatur'  => 'Mit freundlichen Grüßen',
                         ),

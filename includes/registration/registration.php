@@ -22,6 +22,7 @@ function tc_create_registrations_table() {
         event_date date DEFAULT NULL,
         status varchar(20) DEFAULT 'pending',
         source varchar(50) DEFAULT 'form',
+        flow varchar(20) DEFAULT 'direct',
         notes longtext,
         reminder_sent tinyint(1) NOT NULL DEFAULT 0,
         cancel_token varchar(64) DEFAULT NULL,
@@ -39,6 +40,9 @@ function tc_create_registrations_table() {
 
     // Migration for existing installs: add source column if missing
     $wpdb->query( "ALTER TABLE {$table_name} ADD COLUMN IF NOT EXISTS `source` VARCHAR(50) DEFAULT 'form' AFTER `status`" );
+
+    // Migration for existing installs: add flow column if missing
+    $wpdb->query( "ALTER TABLE {$table_name} ADD COLUMN IF NOT EXISTS `flow` VARCHAR(20) DEFAULT 'direct' AFTER `source`" );
 }
 
 // ---------------------------------------------
@@ -63,7 +67,7 @@ function tc_get_registration( $id ) {
 
 function tc_update_registration( $id, $data ) {
     global $wpdb;
-    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'address', 'zip', 'city', 'event_id', 'event_date', 'status', 'notes', 'reminder_sent', 'cancel_token' );
+    $allowed = array( 'firstname', 'lastname', 'email', 'phone', 'address', 'zip', 'city', 'event_id', 'event_date', 'status', 'flow', 'notes', 'reminder_sent', 'cancel_token' );
     $clean   = array_intersect_key( $data, array_flip( $allowed ) );
     if ( empty( $clean ) ) return false;
     return $wpdb->update( "{$wpdb->prefix}tc_registrations", $clean, array( 'id' => $id ) );
@@ -72,6 +76,33 @@ function tc_update_registration( $id, $data ) {
 function tc_delete_registration( $id ) {
     global $wpdb;
     return $wpdb->delete( "{$wpdb->prefix}tc_registrations", array( 'id' => $id ), array( '%d' ) );
+}
+
+// ---------------------------------------------
+// Anmelde-Ablauf: Probetraining oder Direktbuchung
+// ---------------------------------------------
+function tc_get_registration_flow( $event_id ): string {
+    $flow = $event_id ? get_field( 'registration_flow', $event_id ) : '';
+    if ( $flow === 'trial' || $flow === 'direct' ) return $flow;
+
+    // Bestandsevents ohne gespeichertes Feld: Preistyp entscheidet (wie bisher)
+    $price_type = $event_id ? ( get_field( 'event_price_type', $event_id ) ?: 'fixed' ) : 'fixed';
+    return in_array( $price_type, array( 'request', 'free' ), true ) ? 'trial' : 'direct';
+}
+
+function tc_is_trial_registration( $event_id ): bool {
+    return tc_get_registration_flow( $event_id ) === 'trial';
+}
+
+// ---------------------------------------------
+// Status, die einen Platz belegen
+// ---------------------------------------------
+function tc_active_statuses(): array {
+    return array( 'pending', 'confirmed', 'registered' );
+}
+
+function tc_active_statuses_sql(): string {
+    return "'" . implode( "','", tc_active_statuses() ) . "'";
 }
 
 // ---------------------------------------------

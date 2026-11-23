@@ -45,13 +45,14 @@ function tc_handle_registration_submission() {
         wp_send_json_error( array( 'message' => 'Diese Veranstaltung existiert nicht.' ) );
     }
 
-    $is_trial = in_array( get_field( 'event_price_type', $event_id ) ?: 'fixed', array( 'request', 'free' ), true );
+    $flow     = tc_get_registration_flow( $event_id );
+    $is_trial = $flow === 'trial';
 
     $track_p = get_field( 'registration_limit', $event_id );
     $max_p   = get_field( 'max_participants',   $event_id );
     if ( $track_p && $max_p ) {
         $cur = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$table_name} WHERE event_id = %d AND status IN ('pending','confirmed')",
+            "SELECT COUNT(*) FROM {$table_name} WHERE event_id = %d AND status IN (" . tc_active_statuses_sql() . ")",
             $event_id
         ) );
         if ( $cur >= (int) $max_p ) {
@@ -90,11 +91,12 @@ function tc_handle_registration_submission() {
             'event_id'     => $event_id,
             'event_date'   => $event_date ?: null,
             'status'       => 'pending',
+            'flow'         => $flow,
             'notes'        => $notes,
             'cancel_token' => $cancel_token,
             'created_at'   => time(),
         ),
-        array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%d' )
+        array( '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%d' )
     );
 
     if ( $inserted === false ) {
@@ -116,6 +118,7 @@ function tc_handle_registration_submission() {
         'city'         => $city,
         'event_id'     => $event_id,
         'event_date'   => $event_date,
+        'flow'         => $flow,
         'notes'        => $notes,
         'cancel_token' => $cancel_token,
     ) );
@@ -188,7 +191,7 @@ function tc_get_event_details_ajax() {
     if ( $track_p && $max_p ) {
         global $wpdb;
         $current_reg = (int) $wpdb->get_var( $wpdb->prepare(
-            "SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN ('pending','confirmed')",
+            "SELECT COUNT(*) FROM {$wpdb->prefix}tc_registrations WHERE event_id = %d AND status IN (" . tc_active_statuses_sql() . ")",
             $event_id
         ) );
         $is_full = $current_reg >= (int) $max_p;
@@ -319,6 +322,7 @@ add_action( 'wp_ajax_tc_save_manual_registration', function () {
         'notes'        => $notes,
         'status'       => 'confirmed',
         'source'       => 'manual',
+        'flow'         => 'direct',
         'cancel_token' => $cancel_token,
         'created_at'   => time(),
     );
