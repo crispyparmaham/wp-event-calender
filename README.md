@@ -1,6 +1,6 @@
 # Time Calendar
 
-![Version](https://img.shields.io/badge/version-3.7.1-blue)
+![Version](https://img.shields.io/badge/version-3.7.2-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777bb4)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0-green)
@@ -171,6 +171,7 @@ time-calendar/
 ├── includes/
 │   ├── admin/
 │   │   ├── settings.php                   # Settings page
+│   │   ├── confirm-modal.php              # Shared admin confirmation dialog
 │   │   ├── dashboard.php                  # Admin dashboard
 │   │   ├── admin-page.php                 # Admin calendar
 │   │   ├── events-overview.php            # Events list
@@ -216,6 +217,13 @@ time-calendar/
 ```
 
 ---
+
+### 3.7.2
+
+- Status actions in the registrations list and on the dashboard now use an in-plugin modal instead of
+  `window.confirm()`. The mail dispatch is a checkbox inside the dialog, so confirming, marking as
+  registered or cancelling can each be done with or without notifying the participant.
+- Deleting a registration goes through the same dialog.
 
 ### 3.7.1
 

@@ -533,6 +533,7 @@ function tc_render_dashboard_page() {
             'link'  => '',
         ],
     ];
+    tc_render_admin_confirm_modal();
     ?>
     <div class="wrap tc-dash">
         <h1 class="tc-dash-title">
@@ -716,12 +717,14 @@ function tc_render_dashboard_page() {
                             <?php if ( ! in_array( $status, array( 'confirmed', 'registered' ), true ) ) : ?>
                             <button class="tc-btn-confirm button button-small"
                                     data-id="<?php echo esc_attr( $reg['id'] ); ?>"
+                                    data-name="<?php echo esc_attr( $reg['firstname'] . ' ' . $reg['lastname'] ); ?>"
                                     data-nonce="<?php echo esc_attr( $nonce ); ?>"
                                     title="Best&auml;tigen">&#10003;</button>
                             <?php endif; ?>
                             <?php if ( $status !== 'cancelled' ) : ?>
                             <button class="tc-btn-cancel button button-small"
                                     data-id="<?php echo esc_attr( $reg['id'] ); ?>"
+                                    data-name="<?php echo esc_attr( $reg['firstname'] . ' ' . $reg['lastname'] ); ?>"
                                     data-nonce="<?php echo esc_attr( $nonce ); ?>"
                                     title="Stornieren">&#10007;</button>
                             <?php endif; ?>
@@ -767,41 +770,57 @@ function tc_render_dashboard_page() {
         }
 
         $(document).on('click', table + ' .tc-btn-confirm', function() {
-            var $btn = $(this), id = $btn.data('id');
-            if (!confirm('Anmeldung bestätigen und Bestätigungsmail senden?')) return;
-            $btn.prop('disabled', true).text('…');
-            $.post(ajaxurl, {
-                action: 'tc_update_registration_status',
-                nonce: $btn.data('nonce'),
-                registration_id: id,
-                status: 'confirmed',
-                send_confirmation_mail: 1
-            }, function(res) {
-                if (res.success) {
-                    updateRow(id, 'confirmed', '&#10003; Bestätigt', 'confirmed');
-                } else {
-                    alert(res.data || 'Fehler.');
-                    $btn.prop('disabled', false).text('✓');
+            var $btn = $(this), id = $btn.data('id'), name = $btn.data('name');
+            tcConfirm({
+                title:       'Anmeldung bestätigen',
+                message:     name + ' erhält damit einen festen Platz.',
+                tone:        'confirm',
+                confirmText: 'Bestätigen',
+                checkbox:    { label: 'Bestätigungsmail an ' + name + ' senden', checked: true },
+                onConfirm: function( sendMail ) {
+                    $btn.prop('disabled', true).text('…');
+                    $.post(ajaxurl, {
+                        action: 'tc_update_registration_status',
+                        nonce: $btn.data('nonce'),
+                        registration_id: id,
+                        status: 'confirmed',
+                        send_confirmation_mail: sendMail ? 1 : 0
+                    }, function(res) {
+                        if (res.success) {
+                            updateRow(id, 'confirmed', '&#10003; Bestätigt', 'confirmed');
+                        } else {
+                            alert(res.data || 'Fehler.');
+                            $btn.prop('disabled', false).text('✓');
+                        }
+                    });
                 }
             });
         });
 
         $(document).on('click', table + ' .tc-btn-cancel', function() {
-            var $btn = $(this), id = $btn.data('id');
-            if (!confirm('Anmeldung stornieren?')) return;
-            $btn.prop('disabled', true).text('…');
-            $.post(ajaxurl, {
-                action: 'tc_update_registration_status',
-                nonce: $btn.data('nonce'),
-                registration_id: id,
-                status: 'cancelled',
-                send_confirmation_mail: 1
-            }, function(res) {
-                if (res.success) {
-                    updateRow(id, 'cancelled', '&#10007; Storniert', 'cancelled');
-                } else {
-                    alert(res.data || 'Fehler.');
-                    $btn.prop('disabled', false).text('✗');
+            var $btn = $(this), id = $btn.data('id'), name = $btn.data('name');
+            tcConfirm({
+                title:       'Anmeldung stornieren',
+                message:     'Der Platz von ' + name + ' wird wieder freigegeben.',
+                tone:        'danger',
+                confirmText: 'Stornieren',
+                checkbox:    { label: 'Absage-Mail an ' + name + ' senden', checked: true },
+                onConfirm: function( sendMail ) {
+                    $btn.prop('disabled', true).text('…');
+                    $.post(ajaxurl, {
+                        action: 'tc_update_registration_status',
+                        nonce: $btn.data('nonce'),
+                        registration_id: id,
+                        status: 'cancelled',
+                        send_confirmation_mail: sendMail ? 1 : 0
+                    }, function(res) {
+                        if (res.success) {
+                            updateRow(id, 'cancelled', '&#10007; Storniert', 'cancelled');
+                        } else {
+                            alert(res.data || 'Fehler.');
+                            $btn.prop('disabled', false).text('✗');
+                        }
+                    });
                 }
             });
         });

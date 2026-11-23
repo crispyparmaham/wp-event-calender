@@ -39,6 +39,7 @@ function tc_render_registrations_page() {
 
     $filter_title = $filter_event ? get_the_title( $filter_event ) : '';
     $nonce_confirm = wp_create_nonce( 'tc_admin_nonce' );
+    tc_render_admin_confirm_modal();
     ?>
     <div class="wrap">
         <h1>
@@ -211,18 +212,21 @@ function tc_render_registrations_page() {
                         <?php if ( ! in_array( $status, array( 'confirmed', 'registered' ), true ) ) : ?>
                             <button class="tc-btn-confirm button button-small"
                                     data-id="<?php echo esc_attr( $reg['id'] ); ?>"
+                                    data-name="<?php echo esc_attr( $reg['firstname'] . ' ' . $reg['lastname'] ); ?>"
                                     data-nonce="<?php echo esc_attr( $nonce_confirm ); ?>"
                                     title="Bestätigen &amp; Bestätigungsmail senden">✓</button>
                         <?php endif; ?>
                         <?php if ( $status !== 'registered' ) : ?>
                             <button class="tc-btn-registered button button-small"
                                     data-id="<?php echo esc_attr( $reg['id'] ); ?>"
+                                    data-name="<?php echo esc_attr( $reg['firstname'] . ' ' . $reg['lastname'] ); ?>"
                                     data-nonce="<?php echo esc_attr( $nonce_confirm ); ?>"
                                     title="Als verbindlich angemeldet markieren">★</button>
                         <?php endif; ?>
                         <?php if ( $status !== 'cancelled' ) : ?>
                             <button class="tc-btn-cancel button button-small"
                                     data-id="<?php echo esc_attr( $reg['id'] ); ?>"
+                                    data-name="<?php echo esc_attr( $reg['firstname'] . ' ' . $reg['lastname'] ); ?>"
                                     data-nonce="<?php echo esc_attr( $nonce_confirm ); ?>"
                                     title="Stornieren">✗</button>
                         <?php endif; ?>
@@ -233,8 +237,9 @@ function tc_render_registrations_page() {
                         <a href="<?php echo esc_url( wp_nonce_url(
                             admin_url( 'admin.php?page=training-registrations&action=delete&registration_id=' . $reg['id'] ),
                             'tc_delete_registration', 'nonce'
-                        ) ); ?>" class="button button-small button-link-delete"
-                           onclick="return confirm('Anmeldung wirklich löschen?');" title="Löschen">🗑</a>
+                        ) ); ?>" class="button button-small button-link-delete tc-btn-delete"
+                           data-name="<?php echo esc_attr( $reg['firstname'] . ' ' . $reg['lastname'] ); ?>"
+                           title="Löschen">🗑</a>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -248,24 +253,33 @@ function tc_render_registrations_page() {
         $(document).on('click', '.tc-btn-confirm', function() {
             var $btn = $(this);
             var id   = $btn.data('id');
-            if ( ! confirm('Anmeldung bestätigen und Bestätigungsmail senden?') ) return;
-            $btn.prop('disabled', true).text('…');
-            $.post(ajaxurl, {
-                action: 'tc_update_registration_status',
-                nonce:  $btn.data('nonce'),
-                registration_id: id,
-                status: 'confirmed',
-                send_confirmation_mail: 1
-            }, function(res) {
-                if ( res.success ) {
-                    var $row = $('#tc-reg-row-' + id);
-                    $row.find('.tc-status-badge').first()
-                        .attr('class', 'tc-status-badge tc-status-confirmed')
-                        .text('✓ Bestätigt');
-                    $btn.remove();
-                } else {
-                    alert(res.data || 'Fehler.');
-                    $btn.prop('disabled', false).text('✓');
+            var name = $btn.data('name');
+            tcConfirm({
+                title:       'Anmeldung bestätigen',
+                message:     name + ' erhält damit einen festen Platz.',
+                tone:        'confirm',
+                confirmText: 'Bestätigen',
+                checkbox:    { label: 'Bestätigungsmail an ' + name + ' senden', checked: true },
+                onConfirm: function( sendMail ) {
+                $btn.prop('disabled', true).text('…');
+                $.post(ajaxurl, {
+                    action: 'tc_update_registration_status',
+                    nonce:  $btn.data('nonce'),
+                    registration_id: id,
+                    status: 'confirmed',
+                    send_confirmation_mail: sendMail ? 1 : 0
+                }, function(res) {
+                    if ( res.success ) {
+                        var $row = $('#tc-reg-row-' + id);
+                        $row.find('.tc-status-badge').first()
+                            .attr('class', 'tc-status-badge tc-status-confirmed')
+                            .text('✓ Bestätigt');
+                        $btn.remove();
+                    } else {
+                        alert(res.data || 'Fehler.');
+                        $btn.prop('disabled', false).text('✓');
+                    }
+                });
                 }
             });
         });
@@ -273,26 +287,34 @@ function tc_render_registrations_page() {
         $(document).on('click', '.tc-btn-registered', function() {
             var $btn = $(this);
             var id   = $btn.data('id');
-            if ( ! confirm('Teilnehmer als verbindlich angemeldet markieren?') ) return;
-            var sendMail = confirm('Soll dazu eine Bestätigungsmail an den Teilnehmer gesendet werden?\n\nOK = Mail senden · Abbrechen = ohne Mail');
-            $btn.prop('disabled', true).text('…');
-            $.post(ajaxurl, {
-                action: 'tc_update_registration_status',
-                nonce:  $btn.data('nonce'),
-                registration_id: id,
-                status: 'registered',
-                send_confirmation_mail: sendMail ? 1 : 0
-            }, function(res) {
-                if ( res.success ) {
-                    var $row = $('#tc-reg-row-' + id);
-                    $row.find('.tc-status-badge').first()
-                        .attr('class', 'tc-status-badge tc-status-registered')
-                        .text('★ Angemeldet');
-                    $row.find('.tc-btn-confirm').remove();
-                    $btn.remove();
-                } else {
-                    alert(res.data || 'Fehler.');
-                    $btn.prop('disabled', false).text('★');
+            var name = $btn.data('name');
+            tcConfirm({
+                title:       'Als angemeldet markieren',
+                message:     name + ' gilt damit als verbindlich angemeldet – z.B. nach einem unterschriebenen Vertrag.',
+                tone:        'registered',
+                confirmText: 'Als angemeldet markieren',
+                checkbox:    { label: 'Willkommensmail an ' + name + ' senden', checked: false },
+                onConfirm: function( sendMail ) {
+                $btn.prop('disabled', true).text('…');
+                $.post(ajaxurl, {
+                    action: 'tc_update_registration_status',
+                    nonce:  $btn.data('nonce'),
+                    registration_id: id,
+                    status: 'registered',
+                    send_confirmation_mail: sendMail ? 1 : 0
+                }, function(res) {
+                    if ( res.success ) {
+                        var $row = $('#tc-reg-row-' + id);
+                        $row.find('.tc-status-badge').first()
+                            .attr('class', 'tc-status-badge tc-status-registered')
+                            .text('★ Angemeldet');
+                        $row.find('.tc-btn-confirm').remove();
+                        $btn.remove();
+                    } else {
+                        alert(res.data || 'Fehler.');
+                        $btn.prop('disabled', false).text('★');
+                    }
+                });
                 }
             });
         });
@@ -405,25 +427,48 @@ function tc_render_registrations_page() {
         $(document).on('click', '.tc-btn-cancel', function() {
             var $btn = $(this);
             var id   = $btn.data('id');
-            if ( ! confirm('Anmeldung stornieren?') ) return;
-            $btn.prop('disabled', true).text('…');
-            $.post(ajaxurl, {
-                action: 'tc_update_registration_status',
-                nonce:  $btn.data('nonce'),
-                registration_id: id,
-                status: 'cancelled',
-                send_confirmation_mail: 1
-            }, function(res) {
-                if ( res.success ) {
-                    var $row = $('#tc-reg-row-' + id);
-                    $row.find('.tc-status-badge').first()
-                        .attr('class', 'tc-status-badge tc-status-cancelled')
-                        .text('✗ Storniert');
-                    $btn.remove();
-                } else {
-                    alert(res.data || 'Fehler.');
-                    $btn.prop('disabled', false).text('✗');
+            var name = $btn.data('name');
+            tcConfirm({
+                title:       'Anmeldung stornieren',
+                message:     'Der Platz von ' + name + ' wird wieder freigegeben.',
+                tone:        'danger',
+                confirmText: 'Stornieren',
+                checkbox:    { label: 'Absage-Mail an ' + name + ' senden', checked: true },
+                onConfirm: function( sendMail ) {
+                $btn.prop('disabled', true).text('…');
+                $.post(ajaxurl, {
+                    action: 'tc_update_registration_status',
+                    nonce:  $btn.data('nonce'),
+                    registration_id: id,
+                    status: 'cancelled',
+                    send_confirmation_mail: sendMail ? 1 : 0
+                }, function(res) {
+                    if ( res.success ) {
+                        var $row = $('#tc-reg-row-' + id);
+                        $row.find('.tc-status-badge').first()
+                            .attr('class', 'tc-status-badge tc-status-cancelled')
+                            .text('✗ Storniert');
+                        $btn.remove();
+                    } else {
+                        alert(res.data || 'Fehler.');
+                        $btn.prop('disabled', false).text('✗');
+                    }
+                });
                 }
+            });
+        });
+
+        // ── Löschen ───────────────────────────────────────────────
+        $(document).on('click', '.tc-btn-delete', function(e) {
+            e.preventDefault();
+            var url  = $(this).attr('href');
+            var name = $(this).data('name');
+            tcConfirm({
+                title:       'Anmeldung löschen',
+                message:     'Der Eintrag von ' + name + ' wird endgültig entfernt. Das lässt sich nicht rückgängig machen.',
+                tone:        'danger',
+                confirmText: 'Endgültig löschen',
+                onConfirm:   function() { window.location.href = url; }
             });
         });
     });
