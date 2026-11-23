@@ -107,7 +107,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
             $request_btn    = tc_get_setting( 'label_request_btn',    'Jetzt anfragen' );
             $request_notice = tc_get_setting( 'label_request_notice', 'Für weitere Informationen oder eine Buchungsanfrage kontaktieren Sie uns gerne direkt.' );
             ob_start(); ?>
-            <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+            <div id="anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
                 <div class="tc-trial-notice">
                     <?php echo esc_html( $request_notice ); ?>
                 </div>
@@ -125,7 +125,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
             $expired_notice = tc_get_setting( 'label_expired_notice', 'Diese Veranstaltung hat bereits stattgefunden.' );
             $dark_class     = tc_dark_class();
             ob_start(); ?>
-            <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+            <div id="anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
                 <div class="tc-registration-form tc-registration-form--disabled">
                     <div class="tc-expired-notice">
                         <?php echo esc_html( $expired_notice ); ?>
@@ -184,7 +184,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
     if ( $is_full && $event_id ) {
         $wl_form_id = 'tc-waitlist-form-' . $instance;
         ob_start(); ?>
-        <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+        <div id="anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
             <form id="<?php echo esc_attr( $wl_form_id ); ?>" class="tc-registration-form tc-waitlist-form" method="POST">
                 <h2>Warteliste – <?php echo esc_html( get_the_title( $event_id ) ); ?></h2>
                 <div class="tc-waitlist-notice">
@@ -273,7 +273,7 @@ add_shortcode( 'time_registration', function ( $atts ) {
     }
 
     ob_start(); ?>
-    <div id="/#anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
+    <div id="anmelden" class="tc-registration-wrap <?php echo esc_attr( $dark_class ); ?>">
         <form id="<?php echo esc_attr( $form_id ); ?>" class="tc-registration-form" method="POST">
 
             <h2><?php echo esc_html( $form_title ); ?></h2>

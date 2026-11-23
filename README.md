@@ -1,6 +1,6 @@
 # Time Calendar
 
-![Version](https://img.shields.io/badge/version-3.7.0-blue)
+![Version](https://img.shields.io/badge/version-3.7.1-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777bb4)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0-green)
@@ -216,6 +216,13 @@ time-calendar/
 ```
 
 ---
+
+### 3.7.1
+
+- Fix: the registration form could not be submitted when the trial flow was active — the form omits
+  address/zip/city, and the JS read those fields unconditionally, throwing before the AJAX call.
+- Fix: the form anchor was rendered as `id="/#anmelden"`, so every CTA pointing at `#anmelden`
+  (price bar, waitlist button) jumped nowhere.
 
 ### 3.7.0
 

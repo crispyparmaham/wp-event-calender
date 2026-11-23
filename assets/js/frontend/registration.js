@@ -5,6 +5,12 @@
 (function($) {
     'use strict';
 
+    // Feldwert robust lesen — im Probetraining-Formular fehlen
+    // Adresse, PLZ und Ort komplett.
+    function fieldVal($form, name) {
+        return ($form.find('[name="' + name + '"]').val() || '').trim();
+    }
+
     $(document).ready(function() {
         
         // Event-Auswahl: Details laden
@@ -124,16 +130,16 @@
             var formData = {
                 action: $form.find('input[name="action"]').val(),
                 nonce: $form.find('input[name="nonce"]').val(),
-                firstname: $form.find('input[name="firstname"]').val().trim(),
-                lastname: $form.find('input[name="lastname"]').val().trim(),
-                email: $form.find('input[name="email"]').val().trim(),
-                phone: $form.find('input[name="phone"]').val().trim(),
-                address: $form.find('input[name="address"]').val().trim(),
-                zip: $form.find('input[name="zip"]').val().trim(),
-                city: $form.find('input[name="city"]').val().trim(),
+                firstname: fieldVal($form, 'firstname'),
+                lastname: fieldVal($form, 'lastname'),
+                email: fieldVal($form, 'email'),
+                phone: fieldVal($form, 'phone'),
+                address: fieldVal($form, 'address'),
+                zip: fieldVal($form, 'zip'),
+                city: fieldVal($form, 'city'),
                 event_id: $form.find('input[name="event_id"], select[name="event_id"]').val(),
                 event_date: $form.find('select[name="event_date"]').val() || '',
-                notes: $form.find('textarea[name="notes"]').val().trim()
+                notes: fieldVal($form, 'notes')
             };
 
             $form.addClass('tc-form-submitting');
