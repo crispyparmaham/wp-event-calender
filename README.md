@@ -1,6 +1,6 @@
 # Time Calendar
 
-![Version](https://img.shields.io/badge/version-3.7.2-blue)
+![Version](https://img.shields.io/badge/version-3.7.3-blue)
 ![PHP](https://img.shields.io/badge/PHP-8.2%2B-777bb4)
 ![WordPress](https://img.shields.io/badge/WordPress-6.0%2B-21759b)
 ![License](https://img.shields.io/badge/license-GPL--2.0-green)
@@ -217,6 +217,12 @@ time-calendar/
 ```
 
 ---
+
+### 3.7.3
+
+- Fix: the "Probetraining" badge stayed on a registration after it was marked as **Angemeldet**.
+  The badge is now hidden for registrations with status `registered`, both on page load and
+  immediately after the status change in the list.
 
 ### 3.7.2
 
