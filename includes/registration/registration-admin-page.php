@@ -193,7 +193,8 @@ function tc_render_registrations_page() {
                                 default      => '⏳ Ausstehend',
                             }; ?>
                         </span>
-                        <?php if ( ( $reg['flow'] ?? 'direct' ) === 'trial' ) : ?>
+                        <?php // Nach verbindlicher Anmeldung ist das Probetraining abgeschlossen ?>
+                        <?php if ( ( $reg['flow'] ?? 'direct' ) === 'trial' && $status !== 'registered' ) : ?>
                             <span class="tc-status-badge tc-flow-trial">Probetraining</span>
                         <?php endif; ?>
                     </td>
@@ -308,6 +309,7 @@ function tc_render_registrations_page() {
                         $row.find('.tc-status-badge').first()
                             .attr('class', 'tc-status-badge tc-status-registered')
                             .text('★ Angemeldet');
+                        $row.find('.tc-flow-trial').remove();
                         $row.find('.tc-btn-confirm').remove();
                         $btn.remove();
                     } else {
